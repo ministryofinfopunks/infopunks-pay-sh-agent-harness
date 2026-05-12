@@ -7,6 +7,7 @@ export interface ExecuteLivePayShCallInput {
   endpointUrl?: string;
   method?: string;
   body?: unknown;
+  bodyJson?: unknown;
   headers?: Record<string, string>;
 }
 
@@ -42,6 +43,10 @@ function withSkippedResult(
     costUsd: null,
     settlementReference: null,
     responsePreview: "",
+    requestMethod: input.method?.trim() || undefined,
+    requestBodyPreview: input.body !== undefined || input.bodyJson !== undefined
+      ? sanitizePreview(JSON.stringify(input.body ?? input.bodyJson))
+      : undefined,
     parsedJsonAvailable: false,
     errorReason,
     mode: "skipped",
@@ -82,8 +87,8 @@ function parseJsonFromEnv<T>(name: string): T | undefined {
   return parsed as T;
 }
 
-function buildHeaders(input: ExecuteLivePayShCallInput): Record<string, string> {
-  const headers: Record<string, string> = { ...(input.headers ?? {}) };
+function buildHeaders(input: ExecuteLivePayShCallInput, includeDefaultAccept: boolean): Record<string, string> {
+  const headers: Record<string, string> = {};
   const envHeaders = parseJsonFromEnv<Record<string, unknown>>("PAYSH_EXECUTION_HEADERS_JSON");
   if (envHeaders && typeof envHeaders === "object") {
     for (const [key, value] of Object.entries(envHeaders)) {
@@ -94,6 +99,9 @@ function buildHeaders(input: ExecuteLivePayShCallInput): Record<string, string> 
       }
     }
   }
+  for (const [key, value] of Object.entries(input.headers ?? {})) {
+    headers[key] = value;
+  }
 
   const authHeader = getEnv("PAYSH_AUTH_HEADER");
   const authValue = getEnv("PAYSH_AUTH_VALUE");
@@ -101,7 +109,7 @@ function buildHeaders(input: ExecuteLivePayShCallInput): Record<string, string> 
     headers[authHeader] = authValue;
   }
 
-  if (!Object.keys(headers).some((key) => key.toLowerCase() === "accept")) {
+  if (includeDefaultAccept && !Object.keys(headers).some((key) => key.toLowerCase() === "accept")) {
     headers.Accept = "application/json, text/plain;q=0.9, */*;q=0.8";
   }
 
@@ -111,6 +119,9 @@ function buildHeaders(input: ExecuteLivePayShCallInput): Record<string, string> 
 function resolveBody(input: ExecuteLivePayShCallInput): unknown {
   if (input.body !== undefined) {
     return input.body;
+  }
+  if (input.bodyJson !== undefined) {
+    return input.bodyJson;
   }
   return parseJsonFromEnv<unknown>("PAYSH_EXECUTION_BODY_JSON");
 }
@@ -258,10 +269,10 @@ export async function executeLivePayShCall(
     return withSkippedResult(input, startedAtMs, "missing_live_pay_sh_execution_config");
   }
 
-  const method = resolveMethod(input);
-  const headers = buildHeaders(input);
-  const body = resolveBody(input);
   const executionMode = resolveExecutionMode();
+  const method = resolveMethod(input);
+  const headers = buildHeaders(input, executionMode !== "pay_cli");
+  const body = resolveBody(input);
 
   if (executionMode === "pay_cli") {
     return executeViaPayCli({ input, endpointUrl, method, headers, body, startedAtMs });
@@ -269,6 +280,7 @@ export async function executeLivePayShCall(
 
   try {
     const requestBody = attachBodyIfNeeded(method, body, headers);
+    const requestBodyPreview = getRequestBodyPreview(requestBody);
     const response = await fetch(endpointUrl, {
       method,
       headers,
@@ -308,6 +320,8 @@ export async function executeLivePayShCall(
       costUsd: toNumberOrNull(parsedJson?.costUsd),
       settlementReference: toStringOrNull(parsedJson?.settlementReference),
       responsePreview,
+      requestMethod: method.toUpperCase(),
+      requestBodyPreview,
       parsedJsonAvailable,
       errorReason: response.ok ? undefined : response.status === 402 ? "payment_required" : `http_${response.status}`,
       paymentRequired: response.status === 402,
@@ -318,6 +332,7 @@ export async function executeLivePayShCall(
     };
   } catch (error) {
     const completedMs = Date.now();
+    const requestBody = attachBodyIfNeeded(method, body, headers);
     return {
       providerId: input.providerId,
       intent: input.intent,
@@ -329,6 +344,8 @@ export async function executeLivePayShCall(
       costUsd: null,
       settlementReference: null,
       responsePreview: "",
+      requestMethod: method.toUpperCase(),
+      requestBodyPreview: getRequestBodyPreview(requestBody),
       parsedJsonAvailable: false,
       errorReason: error instanceof Error ? error.message : "live_pay_sh_execution_failed",
       mode: "live_pay_sh",
@@ -343,6 +360,21 @@ interface ExecuteViaPayCliInput {
   headers: Record<string, string>;
   body: unknown;
   startedAtMs: number;
+}
+
+function getRequestBodyPreview(bodyString: BodyInit | undefined): string | undefined {
+  if (typeof bodyString !== "string") {
+    return undefined;
+  }
+  return sanitizePreview(bodyString);
+}
+
+function buildPayCliCommandShape(endpointUrl: string, method: string, bodyString: BodyInit | undefined): string {
+  const base = `pay curl ${endpointUrl} -X ${method.toUpperCase()} -H Content-Type:application/json`;
+  if (typeof bodyString === "string") {
+    return `${base} -d ${bodyString}`;
+  }
+  return base;
 }
 
 function runCommand(
@@ -396,16 +428,16 @@ async function executeViaPayCli({
   }
 
   const args: string[] = ["curl", endpointUrl];
+  const bodyString = attachBodyIfNeeded(method, body, headers);
   args.push("-X", method.toUpperCase());
-
   for (const [key, value] of Object.entries(headers)) {
     args.push("-H", `${key}: ${value}`);
   }
-
-  const bodyString = attachBodyIfNeeded(method, body, headers);
   if (typeof bodyString === "string") {
-    args.push("--data", bodyString);
+    args.push("-d", bodyString);
   }
+  const commandShape = buildPayCliCommandShape(endpointUrl, method, bodyString);
+  const requestBodyPreview = getRequestBodyPreview(bodyString);
 
   try {
     const result = await runCommand("pay", args);
@@ -434,6 +466,9 @@ async function executeViaPayCli({
       settlementReference: null,
       responsePreview: stdoutPreview,
       stderrPreview,
+      commandShape,
+      requestMethod: method.toUpperCase(),
+      requestBodyPreview,
       parsedJsonAvailable,
       errorReason: result.exitCode === 0 ? undefined : "pay_cli_execution_failed",
       mode: "live_pay_sh_cli",
@@ -452,7 +487,10 @@ async function executeViaPayCli({
       costUsd: null,
       settlementReference: null,
       responsePreview: "",
-      stderrPreview: "",
+      stderrPreview: error instanceof Error ? sanitizePreview(error.message) : "",
+      commandShape,
+      requestMethod: method.toUpperCase(),
+      requestBodyPreview,
       parsedJsonAvailable: false,
       errorReason: error instanceof Error ? error.message : "pay_cli_execution_failed",
       mode: "live_pay_sh_cli",

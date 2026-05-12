@@ -247,6 +247,41 @@ Artifacts:
 - `benchmark-results/live-head-to-head/latest.csv`
 - `benchmark-results/live-head-to-head/summary.md`
 
+## QuickNode RPC proof
+
+This benchmark expands proof depth for QuickNode on Solana mainnet:
+- `getHealth` proves route health.
+- `getBalance` proves live account state access.
+- `getSlot` proves current chain progress/freshness.
+- Manual `pay curl` verification already exists for `getHealth` and `getBalance`.
+
+This is coverage/state-access proof, not routing superiority proof.
+It may also expose pay-cli/x402 replay-or-settlement failures (for example: `Server returned 402 again after payment`).
+
+Run:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+npm run benchmark:live-rpc -- --trials=5
+```
+
+Lowest-cost smoke:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+LIVE_RPC_METHODS=getHealth \
+LIVE_RPC_TRIAL_MODE=single \
+LIVE_RPC_CALL_DELAY_MS=3000 \
+npm run benchmark:live-rpc -- --trials=1
+```
+
+Artifacts:
+- `benchmark-results/live-rpc/latest.json`
+- `benchmark-results/live-rpc/latest.csv`
+- `benchmark-results/live-rpc/summary.md`
+
 ## Live Radar Preflight Integration
 
 When `RADAR_API_BASE_URL` is set (current value: `https://infopunks-pay-sh-radar.onrender.com`), the harness calls:
@@ -328,6 +363,7 @@ This is a measurement scaffold. Results are simulated unless live execution is e
 - `npm run demo:live-market-data`: Radar preflight plus optional single-provider live Pay.sh execution demo + proof log.
 - `npm run benchmark:live-market-data`: repeated live market-data route benchmark + JSON/CSV/Markdown reports.
 - `npm run benchmark:live-head-to-head`: repeated live naive endpoint-map selection vs Radar-selected provider benchmark for executable market-data mappings.
+- `npm run benchmark:live-rpc`: repeated live QuickNode Solana JSON-RPC health/balance/slot benchmark + JSON/CSV/Markdown reports.
 - `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.

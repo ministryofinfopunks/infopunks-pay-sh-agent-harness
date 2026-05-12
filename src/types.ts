@@ -119,6 +119,9 @@ export interface LivePayShExecutionResult {
   settlementReference: string | null;
   responsePreview: string;
   stderrPreview?: string;
+  commandShape?: string;
+  requestMethod?: string;
+  requestBodyPreview?: string;
   parsedJsonAvailable: boolean;
   errorReason?: string;
   paymentRequired?: boolean;

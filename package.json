@@ -10,6 +10,8 @@
     "demo:live-market-data": "ts-node src/demoLiveMarketData.ts",
     "benchmark:live-market-data": "ts-node src/demoLiveMarketDataBenchmark.ts",
     "benchmark:live-head-to-head": "ts-node src/demoLiveHeadToHeadBenchmark.ts",
+    "benchmark:live-rpc": "ts-node src/demoLiveRpcBenchmark.ts",
+    "debug:pay-cli-parity": "ts-node src/demoPayCliParity.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
     "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
