@@ -1,5 +1,7 @@
 {
   "summary": {
+    "profile": "solana_trending_pools",
+    "expectedOutputShape": "trending_pools",
     "totalTrials": 3,
     "validHeadToHeadComparisonCount": 0,
     "superiorityEvidenceAvailable": false,
@@ -14,8 +16,8 @@
     "naiveExecutionSuccessRateAmongAttempted": 100,
     "naiveSuccessRate": 100,
     "radarSuccessRate": 100,
-    "naiveAvgLatencyMs": 14842,
-    "radarAvgLatencyMs": 4810.33,
+    "naiveAvgLatencyMs": 5047,
+    "radarAvgLatencyMs": 4345,
     "naiveParsedJsonSuccessRate": 100,
     "radarParsedJsonSuccessRate": 100,
     "radarWins": 0,
@@ -23,21 +25,37 @@
     "ties": 0,
     "repeatabilitySameProviderOutcomes": 3,
     "invalidReasons": {},
+    "naiveOutputShapeFitCount": 0,
+    "radarOutputShapeFitCount": 0,
+    "outputShapeFitWins": {
+      "same_provider": 3
+    },
     "uniqueNaiveProviders": [
       "merit-systems-stablecrypto-market-data"
     ],
     "uniqueRadarProviders": [
       "merit-systems-stablecrypto-market-data"
     ],
+    "uniqueEndpointMappingsUsed": [
+      "merit-systems-stablecrypto-market-data"
+    ],
+    "outputShapesObserved": [
+      "simple_price"
+    ],
+    "qualityComparisonAvailableCount": 3,
     "caveat": "Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.",
-    "latencyCaveat": "Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality."
+    "latencyCaveat": "Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality.",
+    "outputShapeCaveat": "different output shapes allow execution reliability comparison, not same-answer quality comparison.",
+    "outputShapeFitCaveat": "output-shape fit is a routing-fit signal, not full answer-quality evaluation."
   },
   "trials": [
     {
       "trialId": 1,
-      "timestamp": "2026-05-12T14:58:14.009Z",
-      "intent": "get crypto market data",
+      "timestamp": "2026-05-12T17:20:21.123Z",
+      "profile": "solana_trending_pools",
+      "intent": "get trending Solana DEX pools",
       "category": "finance",
+      "expectedOutputShape": "trending_pools",
       "constraints": {
         "minTrustScore": 70,
         "maxLatencyMs": 3000,
@@ -55,10 +73,10 @@
       "radarExitCode": 0,
       "naiveParsedJsonAvailable": true,
       "radarParsedJsonAvailable": true,
-      "naiveExecutionLatencyMs": 35716,
-      "radarExecutionLatencyMs": 4112,
-      "naiveResponsePreview": "{\"solana\":{\"usd\":94.53}}",
-      "radarResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "naiveExecutionLatencyMs": 6560,
+      "radarExecutionLatencyMs": 3863,
+      "naiveResponsePreview": "{\"solana\":{\"usd\":94.38}}",
+      "radarResponsePreview": "{\"solana\":{\"usd\":94.38}}",
       "naiveErrorReason": null,
       "radarErrorReason": null,
       "radarDecision": "route_approved",
@@ -70,19 +88,16 @@
           "analytics",
           "market_data"
         ],
-        "trustScore": 97,
+        "trustScore": 98,
         "signalScore": 40,
-        "latencyMs": 118,
+        "latencyMs": 90,
         "costUsd": 0.01,
         "degradationFlag": false
       },
       "radarBlockReason": null,
       "radarCategoryMatch": true,
       "radarCapabilityMatch": true,
-      "radarRequiredCapabilities": [
-        "market_data",
-        "pricing"
-      ],
+      "radarRequiredCapabilities": [],
       "radarRejectionSummary": null,
       "radarConsideredProvidersRejected": [
         "agentmail-email",
@@ -92,16 +107,29 @@
         "merit-systems-stableemail-email"
       ],
       "comparisonOutcome": "repeatability_same_provider",
+      "winReason": "tie_or_not_applicable",
       "naiveEndpointMapped": true,
       "radarEndpointMapped": true,
+      "naiveEndpointMappingStatus": "verified_pay_cli_success",
+      "radarEndpointMappingStatus": "verified_pay_cli_success",
+      "naiveOutputShape": "simple_price",
+      "radarOutputShape": "simple_price",
+      "outputShapesSame": true,
+      "naiveOutputShapeMatchesExpected": false,
+      "radarOutputShapeMatchesExpected": false,
+      "outputShapeFitOutcome": "same_provider",
+      "outputShapeCaveat": null,
+      "qualityComparisonAvailable": true,
       "naiveExecutionAttempted": true,
       "radarExecutionAttempted": true
     },
     {
       "trialId": 2,
-      "timestamp": "2026-05-12T14:58:55.072Z",
-      "intent": "get crypto market data",
+      "timestamp": "2026-05-12T17:20:32.389Z",
+      "profile": "solana_trending_pools",
+      "intent": "get trending Solana DEX pools",
       "category": "finance",
+      "expectedOutputShape": "trending_pools",
       "constraints": {
         "minTrustScore": 70,
         "maxLatencyMs": 3000,
@@ -119,10 +147,10 @@
       "radarExitCode": 0,
       "naiveParsedJsonAvailable": true,
       "radarParsedJsonAvailable": true,
-      "naiveExecutionLatencyMs": 4177,
-      "radarExecutionLatencyMs": 6545,
-      "naiveResponsePreview": "{\"solana\":{\"usd\":94.53}}",
-      "radarResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "naiveExecutionLatencyMs": 4353,
+      "radarExecutionLatencyMs": 3732,
+      "naiveResponsePreview": "{\"solana\":{\"usd\":94.38}}",
+      "radarResponsePreview": "{\"solana\":{\"usd\":94.38}}",
       "naiveErrorReason": null,
       "radarErrorReason": null,
       "radarDecision": "route_approved",
@@ -134,19 +162,16 @@
           "analytics",
           "market_data"
         ],
-        "trustScore": 97,
+        "trustScore": 98,
         "signalScore": 40,
-        "latencyMs": 118,
+        "latencyMs": 90,
         "costUsd": 0.01,
         "degradationFlag": false
       },
       "radarBlockReason": null,
       "radarCategoryMatch": true,
       "radarCapabilityMatch": true,
-      "radarRequiredCapabilities": [
-        "market_data",
-        "pricing"
-      ],
+      "radarRequiredCapabilities": [],
       "radarRejectionSummary": null,
       "radarConsideredProvidersRejected": [
         "agentmail-email",
@@ -156,16 +181,29 @@
         "merit-systems-stableemail-email"
       ],
       "comparisonOutcome": "repeatability_same_provider",
+      "winReason": "tie_or_not_applicable",
       "naiveEndpointMapped": true,
       "radarEndpointMapped": true,
+      "naiveEndpointMappingStatus": "verified_pay_cli_success",
+      "radarEndpointMappingStatus": "verified_pay_cli_success",
+      "naiveOutputShape": "simple_price",
+      "radarOutputShape": "simple_price",
+      "outputShapesSame": true,
+      "naiveOutputShapeMatchesExpected": false,
+      "radarOutputShapeMatchesExpected": false,
+      "outputShapeFitOutcome": "same_provider",
+      "outputShapeCaveat": null,
+      "qualityComparisonAvailable": true,
       "naiveExecutionAttempted": true,
       "radarExecutionAttempted": true
     },
     {
       "trialId": 3,
-      "timestamp": "2026-05-12T14:59:06.235Z",
-      "intent": "get crypto market data",
+      "timestamp": "2026-05-12T17:20:40.995Z",
+      "profile": "solana_trending_pools",
+      "intent": "get trending Solana DEX pools",
       "category": "finance",
+      "expectedOutputShape": "trending_pools",
       "constraints": {
         "minTrustScore": 70,
         "maxLatencyMs": 3000,
@@ -183,10 +221,10 @@
       "radarExitCode": 0,
       "naiveParsedJsonAvailable": true,
       "radarParsedJsonAvailable": true,
-      "naiveExecutionLatencyMs": 4633,
-      "radarExecutionLatencyMs": 3774,
-      "naiveResponsePreview": "{\"solana\":{\"usd\":94.53}}",
-      "radarResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "naiveExecutionLatencyMs": 4228,
+      "radarExecutionLatencyMs": 5440,
+      "naiveResponsePreview": "{\"solana\":{\"usd\":94.38}}",
+      "radarResponsePreview": "{\"solana\":{\"usd\":94.38}}",
       "naiveErrorReason": null,
       "radarErrorReason": null,
       "radarDecision": "route_approved",
@@ -198,19 +236,16 @@
           "analytics",
           "market_data"
         ],
-        "trustScore": 97,
+        "trustScore": 98,
         "signalScore": 40,
-        "latencyMs": 118,
+        "latencyMs": 90,
         "costUsd": 0.01,
         "degradationFlag": false
       },
       "radarBlockReason": null,
       "radarCategoryMatch": true,
       "radarCapabilityMatch": true,
-      "radarRequiredCapabilities": [
-        "market_data",
-        "pricing"
-      ],
+      "radarRequiredCapabilities": [],
       "radarRejectionSummary": null,
       "radarConsideredProvidersRejected": [
         "agentmail-email",
@@ -220,8 +255,19 @@
         "merit-systems-stableemail-email"
       ],
       "comparisonOutcome": "repeatability_same_provider",
+      "winReason": "tie_or_not_applicable",
       "naiveEndpointMapped": true,
       "radarEndpointMapped": true,
+      "naiveEndpointMappingStatus": "verified_pay_cli_success",
+      "radarEndpointMappingStatus": "verified_pay_cli_success",
+      "naiveOutputShape": "simple_price",
+      "radarOutputShape": "simple_price",
+      "outputShapesSame": true,
+      "naiveOutputShapeMatchesExpected": false,
+      "radarOutputShapeMatchesExpected": false,
+      "outputShapeFitOutcome": "same_provider",
+      "outputShapeCaveat": null,
+      "qualityComparisonAvailable": true,
       "naiveExecutionAttempted": true,
       "radarExecutionAttempted": true
     }

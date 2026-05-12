@@ -182,6 +182,15 @@ Current scope:
 - only executable providers present in the local endpoint map are run
 - market-data route only (`intent="get crypto market data"`, `category="finance"`)
 
+Provider endpoint mappings:
+
+| Provider | providerId | Endpoint | Status | Output shape |
+|---|---|---|---|---|
+| StableCrypto | merit-systems-stablecrypto-market-data | https://stablecrypto.dev/api/coingecko/price | verified_pay_cli_success | simple_price |
+| PaySponge CoinGecko | paysponge-coingecko | https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools | verified_pay_cli_success | trending_pools |
+
+Note: The PaySponge `/x402/onchain/networks` route returned API-key-missing and is not mapped. Only the verified `trending_pools` route is mapped.
+
 Interpretation:
 - if both strategies select StableCrypto, that is repeatability evidence, not superiority evidence
 - if both strategies select the same provider, the benchmark reports repeatability_same_provider and does not count it as superiority evidence
@@ -193,13 +202,29 @@ Interpretation:
 
 Run:
 
+Simple price profile:
+
 ```bash
 PAYSH_EXECUTION_MODE=pay_cli \
 LIVE_PAYSH_EXECUTION=true \
+LIVE_HEAD_TO_HEAD_PROFILE=simple_price \
 RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
 RADAR_API_TIMEOUT_MS=15000 \
 npm run benchmark:live-head-to-head -- --trials=30
 ```
+
+Trending pools profile:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+LIVE_HEAD_TO_HEAD_PROFILE=solana_trending_pools \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run benchmark:live-head-to-head -- --trials=30
+```
+
+The trending pools profile is the first attempt to test whether Radar chooses PaySponge CoinGecko for a DEX-pools intent instead of StableCrypto.
 
 Artifacts:
 - `benchmark-results/live-head-to-head/latest.json`

@@ -1,5 +1,7 @@
 # Live Naive-vs-Radar Benchmark Summary
 
+- profile: solana_trending_pools
+- expected output shape: trending_pools
 - total trials: 3
 - valid head-to-head comparison count (different-provider superiority comparisons only): 0
 - superiority evidence available: false
@@ -14,8 +16,8 @@
 - naive execution success rate among attempted: 100%
 - naive success rate: 100%
 - radar success rate: 100%
-- naive avg latency: 14842ms
-- radar avg latency: 4810.33ms
+- naive avg latency: 5047ms
+- radar avg latency: 4345ms
 - parsed JSON success rates: naive=100% radar=100%
 - radar wins: 0
 - naive wins: 0
@@ -23,8 +25,16 @@
 - repeatability same-provider outcomes: 3
 - invalid reasons: {}
 - `radar_route_blocked` means Radar intentionally refused execution under current policy constraints (not a missing endpoint mapping).
+- naive output shape fit count: 0
+- radar output shape fit count: 0
+- output-shape fit wins: {"same_provider":3}
 - unique naive providers: merit-systems-stablecrypto-market-data
 - unique Radar providers: merit-systems-stablecrypto-market-data
+- unique endpoint mappings used: merit-systems-stablecrypto-market-data
+- output shapes observed: simple_price
+- qualityComparisonAvailable count: 3
 - caveat: Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.
 - caveat: Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality.
+- caveat: different output shapes allow execution reliability comparison, not same-answer quality comparison.
+- caveat: output-shape fit is a routing-fit signal, not full answer-quality evaluation.
 - warning: No superiority evidence available: naive and Radar selected the same executable provider in all comparable trials.

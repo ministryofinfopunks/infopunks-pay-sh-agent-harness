@@ -3,14 +3,15 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { executeLivePayShCall } from "./livePayShExecutor";
 import { callRadarPreflight, RadarPreflightInput } from "./radarClient";
+import { providerEndpointMap, ProviderEndpointMapping } from "./providerEndpointMap";
 
 const DEFAULT_TRIALS = 30;
 const DEFAULT_MARKET_DATA_MIN_TRUST_SCORE = 70;
 const DEFAULT_MARKET_DATA_MAX_LATENCY_MS = 3000;
 const DEFAULT_MARKET_DATA_MAX_COST_USD = 0.05;
-const DEFAULT_INTENT = "get crypto market data";
-const DEFAULT_CATEGORY = "finance";
 const RESULTS_DIR = path.resolve(process.cwd(), "benchmark-results", "live-head-to-head");
+
+type ProfileName = "simple_price" | "solana_trending_pools";
 
 type ComparisonOutcome =
   | "radar_win"
@@ -21,31 +22,41 @@ type ComparisonOutcome =
   | "invalid_missing_endpoint"
   | "invalid_execution_skipped";
 
-interface EndpointMapping {
-  providerId: string;
-  url: string;
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  body?: unknown;
+type OutputShapeFitOutcome = "radar_better_fit" | "naive_better_fit" | "both_fit" | "neither_fit" | "same_provider";
+type WinReason = "better_output_shape_fit" | "execution_success" | "latency" | "tie_or_not_applicable";
+
+interface BenchmarkIntentProfile {
+  name: ProfileName;
+  intent: string;
   category: string;
-  capabilities: string[];
+  expectedOutputShape: string;
+  preferredCapabilities: string[];
 }
 
-const endpointMap: EndpointMapping[] = [
-  {
-    providerId: "merit-systems-stablecrypto-market-data",
-    url: "https://stablecrypto.dev/api/coingecko/price",
-    method: "POST",
-    body: { ids: ["solana"], vs_currencies: ["usd"] },
+const BENCHMARK_PROFILES: Record<ProfileName, BenchmarkIntentProfile> = {
+  simple_price: {
+    name: "simple_price",
+    intent: "get crypto market data",
     category: "finance",
-    capabilities: ["market_data", "pricing"],
+    expectedOutputShape: "simple_price",
+    preferredCapabilities: ["market_data", "pricing"],
   },
-];
+  solana_trending_pools: {
+    name: "solana_trending_pools",
+    intent: "get trending Solana DEX pools",
+    category: "finance",
+    expectedOutputShape: "trending_pools",
+    preferredCapabilities: ["market_data", "dex_pools", "trending"],
+  },
+};
 
 interface HeadToHeadTrial {
   trialId: number;
   timestamp: string;
+  profile: ProfileName;
   intent: string;
   category: string;
+  expectedOutputShape: string;
   constraints: {
     minTrustScore: number;
     maxLatencyMs: number;
@@ -78,8 +89,19 @@ interface HeadToHeadTrial {
   radarRejectionSummary: string | null;
   radarConsideredProvidersRejected: string[];
   comparisonOutcome: ComparisonOutcome;
+  winReason: WinReason;
   naiveEndpointMapped: boolean;
   radarEndpointMapped: boolean;
+  naiveEndpointMappingStatus: string | null;
+  radarEndpointMappingStatus: string | null;
+  naiveOutputShape: string | null;
+  radarOutputShape: string | null;
+  outputShapesSame: boolean;
+  naiveOutputShapeMatchesExpected: boolean;
+  radarOutputShapeMatchesExpected: boolean;
+  outputShapeFitOutcome: OutputShapeFitOutcome;
+  outputShapeCaveat: string | null;
+  qualityComparisonAvailable: boolean;
   naiveExecutionAttempted: boolean;
   radarExecutionAttempted: boolean;
 }
@@ -98,6 +120,13 @@ function getTrialsFromArgsOrEnv(): number {
   const fromArg = arg ? Number(arg.slice("--trials=".length)) : undefined;
   const value = fromArg ?? DEFAULT_TRIALS;
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : DEFAULT_TRIALS;
+}
+
+function getProfileFromArgsOrEnv(): BenchmarkIntentProfile {
+  const arg = process.argv.find((entry) => entry.startsWith("--profile="));
+  const raw = (arg ? arg.slice("--profile=".length) : process.env.LIVE_HEAD_TO_HEAD_PROFILE ?? "simple_price").trim();
+  const profile = (raw in BENCHMARK_PROFILES ? raw : "simple_price") as ProfileName;
+  return BENCHMARK_PROFILES[profile];
 }
 
 function toCsvCell(value: unknown): string {
@@ -120,21 +149,17 @@ function round(value: number, digits = 2): number {
   return Math.round(value * factor) / factor;
 }
 
-function findNaiveProvider(intent: string, category: string): EndpointMapping | null {
-  const loweredIntent = intent.toLowerCase();
-  const intentLooksLikeMarketData =
-    loweredIntent.includes("market") || loweredIntent.includes("price") || loweredIntent.includes("crypto");
+function findNaiveProvider(category: string): ProviderEndpointMapping | null {
   return (
-    endpointMap.find(
+    providerEndpointMap.find(
       (provider) =>
         provider.category.toLowerCase() === category.toLowerCase() &&
-        provider.capabilities.some((capability) => capability === "market_data" || capability === "pricing") &&
-        intentLooksLikeMarketData,
+        provider.capabilities.some((capability) => capability === "market_data"),
     ) ?? null
   );
 }
 
-async function executeProvider(provider: EndpointMapping | null, intent: string) {
+async function executeProvider(provider: ProviderEndpointMapping | null, intent: string) {
   if (!provider) {
     return {
       success: false,
@@ -152,7 +177,7 @@ async function executeProvider(provider: EndpointMapping | null, intent: string)
     intent,
     endpointUrl: provider.url,
     method: provider.method,
-    body: provider.body,
+    body: provider.body ?? undefined,
   });
 
   return {
@@ -212,10 +237,32 @@ function toRejectedProviders(details: Record<string, unknown> | null, fallback: 
   return rejected.slice(0, 5);
 }
 
+function getOutputShapeFitOutcome(
+  providersSame: boolean,
+  naiveFits: boolean,
+  radarFits: boolean,
+): OutputShapeFitOutcome {
+  if (providersSame) {
+    return "same_provider";
+  }
+  if (radarFits && !naiveFits) {
+    return "radar_better_fit";
+  }
+  if (!radarFits && naiveFits) {
+    return "naive_better_fit";
+  }
+  if (radarFits && naiveFits) {
+    return "both_fit";
+  }
+  return "neither_fit";
+}
+
 async function main(): Promise<void> {
   const trials = getTrialsFromArgsOrEnv();
-  const intent = DEFAULT_INTENT;
-  const category = DEFAULT_CATEGORY;
+  const profile = getProfileFromArgsOrEnv();
+  const intent = profile.intent;
+  const category = profile.category;
+  const expectedOutputShape = profile.expectedOutputShape;
   const constraints = {
     minTrustScore: getEnvNumber("MARKET_DATA_MIN_TRUST_SCORE", DEFAULT_MARKET_DATA_MIN_TRUST_SCORE),
     maxLatencyMs: getEnvNumber("MARKET_DATA_MAX_LATENCY_MS", DEFAULT_MARKET_DATA_MAX_LATENCY_MS),
@@ -227,9 +274,12 @@ async function main(): Promise<void> {
   const canExecute = liveEnabled && payMode === "pay_cli";
 
   console.log("\n=== Live Naive-vs-Radar Head-to-Head Benchmark ===");
+  console.log(`Profile: ${profile.name}`);
   console.log(`Trials: ${trials}`);
   console.log(`Intent: ${intent}`);
   console.log(`Category: ${category}`);
+  console.log(`Expected output shape: ${expectedOutputShape}`);
+  console.log(`Preferred capabilities: ${profile.preferredCapabilities.join(", ")}`);
   console.log(`Constraints: ${JSON.stringify(constraints)}`);
 
   if (!canExecute) {
@@ -257,13 +307,32 @@ async function main(): Promise<void> {
       preflight.decision?.rejectedProviders ?? [],
     );
 
-    const naiveProviderMapping = findNaiveProvider(intent, category);
+    const naiveProviderMapping = findNaiveProvider(category);
     const naiveProvider = naiveProviderMapping?.providerId ?? null;
-    const radarProviderMapping = endpointMap.find((mapping) => mapping.providerId === radarProvider) ?? null;
+    const radarProviderMapping = providerEndpointMap.find((mapping) => mapping.providerId === radarProvider) ?? null;
 
     const providersSame = Boolean(naiveProvider && radarProvider && naiveProvider === radarProvider);
     const naiveEndpointMapped = Boolean(naiveProviderMapping);
     const radarEndpointMapped = Boolean(radarProviderMapping);
+    const naiveEndpointMappingStatus = naiveProviderMapping?.status ?? null;
+    const radarEndpointMappingStatus = radarProviderMapping?.status ?? null;
+    const naiveOutputShape = naiveProviderMapping?.outputShape ?? null;
+    const radarOutputShape = radarProviderMapping?.outputShape ?? null;
+    const outputShapesSame = Boolean(naiveOutputShape && radarOutputShape && naiveOutputShape === radarOutputShape);
+    const naiveOutputShapeMatchesExpected = naiveOutputShape === expectedOutputShape;
+    const radarOutputShapeMatchesExpected = radarOutputShape === expectedOutputShape;
+    const outputShapeFitOutcome = getOutputShapeFitOutcome(
+      providersSame,
+      naiveOutputShapeMatchesExpected,
+      radarOutputShapeMatchesExpected,
+    );
+    const bothVerified =
+      naiveEndpointMappingStatus === "verified_pay_cli_success" && radarEndpointMappingStatus === "verified_pay_cli_success";
+    const outputShapeCaveat =
+      !providersSame && bothVerified && !outputShapesSame
+        ? "providers executed successfully but returned different market-data shapes"
+        : null;
+    let qualityComparisonAvailable = true;
 
     let naiveExecutionMode = "skipped";
     let radarExecutionMode = "skipped";
@@ -280,6 +349,7 @@ async function main(): Promise<void> {
     let naiveErrorReason: string | null = null;
     let radarErrorReason: string | null = null;
     let comparisonOutcome: ComparisonOutcome = "tie";
+    let winReason: WinReason = "tie_or_not_applicable";
     let naiveExecutionAttempted = false;
     let radarExecutionAttempted = false;
 
@@ -360,24 +430,50 @@ async function main(): Promise<void> {
         comparisonOutcome = "invalid_execution_skipped";
       } else if (providersSame) {
         comparisonOutcome = "repeatability_same_provider";
+      } else if (
+        naiveSuccess &&
+        radarSuccess &&
+        radarOutputShapeMatchesExpected &&
+        !naiveOutputShapeMatchesExpected
+      ) {
+        comparisonOutcome = "radar_win";
+        winReason = "better_output_shape_fit";
+      } else if (
+        naiveSuccess &&
+        radarSuccess &&
+        naiveOutputShapeMatchesExpected &&
+        !radarOutputShapeMatchesExpected
+      ) {
+        comparisonOutcome = "naive_win";
+        winReason = "better_output_shape_fit";
       } else if (naiveSuccess && !radarSuccess) {
         comparisonOutcome = "naive_win";
+        winReason = "execution_success";
       } else if (!naiveSuccess && radarSuccess) {
         comparisonOutcome = "radar_win";
+        winReason = "execution_success";
       } else if ((naiveExecutionLatencyMs ?? Number.POSITIVE_INFINITY) < (radarExecutionLatencyMs ?? Number.POSITIVE_INFINITY)) {
         comparisonOutcome = "naive_win";
+        winReason = "latency";
       } else if ((radarExecutionLatencyMs ?? Number.POSITIVE_INFINITY) < (naiveExecutionLatencyMs ?? Number.POSITIVE_INFINITY)) {
         comparisonOutcome = "radar_win";
+        winReason = "latency";
       } else {
         comparisonOutcome = "tie";
+      }
+
+      if (!outputShapesSame) {
+        qualityComparisonAvailable = false;
       }
     }
 
     const trial: HeadToHeadTrial = {
       trialId,
       timestamp,
+      profile: profile.name,
       intent,
       category,
+      expectedOutputShape,
       constraints,
       naiveProvider,
       radarProvider,
@@ -406,15 +502,26 @@ async function main(): Promise<void> {
       radarRejectionSummary,
       radarConsideredProvidersRejected,
       comparisonOutcome,
+      winReason,
       naiveEndpointMapped,
       radarEndpointMapped,
+      naiveEndpointMappingStatus,
+      radarEndpointMappingStatus,
+      naiveOutputShape,
+      radarOutputShape,
+      outputShapesSame,
+      naiveOutputShapeMatchesExpected,
+      radarOutputShapeMatchesExpected,
+      outputShapeFitOutcome,
+      outputShapeCaveat,
+      qualityComparisonAvailable,
       naiveExecutionAttempted,
       radarExecutionAttempted,
     };
 
     benchmarkTrials.push(trial);
     console.log(
-      `[trial ${trialId}/${trials}] naive=${naiveProvider ?? "none"} radar=${radarProvider ?? "none"} outcome=${comparisonOutcome}`,
+      `[trial ${trialId}/${trials}] profile=${profile.name} naive=${naiveProvider ?? "none"} radar=${radarProvider ?? "none"} outcome=${comparisonOutcome} fit=${outputShapeFitOutcome}`,
     );
   }
 
@@ -427,7 +534,8 @@ async function main(): Promise<void> {
       trial.radarExecutionAttempted &&
       trial.comparisonOutcome !== "radar_route_blocked" &&
       trial.comparisonOutcome !== "invalid_missing_endpoint" &&
-      trial.comparisonOutcome !== "invalid_execution_skipped",
+      trial.comparisonOutcome !== "invalid_execution_skipped" &&
+      trial.qualityComparisonAvailable,
   );
   const invalidComparisons = benchmarkTrials.filter(
     (trial) =>
@@ -484,7 +592,39 @@ async function main(): Promise<void> {
     return acc;
   }, {});
 
+  const qualityComparisonAvailableCount = benchmarkTrials.filter((trial) => trial.qualityComparisonAvailable).length;
+  const outputShapesObserved = Array.from(
+    new Set(
+      benchmarkTrials
+        .flatMap((trial) => [trial.naiveOutputShape, trial.radarOutputShape])
+        .filter((value): value is string => typeof value === "string" && value.length > 0),
+    ),
+  );
+  const uniqueEndpointMappingsUsed = Array.from(
+    new Set(
+      benchmarkTrials.flatMap((trial) => {
+        const mapped: string[] = [];
+        if (trial.naiveProvider && trial.naiveEndpointMapped) {
+          mapped.push(trial.naiveProvider);
+        }
+        if (trial.radarProvider && trial.radarEndpointMapped) {
+          mapped.push(trial.radarProvider);
+        }
+        return mapped;
+      }),
+    ),
+  );
+
+  const naiveOutputShapeFitCount = benchmarkTrials.filter((trial) => trial.naiveOutputShapeMatchesExpected).length;
+  const radarOutputShapeFitCount = benchmarkTrials.filter((trial) => trial.radarOutputShapeMatchesExpected).length;
+  const outputShapeFitWins = benchmarkTrials.reduce<Record<string, number>>((acc, trial) => {
+    acc[trial.outputShapeFitOutcome] = (acc[trial.outputShapeFitOutcome] ?? 0) + 1;
+    return acc;
+  }, {});
+
   const summary = {
+    profile: profile.name,
+    expectedOutputShape,
     totalTrials: benchmarkTrials.length,
     validHeadToHeadComparisonCount: validComparisons.length,
     superiorityEvidenceAvailable: validComparisons.length > 0,
@@ -508,12 +648,22 @@ async function main(): Promise<void> {
     ties,
     repeatabilitySameProviderOutcomes: repeatabilityCount,
     invalidReasons,
+    naiveOutputShapeFitCount,
+    radarOutputShapeFitCount,
+    outputShapeFitWins,
     uniqueNaiveProviders: Array.from(new Set(benchmarkTrials.map((trial) => trial.naiveProvider).filter((value): value is string => Boolean(value)))),
     uniqueRadarProviders: Array.from(new Set(benchmarkTrials.map((trial) => trial.radarProvider).filter((value): value is string => Boolean(value)))),
+    uniqueEndpointMappingsUsed,
+    outputShapesObserved,
+    qualityComparisonAvailableCount,
     caveat:
       "Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.",
     latencyCaveat:
       "Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality.",
+    outputShapeCaveat:
+      "different output shapes allow execution reliability comparison, not same-answer quality comparison.",
+    outputShapeFitCaveat:
+      "output-shape fit is a routing-fit signal, not full answer-quality evaluation.",
   };
 
   await mkdir(RESULTS_DIR, { recursive: true });
@@ -525,8 +675,10 @@ async function main(): Promise<void> {
   const csvHeader = [
     "trialId",
     "timestamp",
+    "profile",
     "intent",
     "category",
+    "expectedOutputShape",
     "constraints",
     "naiveProvider",
     "radarProvider",
@@ -555,14 +707,27 @@ async function main(): Promise<void> {
     "radarRejectionSummary",
     "radarConsideredProvidersRejected",
     "comparisonOutcome",
+    "winReason",
+    "naiveEndpointMappingStatus",
+    "radarEndpointMappingStatus",
+    "naiveOutputShape",
+    "radarOutputShape",
+    "outputShapesSame",
+    "naiveOutputShapeMatchesExpected",
+    "radarOutputShapeMatchesExpected",
+    "outputShapeFitOutcome",
+    "outputShapeCaveat",
+    "qualityComparisonAvailable",
   ].join(",");
 
   const csvRows = benchmarkTrials.map((trial) =>
     [
       trial.trialId,
       trial.timestamp,
+      trial.profile,
       trial.intent,
       trial.category,
+      trial.expectedOutputShape,
       JSON.stringify(trial.constraints),
       trial.naiveProvider ?? "",
       trial.radarProvider ?? "",
@@ -591,6 +756,17 @@ async function main(): Promise<void> {
       trial.radarRejectionSummary ?? "",
       JSON.stringify(trial.radarConsideredProvidersRejected),
       trial.comparisonOutcome,
+      trial.winReason,
+      trial.naiveEndpointMappingStatus ?? "",
+      trial.radarEndpointMappingStatus ?? "",
+      trial.naiveOutputShape ?? "",
+      trial.radarOutputShape ?? "",
+      trial.outputShapesSame,
+      trial.naiveOutputShapeMatchesExpected,
+      trial.radarOutputShapeMatchesExpected,
+      trial.outputShapeFitOutcome,
+      trial.outputShapeCaveat ?? "",
+      trial.qualityComparisonAvailable,
     ]
       .map((cell) => toCsvCell(cell))
       .join(","),
@@ -599,6 +775,8 @@ async function main(): Promise<void> {
   const summaryMarkdown = [
     "# Live Naive-vs-Radar Benchmark Summary",
     "",
+    `- profile: ${summary.profile}`,
+    `- expected output shape: ${summary.expectedOutputShape}`,
     `- total trials: ${summary.totalTrials}`,
     `- valid head-to-head comparison count (different-provider superiority comparisons only): ${summary.validHeadToHeadComparisonCount}`,
     `- superiority evidence available: ${summary.superiorityEvidenceAvailable}`,
@@ -622,10 +800,18 @@ async function main(): Promise<void> {
     `- repeatability same-provider outcomes: ${summary.repeatabilitySameProviderOutcomes}`,
     `- invalid reasons: ${JSON.stringify(summary.invalidReasons)}`,
     "- `radar_route_blocked` means Radar intentionally refused execution under current policy constraints (not a missing endpoint mapping).",
+    `- naive output shape fit count: ${summary.naiveOutputShapeFitCount}`,
+    `- radar output shape fit count: ${summary.radarOutputShapeFitCount}`,
+    `- output-shape fit wins: ${JSON.stringify(summary.outputShapeFitWins)}`,
     `- unique naive providers: ${summary.uniqueNaiveProviders.join(", ") || "none"}`,
     `- unique Radar providers: ${summary.uniqueRadarProviders.join(", ") || "none"}`,
+    `- unique endpoint mappings used: ${summary.uniqueEndpointMappingsUsed.join(", ") || "none"}`,
+    `- output shapes observed: ${summary.outputShapesObserved.join(", ") || "none"}`,
+    `- qualityComparisonAvailable count: ${summary.qualityComparisonAvailableCount}`,
     `- caveat: ${summary.caveat}`,
     `- caveat: ${summary.latencyCaveat}`,
+    `- caveat: ${summary.outputShapeCaveat}`,
+    `- caveat: ${summary.outputShapeFitCaveat}`,
     ...(!summary.superiorityEvidenceAvailable
       ? [
           "- warning: No superiority evidence available: naive and Radar selected the same executable provider in all comparable trials.",
