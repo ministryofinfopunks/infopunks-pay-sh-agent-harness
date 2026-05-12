@@ -370,11 +370,15 @@ function getRequestBodyPreview(bodyString: BodyInit | undefined): string | undef
 }
 
 function buildPayCliCommandShape(endpointUrl: string, method: string, bodyString: BodyInit | undefined): string {
-  const base = `pay curl ${endpointUrl} -X ${method.toUpperCase()} -H Content-Type:application/json`;
+  const base = `pay curl ${quoteForShell(endpointUrl)} -X ${method.toUpperCase()} -H "Content-Type: application/json"`;
   if (typeof bodyString === "string") {
-    return `${base} -d ${bodyString}`;
+    return `${base} -d ${quoteForShell(bodyString)}`;
   }
   return base;
+}
+
+function quoteForShell(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
 function runCommand(
@@ -430,7 +434,14 @@ async function executeViaPayCli({
   const args: string[] = ["curl", endpointUrl];
   const bodyString = attachBodyIfNeeded(method, body, headers);
   args.push("-X", method.toUpperCase());
+  // Keep CLI arguments deterministic for parity with the manually successful invocation.
+  if (Object.keys(headers).some((key) => key.toLowerCase() === "content-type")) {
+    args.push("-H", "Content-Type: application/json");
+  }
   for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === "content-type") {
+      continue;
+    }
     args.push("-H", `${key}: ${value}`);
   }
   if (typeof bodyString === "string") {
