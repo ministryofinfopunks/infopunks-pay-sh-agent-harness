@@ -4,6 +4,7 @@ import path from "node:path";
 import { executeLivePayShCall } from "./livePayShExecutor";
 import { callRadarPreflight, RadarPreflightInput } from "./radarClient";
 import { providerEndpointMap, ProviderEndpointMapping } from "./providerEndpointMap";
+import { validateJsonRpcResponse } from "./jsonRpcValidator";
 
 const DEFAULT_TRIALS = 30;
 const DEFAULT_MARKET_DATA_MIN_TRUST_SCORE = 70;
@@ -23,6 +24,7 @@ type ComparisonOutcome =
   | "repeatability_same_provider"
   | "radar_route_blocked"
   | "invalid_missing_endpoint"
+  | "invalid_unverified_execution_mapping"
   | "invalid_execution_skipped";
 
 type OutputShapeFitOutcome = "radar_better_fit" | "naive_better_fit" | "both_fit" | "neither_fit" | "same_provider";
@@ -94,6 +96,8 @@ interface HeadToHeadTrial {
   };
   naiveProvider: string | null;
   radarProvider: string | null;
+  naiveEndpointMappingId: string | null;
+  radarEndpointMappingId: string | null;
   providersSame: boolean;
   naiveSelectionSource: "endpoint_map_order";
   naiveExecutionMode: string;
@@ -110,6 +114,7 @@ interface HeadToHeadTrial {
   radarResponsePreview: string;
   naiveErrorReason: string | null;
   radarErrorReason: string | null;
+  errorClassification: string | null;
   radarDecision: string;
   radarSelectedProviderDetails: Record<string, unknown> | null;
   radarBlockReason: string | null;
@@ -134,6 +139,18 @@ interface HeadToHeadTrial {
   qualityComparisonAvailable: boolean;
   naiveExecutionAttempted: boolean;
   radarExecutionAttempted: boolean;
+  naiveJsonRpcValid: boolean | null;
+  radarJsonRpcValid: boolean | null;
+  naiveJsonRpcMethod: string | null;
+  radarJsonRpcMethod: string | null;
+  naiveJsonRpcResultShapeValid: boolean | null;
+  radarJsonRpcResultShapeValid: boolean | null;
+  naiveSlot: number | null;
+  radarSlot: number | null;
+  naiveApiVersion: string | null;
+  radarApiVersion: string | null;
+  naiveValidationError: string | null;
+  radarValidationError: string | null;
 }
 
 function getEnvNumber(name: string, defaultValue: number): number {
@@ -184,11 +201,30 @@ function findNaiveProvider(category: string): ProviderEndpointMapping | null {
     providerEndpointMap.find(
       (provider) =>
         provider.category.toLowerCase() === category.toLowerCase() &&
+        provider.status === "verified_pay_cli_success" &&
         provider.capabilities.some((capability) =>
           category.toLowerCase() === "compute" ? capability === "rpc" : capability === "market_data",
         ),
     ) ?? null
   );
+}
+
+function parseJsonOrNull(input: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(input) as unknown;
+    return typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getJsonRpcMethod(mapping: ProviderEndpointMapping | null): string | null {
+  const body = mapping?.body;
+  if (typeof body !== "object" || body === null) {
+    return null;
+  }
+  const method = (body as Record<string, unknown>).method;
+  return typeof method === "string" ? method : null;
 }
 
 async function executeProvider(provider: ProviderEndpointMapping | null, intent: string) {
@@ -341,7 +377,18 @@ async function main(): Promise<void> {
 
     const naiveProviderMapping = findNaiveProvider(category);
     const naiveProvider = naiveProviderMapping?.providerId ?? null;
-    const radarProviderMapping = providerEndpointMap.find((mapping) => mapping.providerId === radarProvider) ?? null;
+    const radarProviderAnyMapping = providerEndpointMap.find(
+      (mapping) =>
+        mapping.providerId === radarProvider && mapping.category.toLowerCase() === category.toLowerCase(),
+    ) ?? null;
+    const radarProviderMapping = providerEndpointMap.find(
+      (mapping) =>
+        mapping.providerId === radarProvider &&
+        mapping.category.toLowerCase() === category.toLowerCase() &&
+        mapping.status === "verified_pay_cli_success",
+    ) ?? null;
+    const naiveEndpointMappingId = naiveProviderMapping?.endpointMappingId ?? null;
+    const radarEndpointMappingId = radarProviderMapping?.endpointMappingId ?? null;
 
     const providersSame = Boolean(naiveProvider && radarProvider && naiveProvider === radarProvider);
     const naiveEndpointMapped = Boolean(naiveProviderMapping);
@@ -380,10 +427,23 @@ async function main(): Promise<void> {
     let radarResponsePreview = "";
     let naiveErrorReason: string | null = null;
     let radarErrorReason: string | null = null;
+    let errorClassification: string | null = null;
     let comparisonOutcome: ComparisonOutcome = "tie";
     let winReason: WinReason = "tie_or_not_applicable";
     let naiveExecutionAttempted = false;
     let radarExecutionAttempted = false;
+    let naiveJsonRpcValid: boolean | null = null;
+    let radarJsonRpcValid: boolean | null = null;
+    let naiveJsonRpcMethod: string | null = getJsonRpcMethod(naiveProviderMapping);
+    let radarJsonRpcMethod: string | null = getJsonRpcMethod(radarProviderMapping);
+    let naiveJsonRpcResultShapeValid: boolean | null = null;
+    let radarJsonRpcResultShapeValid: boolean | null = null;
+    let naiveSlot: number | null = null;
+    let radarSlot: number | null = null;
+    let naiveApiVersion: string | null = null;
+    let radarApiVersion: string | null = null;
+    let naiveValidationError: string | null = null;
+    let radarValidationError: string | null = null;
 
     if (!canExecute) {
       naiveErrorReason = "invalid_execution_skipped";
@@ -415,8 +475,14 @@ async function main(): Promise<void> {
       naiveResponsePreview = naiveRun.responsePreview;
       naiveErrorReason = normalizeErrorReason(naiveRun.errorReason);
 
-      radarErrorReason = "missing_endpoint_mapping";
-      comparisonOutcome = "invalid_missing_endpoint";
+      if (radarProviderAnyMapping?.status === "verified_402") {
+        radarErrorReason = "unverified_execution_mapping";
+        errorClassification = "settlement_not_verified";
+        comparisonOutcome = "invalid_unverified_execution_mapping";
+      } else {
+        radarErrorReason = "missing_endpoint_mapping";
+        comparisonOutcome = "invalid_missing_endpoint";
+      }
     } else if (!radarProvider || !radarProviderMapping) {
       const naiveRun = await executeProvider(naiveProviderMapping, intent);
       naiveExecutionAttempted = Boolean(naiveProviderMapping);
@@ -452,6 +518,33 @@ async function main(): Promise<void> {
       radarResponsePreview = radarRun.responsePreview;
       naiveErrorReason = normalizeErrorReason(naiveRun.errorReason);
       radarErrorReason = normalizeErrorReason(radarRun.errorReason);
+
+      const naiveJson = parseJsonOrNull(naiveRun.responsePreview);
+      const radarJson = parseJsonOrNull(radarRun.responsePreview);
+      if (naiveProviderMapping?.outputShape.startsWith("json_rpc_") && naiveJsonRpcMethod && naiveJson) {
+        const validation = validateJsonRpcResponse(
+          naiveProviderMapping.outputShape as "json_rpc_health" | "json_rpc_balance" | "json_rpc_slot",
+          naiveJsonRpcMethod,
+          naiveJson,
+        );
+        naiveJsonRpcValid = validation.jsonRpcValid;
+        naiveJsonRpcResultShapeValid = validation.jsonRpcResultShapeValid;
+        naiveSlot = validation.slot;
+        naiveApiVersion = validation.apiVersion;
+        naiveValidationError = validation.validationError;
+      }
+      if (radarProviderMapping?.outputShape.startsWith("json_rpc_") && radarJsonRpcMethod && radarJson) {
+        const validation = validateJsonRpcResponse(
+          radarProviderMapping.outputShape as "json_rpc_health" | "json_rpc_balance" | "json_rpc_slot",
+          radarJsonRpcMethod,
+          radarJson,
+        );
+        radarJsonRpcValid = validation.jsonRpcValid;
+        radarJsonRpcResultShapeValid = validation.jsonRpcResultShapeValid;
+        radarSlot = validation.slot;
+        radarApiVersion = validation.apiVersion;
+        radarValidationError = validation.validationError;
+      }
 
       if (
         naiveErrorReason === "invalid_execution_skipped" ||
@@ -507,6 +600,8 @@ async function main(): Promise<void> {
       constraints,
       naiveProvider,
       radarProvider,
+      naiveEndpointMappingId,
+      radarEndpointMappingId,
       providersSame,
       naiveSelectionSource: "endpoint_map_order",
       naiveExecutionMode,
@@ -523,6 +618,7 @@ async function main(): Promise<void> {
       radarResponsePreview,
       naiveErrorReason,
       radarErrorReason,
+      errorClassification,
       radarDecision,
       radarSelectedProviderDetails,
       radarBlockReason,
@@ -547,6 +643,18 @@ async function main(): Promise<void> {
       qualityComparisonAvailable,
       naiveExecutionAttempted,
       radarExecutionAttempted,
+      naiveJsonRpcValid,
+      radarJsonRpcValid,
+      naiveJsonRpcMethod,
+      radarJsonRpcMethod,
+      naiveJsonRpcResultShapeValid,
+      radarJsonRpcResultShapeValid,
+      naiveSlot,
+      radarSlot,
+      naiveApiVersion,
+      radarApiVersion,
+      naiveValidationError,
+      radarValidationError,
     };
 
     benchmarkTrials.push(trial);
@@ -571,11 +679,13 @@ async function main(): Promise<void> {
       trial.radarExecutionAttempted &&
       trial.comparisonOutcome !== "radar_route_blocked" &&
       trial.comparisonOutcome !== "invalid_missing_endpoint" &&
+      trial.comparisonOutcome !== "invalid_unverified_execution_mapping" &&
       trial.comparisonOutcome !== "invalid_execution_skipped",
   );
   const invalidComparisons = benchmarkTrials.filter(
     (trial) =>
       trial.comparisonOutcome === "invalid_missing_endpoint" ||
+      trial.comparisonOutcome === "invalid_unverified_execution_mapping" ||
       trial.comparisonOutcome === "radar_route_blocked" ||
       trial.comparisonOutcome === "invalid_execution_skipped",
   ).length;
@@ -621,6 +731,9 @@ async function main(): Promise<void> {
     }
     if (trial.comparisonOutcome === "invalid_missing_endpoint") {
       acc.invalid_missing_endpoint = (acc.invalid_missing_endpoint ?? 0) + 1;
+    }
+    if (trial.comparisonOutcome === "invalid_unverified_execution_mapping") {
+      acc.invalid_unverified_execution_mapping = (acc.invalid_unverified_execution_mapping ?? 0) + 1;
     }
     if (trial.comparisonOutcome === "invalid_execution_skipped") {
       acc.invalid_execution_skipped = (acc.invalid_execution_skipped ?? 0) + 1;
@@ -726,6 +839,8 @@ async function main(): Promise<void> {
     "constraints",
     "naiveProvider",
     "radarProvider",
+    "naiveEndpointMappingId",
+    "radarEndpointMappingId",
     "providersSame",
     "naiveSelectionSource",
     "naiveExecutionMode",
@@ -742,6 +857,7 @@ async function main(): Promise<void> {
     "radarResponsePreview",
     "naiveErrorReason",
     "radarErrorReason",
+    "errorClassification",
     "radarDecision",
     "radarSelectedProviderDetails",
     "radarBlockReason",
@@ -762,6 +878,18 @@ async function main(): Promise<void> {
     "outputShapeFitOutcome",
     "outputShapeCaveat",
     "qualityComparisonAvailable",
+    "naiveJsonRpcValid",
+    "radarJsonRpcValid",
+    "naiveJsonRpcMethod",
+    "radarJsonRpcMethod",
+    "naiveJsonRpcResultShapeValid",
+    "radarJsonRpcResultShapeValid",
+    "naiveSlot",
+    "radarSlot",
+    "naiveApiVersion",
+    "radarApiVersion",
+    "naiveValidationError",
+    "radarValidationError",
   ].join(",");
 
   const csvRows = benchmarkTrials.map((trial) =>
@@ -775,6 +903,8 @@ async function main(): Promise<void> {
       JSON.stringify(trial.constraints),
       trial.naiveProvider ?? "",
       trial.radarProvider ?? "",
+      trial.naiveEndpointMappingId ?? "",
+      trial.radarEndpointMappingId ?? "",
       trial.providersSame,
       trial.naiveSelectionSource,
       trial.naiveExecutionMode,
@@ -791,6 +921,7 @@ async function main(): Promise<void> {
       trial.radarResponsePreview,
       trial.naiveErrorReason ?? "",
       trial.radarErrorReason ?? "",
+      trial.errorClassification ?? "",
       trial.radarDecision,
       JSON.stringify(trial.radarSelectedProviderDetails ?? {}),
       trial.radarBlockReason ?? "",
@@ -811,6 +942,18 @@ async function main(): Promise<void> {
       trial.outputShapeFitOutcome,
       trial.outputShapeCaveat ?? "",
       trial.qualityComparisonAvailable,
+      trial.naiveJsonRpcValid ?? "",
+      trial.radarJsonRpcValid ?? "",
+      trial.naiveJsonRpcMethod ?? "",
+      trial.radarJsonRpcMethod ?? "",
+      trial.naiveJsonRpcResultShapeValid ?? "",
+      trial.radarJsonRpcResultShapeValid ?? "",
+      trial.naiveSlot ?? "",
+      trial.radarSlot ?? "",
+      trial.naiveApiVersion ?? "",
+      trial.radarApiVersion ?? "",
+      trial.naiveValidationError ?? "",
+      trial.radarValidationError ?? "",
     ]
       .map((cell) => toCsvCell(cell))
       .join(","),

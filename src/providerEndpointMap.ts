@@ -1,4 +1,8 @@
-export type ProviderEndpointStatus = "verified_pay_cli_success" | "unverified";
+export type ProviderEndpointStatus =
+  | "verified_pay_cli_success"
+  | "intermittent_pay_cli_success"
+  | "verified_402"
+  | "unverified";
 
 export interface ProviderEndpointMapping {
   endpointMappingId: string;
@@ -11,7 +15,7 @@ export interface ProviderEndpointMapping {
   capabilities: string[];
   outputShape: string;
   status: ProviderEndpointStatus;
-  endpointMappingSource: "manual_pay_cli_verification" | "unknown";
+  endpointMappingSource: "manual_pay_cli_verification" | "manual_402_verification" | "unknown";
   notes: string;
 }
 
@@ -26,9 +30,10 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     category: "compute",
     capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
     outputShape: "json_rpc_health",
-    status: "verified_pay_cli_success",
+    status: "intermittent_pay_cli_success",
     endpointMappingSource: "manual_pay_cli_verification",
-    notes: "pay curl succeeded for Solana getHealth and getBalance JSON-RPC requests.",
+    notes:
+      "Manual pay curl previously succeeded for getHealth/getBalance, but current pay-cli calls can fail with Server returned 402 again after payment. Do not execute by default until stable.",
   },
   {
     endpointMappingId: "quicknode-rpc-balance",
@@ -45,9 +50,10 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     category: "compute",
     capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
     outputShape: "json_rpc_balance",
-    status: "verified_pay_cli_success",
+    status: "intermittent_pay_cli_success",
     endpointMappingSource: "manual_pay_cli_verification",
-    notes: "pay curl succeeded for Solana getBalance JSON-RPC requests.",
+    notes:
+      "Manual pay curl previously succeeded for getHealth/getBalance, but current pay-cli calls can fail with Server returned 402 again after payment. Do not execute by default until stable.",
   },
   {
     endpointMappingId: "quicknode-rpc-slot",
@@ -59,9 +65,10 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     category: "compute",
     capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
     outputShape: "json_rpc_slot",
-    status: "verified_pay_cli_success",
+    status: "intermittent_pay_cli_success",
     endpointMappingSource: "manual_pay_cli_verification",
-    notes: "pay curl succeeded for Solana getSlot JSON-RPC requests.",
+    notes:
+      "Manual pay curl previously succeeded for getHealth/getBalance, but current pay-cli calls can fail with Server returned 402 again after payment. Do not execute by default until stable.",
   },
   {
     endpointMappingId: "stablecrypto-price",
@@ -91,5 +98,20 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     endpointMappingSource: "manual_pay_cli_verification",
     notes:
       "pay curl succeeded for Solana trending pools. /x402/onchain/networks returned API-key-missing and is intentionally not mapped.",
+  },
+  {
+    endpointMappingId: "stableenrich-exa-search",
+    providerId: "merit-systems-stableenrich-enrichment",
+    label: "StableEnrich Exa Web Search",
+    url: "https://stableenrich.dev/api/exa/search",
+    method: "POST",
+    body: { query: "latest Solana agent payments" },
+    category: "data",
+    capabilities: ["search", "web_search", "research", "enrichment", "data"],
+    outputShape: "web_search_results",
+    status: "verified_402",
+    endpointMappingSource: "manual_402_verification",
+    notes:
+      "Unpaid curl returned x402 Payment Required. pay curl returned Settlement failed, so this mapping is not executed by default.",
   },
 ];

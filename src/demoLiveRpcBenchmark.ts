@@ -75,6 +75,10 @@ function getTrialMode(): "suite" | "single" {
   return value === "single" ? "single" : DEFAULT_TRIAL_MODE;
 }
 
+function includeIntermittentMappings(): boolean {
+  return (process.env.INCLUDE_INTERMITTENT_PROVIDER_MAPPINGS ?? "").trim().toLowerCase() === "true";
+}
+
 async function sleep(ms: number): Promise<void> {
   if (ms <= 0) {
     return;
@@ -141,9 +145,11 @@ async function main(): Promise<void> {
   const callDelayMs = getCallDelayMs();
   const selectedMethods = getSelectedMethods();
   const trialMode = getTrialMode();
+  const allowIntermittent = includeIntermittentMappings();
   const quickNodeMappings = providerEndpointMap.filter(
     (m) =>
       m.providerId === "quicknode-rpc" &&
+      m.status === "verified_pay_cli_success" &&
       (m.endpointMappingId === "quicknode-rpc-health" ||
         m.endpointMappingId === "quicknode-rpc-balance" ||
         m.endpointMappingId === "quicknode-rpc-slot"),
@@ -174,11 +180,47 @@ async function main(): Promise<void> {
   console.log(`Trial mode: ${trialMode}`);
   console.log(`Selected methods: ${selectedMethods.join(", ")}`);
   console.log(`Call delay: ${callDelayMs}ms`);
+  console.log(`Include intermittent mappings: ${allowIntermittent}`);
   console.log(`Calls per trial: ${perTrialMappings.length}`);
 
   for (let trialId = 1; trialId <= trials; trialId += 1) {
     for (const mapping of perTrialMappings) {
       const methodName = getMethodName(mapping);
+      const defaultExecutable = mapping.status === "verified_pay_cli_success";
+      const shouldExecute = defaultExecutable || (allowIntermittent && mapping.status === "intermittent_pay_cli_success");
+      if (!shouldExecute) {
+        records.push({
+          trialId,
+          timestamp: new Date().toISOString(),
+          endpointMappingId: mapping.endpointMappingId,
+          providerId: mapping.providerId,
+          methodName,
+          outputShape: mapping.outputShape,
+          success: false,
+          exitCode: null,
+          executionMode: "skipped",
+          latencyMs: null,
+          parsedJsonAvailable: false,
+          responsePreview: "",
+          stderrPreview: "",
+          endpointUrl: mapping.url,
+          requestMethod: mapping.method,
+          requestBodyPreview: mapping.body ? JSON.stringify(mapping.body) : null,
+          commandShape: null,
+          errorReason: "intermittent_mapping_not_executed_by_default",
+          jsonRpcValid: false,
+          jsonRpcMethod: methodName,
+          jsonRpcResultShapeValid: false,
+          slot: null,
+          apiVersion: null,
+          validationError: "intermittent_mapping_not_executed_by_default",
+          errorClassification: "intermittent_mapping_not_executed_by_default",
+        });
+        console.log(
+          `[trial ${trialId}/${trials}] mapping=${mapping.endpointMappingId} skipped=intermittent_mapping_not_executed_by_default`,
+        );
+        continue;
+      }
       const result = await executeLivePayShCall({
         providerId: mapping.providerId,
         intent: `run ${methodName} via QuickNode Solana RPC`,
@@ -263,6 +305,9 @@ async function main(): Promise<void> {
   const jsonRpcValidationFailureCount = records.filter(
     (r) => r.errorClassification === "json_rpc_validation_failure",
   ).length;
+  const intermittentMappingNotExecutedByDefaultCount = records.filter(
+    (r) => r.errorClassification === "intermittent_mapping_not_executed_by_default",
+  ).length;
   const latencies = records
     .map((r) => r.latencyMs)
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
@@ -285,6 +330,7 @@ async function main(): Promise<void> {
     paymentReplayOrSettlementFailedCount,
     executionFailureCount,
     jsonRpcValidationFailureCount,
+    intermittentMappingNotExecutedByDefaultCount,
     avgLatencyMs: round(average(latencies), 2),
     medianLatencyMs: round(median(latencies), 2),
     observedSlotMin: observedSlots.length > 0 ? Math.min(...observedSlots) : null,
@@ -371,6 +417,8 @@ async function main(): Promise<void> {
     `- payment replay/settlement failed count: ${summary.paymentReplayOrSettlementFailedCount}`,
     `- execution failure count: ${summary.executionFailureCount}`,
     `- JSON-RPC validation failure count: ${summary.jsonRpcValidationFailureCount}`,
+    `- intermittent mapping not executed by default count: ${summary.intermittentMappingNotExecutedByDefaultCount}`,
+    `- intermittent mapping default behavior: only status=verified_pay_cli_success executes by default; set INCLUDE_INTERMITTENT_PROVIDER_MAPPINGS=true to run intermittent mappings`,
     `- avg latency: ${summary.avgLatencyMs}ms`,
     `- median latency: ${summary.medianLatencyMs}ms`,
     `- observed slot min: ${summary.observedSlotMin ?? "n/a"}`,

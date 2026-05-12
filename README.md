@@ -186,11 +186,13 @@ Provider endpoint mappings:
 
 | Provider | providerId | Endpoint | Status | Output shape |
 |---|---|---|---|---|
-| QuickNode RPC | quicknode-rpc | https://x402.quicknode.com/solana-mainnet | verified_pay_cli_success | json_rpc_health |
+| QuickNode RPC | quicknode-rpc | https://x402.quicknode.com/solana-mainnet | intermittent_pay_cli_success | json_rpc_health |
 | StableCrypto | merit-systems-stablecrypto-market-data | https://stablecrypto.dev/api/coingecko/price | verified_pay_cli_success | simple_price |
 | PaySponge CoinGecko | paysponge-coingecko | https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools | verified_pay_cli_success | trending_pools |
+| StableEnrich Exa Search | merit-systems-stableenrich-enrichment | https://stableenrich.dev/api/exa/search | verified_402 | web_search_results |
 
 Note: The PaySponge `/x402/onchain/networks` route returned API-key-missing and is not mapped. Only the verified `trending_pools` route is mapped.
+Note: StableEnrich Exa Search is x402-verified but paid execution currently returns Settlement failed.
 
 Interpretation:
 - if both strategies select StableCrypto, that is repeatability evidence, not superiority evidence
@@ -202,6 +204,7 @@ Interpretation:
   - `repeatability_same_provider`: both selected the same executable provider
   - `radar_route_blocked`: Radar intentionally refused a route under configured policy constraints
   - `invalid_missing_endpoint`: Radar approved a provider route, but that provider is not executable in the local endpoint map
+  - `invalid_unverified_execution_mapping`: Radar approved a mapped provider, but mapping status is not executable by default
   - `radar_win`/`naive_win` with `better_output_shape_fit`: output-shape routing-fit superiority signal only
 - superiority requires more executable provider mappings with different reliability/cost/latency profiles
 
@@ -253,10 +256,13 @@ This benchmark expands proof depth for QuickNode on Solana mainnet:
 - `getHealth` proves route health.
 - `getBalance` proves live account state access.
 - `getSlot` proves current chain progress/freshness.
-- Manual `pay curl` verification already exists for `getHealth` and `getBalance`.
+- Manual `pay curl` verification exists historically for `getHealth` and `getBalance`.
 
 This is coverage/state-access proof, not routing superiority proof.
-It may also expose pay-cli/x402 replay-or-settlement failures (for example: `Server returned 402 again after payment`).
+Current pay-cli calls may fail with `Server returned 402 again after payment`.
+QuickNode is treated as diagnostic/intermittent until stable.
+By default, intermittent mappings are not executed in `benchmark:live-rpc`; set `INCLUDE_INTERMITTENT_PROVIDER_MAPPINGS=true` to force execution.
+Do not treat failing live-rpc artifacts as proof.
 
 Run:
 
@@ -269,6 +275,7 @@ npm run benchmark:live-rpc -- --trials=5
 Lowest-cost smoke:
 
 ```bash
+INCLUDE_INTERMITTENT_PROVIDER_MAPPINGS=true \
 PAYSH_EXECUTION_MODE=pay_cli \
 LIVE_PAYSH_EXECUTION=true \
 LIVE_RPC_METHODS=getHealth \
