@@ -1,0 +1,48 @@
+{
+  "type": "function",
+  "function": {
+    "name": "radar_preflight",
+    "description": "Run an Infopunks Radar preflight decision before selecting a Pay.sh provider.",
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "intent": {
+          "type": "string",
+          "description": "Agent intent that needs provider routing."
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional intent category (for example, finance or market_data)."
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minTrustScore": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "maxLatencyMs": {
+              "type": "number",
+              "minimum": 1
+            },
+            "maxCostUsd": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "candidateProviders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional Pay.sh candidate provider IDs to evaluate."
+        }
+      },
+      "required": ["intent"]
+    }
+  }
+}

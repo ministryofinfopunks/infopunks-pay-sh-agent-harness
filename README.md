@@ -178,6 +178,37 @@ npm run demo:compare
 
 If base URLs are unset or unavailable, the harness falls back to clearly labeled mock/fallback behavior.
 
+## Use as an agent tool
+
+This harness now exposes two importable functions for agent workflows:
+
+- `callRadarPreflight` from `src/index.ts`
+- `executeLivePayShCall` from `src/index.ts`
+
+Example artifacts for agent adoption:
+
+- `examples/openai-tool-schema.json`: OpenAI tool schema for Radar preflight.
+- `examples/langchain-tool.ts`: LangChain tool wrapper that calls Radar preflight before selecting Pay.sh execution.
+- `examples/live-market-data-agent.ts`: end-to-end agent flow:
+  - set intent
+  - call Radar preflight
+  - if route is approved, execute Pay.sh (supports CLI mode via `PAYSH_EXECUTION_MODE=pay_cli`)
+
+Run examples with `ts-node`:
+
+```bash
+npx ts-node examples/live-market-data-agent.ts
+npx ts-node examples/langchain-tool.ts
+```
+
+`examples/langchain-tool.ts` uses `@langchain/core` and `zod`; install them before running:
+
+```bash
+npm install @langchain/core zod
+```
+
+Publication note: npm publish is intentionally not performed yet.
+
 ## Scripts
 
 - `npm run demo:route`: single Radar-assisted route decision + proof log.
