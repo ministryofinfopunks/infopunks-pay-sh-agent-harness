@@ -84,6 +84,7 @@ export interface ProofLog extends RadarProofFields {
   simulatedOrLiveResult: string;
   executionMode?: BenchmarkExecutionMode;
   settlementReference?: string;
+  executionLatencyMs?: number;
   latencyMs: number;
   success: boolean;
   comparisonValidity?: ComparisonValidity;

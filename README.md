@@ -100,6 +100,8 @@ RADAR_API_TIMEOUT_MS=15000 \
 npm run demo:live-market-data
 ```
 
+Latency caveat for CLI mode: `PAYSH_EXECUTION_MODE=pay_cli` latency includes CLI process startup, payment flow, wallet interaction, and network overhead. Do not interpret it as raw provider latency.
+
 ## Benchmark mode
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
@@ -175,6 +177,14 @@ Proof logs include Radar-specific integration metadata:
 - `radarMode` (`live | mock | fallback`)
 - `comparisonValidity` (`valid_simulated_same_catalog | invalid_mixed_catalogs | live_preflight_only`)
 - `candidateProviderSource` (`mock | live | omitted`)
+
+Latency semantics:
+
+- Legacy `latencyMs` is execution latency measured by the harness.
+- `executionLatencyMs` is the explicit execution-latency field.
+- `cliTotalLatencyMs` is populated in `pay_cli` mode and equals execution latency for that run.
+- `radarProviderLatencyMs` comes from Radar-selected provider telemetry.
+- `providerReportedLatencyMs` is `null` unless provider response includes timing.
 
 ## What this proves
 

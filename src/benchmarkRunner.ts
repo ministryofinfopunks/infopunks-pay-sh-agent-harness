@@ -288,6 +288,7 @@ export async function runBenchmark(options?: {
       simulatedOrLiveResult: mode,
       executionMode,
       settlementReference: radarExecution.settlementReference,
+      executionLatencyMs: Math.max(naiveExecution.latencyMs, radarExecution.latencyMs),
       latencyMs: Math.max(naiveExecution.latencyMs, radarExecution.latencyMs),
       success: radarExecution.success,
       comparisonValidity,

@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   console.log(`Naive success rate: ${(result.summary.naiveSuccessRate * 100).toFixed(2)}%`);
   console.log(`Radar success rate: ${(result.summary.radarSuccessRate * 100).toFixed(2)}%`);
   console.log(
-    `Average latency (ms): naive=${result.summary.naiveAvgLatencyMs}, radar=${result.summary.radarAvgLatencyMs}`,
+    `Average execution latency (ms): naive=${result.summary.naiveAvgLatencyMs}, radar=${result.summary.radarAvgLatencyMs}`,
   );
   console.log(`Average cost (USD): naive=${result.summary.naiveAvgCostUsd}, radar=${result.summary.radarAvgCostUsd}`);
   console.log(

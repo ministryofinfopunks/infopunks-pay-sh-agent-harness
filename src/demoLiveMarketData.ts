@@ -18,6 +18,10 @@ interface LiveMarketDataProof {
   executionSuccess: boolean;
   statusCode: number | null;
   exitCode: number | null;
+  executionLatencyMs: number;
+  cliTotalLatencyMs: number | null;
+  radarProviderLatencyMs: number | null;
+  providerReportedLatencyMs: number | null;
   latencyMs: number;
   responsePreview: string;
   stderrPreview: string;
@@ -57,6 +61,45 @@ function getEnvNumber(name: string, defaultValue: number): number {
 
 function safeFileSuffix(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function getRadarProviderLatencyMs(selectedProviderDetails: Record<string, unknown> | null): number | null {
+  if (!selectedProviderDetails) {
+    return null;
+  }
+  return toNullableNumber(selectedProviderDetails.latencyMs);
+}
+
+function getProviderReportedLatencyMs(execution: { parsedJsonAvailable: boolean; responsePreview: string }): number | null {
+  if (!execution.parsedJsonAvailable) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(execution.responsePreview) as unknown;
+    if (typeof parsed !== "object" || parsed === null) {
+      return null;
+    }
+    const obj = parsed as Record<string, unknown>;
+    return (
+      toNullableNumber(obj.providerReportedLatencyMs) ??
+      toNullableNumber(obj.latencyMs) ??
+      toNullableNumber(obj.timeMs) ??
+      toNullableNumber(obj.durationMs)
+    );
+  } catch {
+    return null;
+  }
 }
 
 async function saveLiveMarketDataProof(proof: LiveMarketDataProof): Promise<string> {
@@ -132,6 +175,7 @@ async function main(): Promise<void> {
   console.log(`Raw Radar decision fields: ${JSON.stringify(rawRadarDecisionFields)}`);
 
   if (radarDecision !== "route_approved" || !selectedProviderId) {
+    const radarProviderLatencyMs = getRadarProviderLatencyMs(selectedProviderDetails);
     const proof: LiveMarketDataProof = {
       timestamp: new Date().toISOString(),
       intent,
@@ -145,6 +189,10 @@ async function main(): Promise<void> {
       executionSuccess: false,
       statusCode: null,
       exitCode: null,
+      executionLatencyMs: 0,
+      cliTotalLatencyMs: null,
+      radarProviderLatencyMs,
+      providerReportedLatencyMs: null,
       latencyMs: 0,
       responsePreview: "",
       stderrPreview: "",
@@ -170,6 +218,9 @@ async function main(): Promise<void> {
     intent,
     endpointUrl: process.env.PAYSH_EXECUTION_URL,
   });
+  const radarProviderLatencyMs = getRadarProviderLatencyMs(selectedProviderDetails);
+  const providerReportedLatencyMs = getProviderReportedLatencyMs(execution);
+  const cliTotalLatencyMs = execution.mode === "live_pay_sh_cli" ? execution.latencyMs : null;
 
   const proof: LiveMarketDataProof = {
     timestamp: new Date().toISOString(),
@@ -184,6 +235,10 @@ async function main(): Promise<void> {
     executionSuccess: execution.success,
     statusCode: execution.statusCode ?? null,
     exitCode: execution.exitCode ?? null,
+    executionLatencyMs: execution.latencyMs,
+    cliTotalLatencyMs,
+    radarProviderLatencyMs,
+    providerReportedLatencyMs,
     latencyMs: execution.latencyMs,
     responsePreview: execution.responsePreview,
     stderrPreview: execution.stderrPreview ?? "",
@@ -210,10 +265,19 @@ async function main(): Promise<void> {
 
   const proofPath = await saveLiveMarketDataProof(proof);
   console.log(`Execution mode: ${execution.mode}`);
+  console.log(`Radar provider latency: ${radarProviderLatencyMs ?? "n/a"}ms`);
+  console.log(`Execution latency: ${execution.latencyMs}ms`);
+  if (execution.mode === "live_pay_sh_cli") {
+    console.log(`CLI total latency: ${execution.latencyMs}ms`);
+  }
   console.log(`Exit code: ${execution.exitCode ?? "n/a"}`);
   console.log(`Execution success: ${execution.success}`);
   console.log(`Status code: ${execution.statusCode ?? "n/a"}`);
-  console.log(`Latency: ${execution.latencyMs}ms`);
+  console.log(
+    `Provider reported latency: ${
+      providerReportedLatencyMs === null ? "n/a" : `${providerReportedLatencyMs}ms`
+    }`,
+  );
   console.log(`Parsed JSON: ${execution.parsedJsonAvailable ? "yes" : "no"}`);
   console.log(`Payment required: ${execution.paymentRequired ? "yes" : "no"}`);
   console.log(`x402Version: ${execution.paymentChallenge?.x402Version ?? "n/a"}`);
