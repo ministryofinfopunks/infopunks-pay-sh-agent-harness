@@ -1,4 +1,0 @@
-trialNumber,intent,naiveProviderId,radarProviderId,naiveSuccess,radarSuccess,naiveLatencyMs,radarLatencyMs,naiveCostUsd,radarCostUsd,naiveQualityScore,radarQualityScore,radarAvoidedFailure,winner
-1,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
-2,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
-3,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar

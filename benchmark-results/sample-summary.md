@@ -1,6 +1,8 @@
-# Benchmark Summary
+# Sample Benchmark Summary (Simulated)
 
-Simulated benchmark shows the measurement framework and expected policy behavior.
+This file is a committed example artifact for repository documentation.
+
+Generated from simulated mode (not live Pay.sh execution outcomes).
 
 - total trials: 3
 - naive success rate: 1

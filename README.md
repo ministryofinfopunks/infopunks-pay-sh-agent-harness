@@ -67,6 +67,10 @@ BENCHMARK_TRIALS=50 npm run benchmark
 npm run benchmark -- --trials=50
 ```
 
+Benchmark writes local generated artifacts to `benchmark-results/latest.json`, `benchmark-results/latest.csv`, and `benchmark-results/summary.md`. These `latest` artifacts are git-ignored so repeated runs do not dirty the repo.
+
+A committed example summary is kept at `benchmark-results/sample-summary.md`.
+
 ## Install
 
 ```bash
