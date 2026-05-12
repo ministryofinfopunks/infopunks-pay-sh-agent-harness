@@ -5,6 +5,37 @@ Minimal TypeScript/Node.js harness showing one thing: an agent can query **Infop
 > [!IMPORTANT]
 > This is a minimal demo harness. It demonstrates integration shape and decision logging, but real adoption still requires external agent usage against live systems.
 
+## Benchmark mode
+
+`demo:compare` proves the routing shape for a single naive-vs-Radar decision.
+
+Benchmark mode starts measuring whether Radar-assisted routing produces better outcomes across repeated trials.
+
+The initial benchmark mode is simulated unless live execution is configured.
+
+This still does not prove live Pay.sh value until real endpoint execution is added.
+
+Simulated benchmark shows the measurement framework and expected policy behavior.
+
+### Run benchmark
+
+```bash
+npm run benchmark
+BENCHMARK_TRIALS=50 npm run benchmark
+npm run benchmark -- --trials=50
+```
+
+### Sample benchmark output
+
+```text
+Naive success rate: 76.67%
+Radar success rate: 100.00%
+Average latency (ms): naive=111.47, radar=104.93
+Average cost (USD): naive=0.005, radar=0.004778
+Average quality: naive=72.26, radar=82.09
+Radar wins / naive wins / ties: 26 / 0 / 4
+```
+
 ## 30-second demo
 
 ```bash
@@ -52,6 +83,7 @@ If base URLs are unset or unavailable, the harness falls back to clearly labeled
 
 - `npm run demo:route`: single Radar-assisted route decision + proof log.
 - `npm run demo:compare`: naive catalog route vs Radar-assisted route + proof log.
+- `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.
 

@@ -60,3 +60,41 @@ export interface ProofLog {
     explanation: string;
   };
 }
+
+export type ExecutionMode = "simulated" | "live";
+
+export interface ExecutionResult {
+  success: boolean;
+  latencyMs: number;
+  costUsd: number;
+  qualityScore: number;
+  errorReason?: string;
+  mode: ExecutionMode;
+}
+
+export interface BenchmarkTrial {
+  trialNumber: number;
+  intent: string;
+  naiveProviderId: string | null;
+  radarProviderId: string | null;
+  naive: ExecutionResult;
+  radar: ExecutionResult;
+  winner: "naive" | "radar" | "tie";
+  radarAvoidedFailure: boolean;
+}
+
+export interface BenchmarkSummary {
+  totalTrials: number;
+  naiveSuccessRate: number;
+  radarSuccessRate: number;
+  naiveAvgLatencyMs: number;
+  radarAvgLatencyMs: number;
+  naiveAvgCostUsd: number;
+  radarAvgCostUsd: number;
+  naiveAvgQualityScore: number;
+  radarAvgQualityScore: number;
+  radarAvoidedFailureCount: number;
+  radarWinCount: number;
+  naiveWinCount: number;
+  tieCount: number;
+}

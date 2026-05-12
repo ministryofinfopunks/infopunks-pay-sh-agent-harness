@@ -1,0 +1,31 @@
+trialNumber,intent,naiveProviderId,radarProviderId,naiveSuccess,radarSuccess,naiveLatencyMs,radarLatencyMs,naiveCostUsd,radarCostUsd,naiveQualityScore,radarQualityScore,radarAvoidedFailure,winner
+1,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
+2,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
+3,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar
+4,"send merchant disbursement with latency sensitivity",paysh-beta,paysh-delta,true,true,103,100,0.004418,0.004073,69.88,80.76,false,radar
+5,"execute partner transfer with strong trust requirements",paysh-beta,paysh-delta,false,true,100,114,0.004193,0.004931,68.68,85.33,true,radar
+6,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
+7,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
+8,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar
+9,"send merchant disbursement with latency sensitivity",paysh-beta,paysh-delta,true,true,103,100,0.004418,0.004073,69.88,80.76,false,radar
+10,"execute partner transfer with strong trust requirements",paysh-beta,paysh-delta,false,true,100,114,0.004193,0.004931,68.68,85.33,true,radar
+11,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
+12,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
+13,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar
+14,"send merchant disbursement with latency sensitivity",paysh-beta,paysh-delta,true,true,103,100,0.004418,0.004073,69.88,80.76,false,radar
+15,"execute partner transfer with strong trust requirements",paysh-beta,paysh-delta,false,true,100,114,0.004193,0.004931,68.68,85.33,true,radar
+16,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
+17,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
+18,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar
+19,"send merchant disbursement with latency sensitivity",paysh-beta,paysh-delta,true,true,103,100,0.004418,0.004073,69.88,80.76,false,radar
+20,"execute partner transfer with strong trust requirements",paysh-beta,paysh-delta,false,true,100,114,0.004193,0.004931,68.68,85.33,true,radar
+21,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
+22,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
+23,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar
+24,"send merchant disbursement with latency sensitivity",paysh-beta,paysh-delta,true,true,103,100,0.004418,0.004073,69.88,80.76,false,radar
+25,"execute partner transfer with strong trust requirements",paysh-beta,paysh-delta,false,true,100,114,0.004193,0.004931,68.68,85.33,true,radar
+26,"send payroll payout to a verified provider",paysh-beta,paysh-delta,true,true,117,107,0.005252,0.004457,74.33,82.8,false,radar
+27,"issue contractor payment with low failure risk",paysh-beta,paysh-delta,true,true,120,95,0.00545,0.003746,75.38,79.01,false,radar
+28,"route supplier settlement for same-day completion",paysh-beta,paysh-delta,true,true,104,99,0.004475,0.003974,70.18,80.23,false,radar
+29,"send merchant disbursement with latency sensitivity",paysh-beta,paysh-delta,true,true,103,100,0.004418,0.004073,69.88,80.76,false,radar
+30,"execute partner transfer with strong trust requirements",paysh-beta,paysh-delta,false,true,100,114,0.004193,0.004931,68.68,85.33,true,radar

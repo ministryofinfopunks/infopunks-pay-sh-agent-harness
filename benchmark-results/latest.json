@@ -1,0 +1,685 @@
+{
+  "summary": {
+    "totalTrials": 30,
+    "naiveSuccessRate": 0.8,
+    "radarSuccessRate": 1,
+    "naiveAvgLatencyMs": 108.8,
+    "radarAvgLatencyMs": 103,
+    "naiveAvgCostUsd": 0.004758,
+    "radarAvgCostUsd": 0.004236,
+    "naiveAvgQualityScore": 71.69,
+    "radarAvgQualityScore": 81.63,
+    "radarAvoidedFailureCount": 6,
+    "radarWinCount": 30,
+    "naiveWinCount": 0,
+    "tieCount": 0
+  },
+  "trials": [
+    {
+      "trialNumber": 1,
+      "intent": "send payroll payout to a verified provider",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 117,
+        "costUsd": 0.005252,
+        "qualityScore": 74.33,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 107,
+        "costUsd": 0.004457,
+        "qualityScore": 82.8,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 2,
+      "intent": "issue contractor payment with low failure risk",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 120,
+        "costUsd": 0.00545,
+        "qualityScore": 75.38,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 95,
+        "costUsd": 0.003746,
+        "qualityScore": 79.01,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 3,
+      "intent": "route supplier settlement for same-day completion",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 104,
+        "costUsd": 0.004475,
+        "qualityScore": 70.18,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 99,
+        "costUsd": 0.003974,
+        "qualityScore": 80.23,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 4,
+      "intent": "send merchant disbursement with latency sensitivity",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 103,
+        "costUsd": 0.004418,
+        "qualityScore": 69.88,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 100,
+        "costUsd": 0.004073,
+        "qualityScore": 80.76,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 5,
+      "intent": "execute partner transfer with strong trust requirements",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": false,
+        "latencyMs": 100,
+        "costUsd": 0.004193,
+        "qualityScore": 68.68,
+        "errorReason": "simulatedProviderFailure",
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 114,
+        "costUsd": 0.004931,
+        "qualityScore": 85.33,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": true
+    },
+    {
+      "trialNumber": 6,
+      "intent": "send payroll payout to a verified provider",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 117,
+        "costUsd": 0.005252,
+        "qualityScore": 74.33,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 107,
+        "costUsd": 0.004457,
+        "qualityScore": 82.8,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 7,
+      "intent": "issue contractor payment with low failure risk",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 120,
+        "costUsd": 0.00545,
+        "qualityScore": 75.38,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 95,
+        "costUsd": 0.003746,
+        "qualityScore": 79.01,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 8,
+      "intent": "route supplier settlement for same-day completion",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 104,
+        "costUsd": 0.004475,
+        "qualityScore": 70.18,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 99,
+        "costUsd": 0.003974,
+        "qualityScore": 80.23,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 9,
+      "intent": "send merchant disbursement with latency sensitivity",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 103,
+        "costUsd": 0.004418,
+        "qualityScore": 69.88,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 100,
+        "costUsd": 0.004073,
+        "qualityScore": 80.76,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 10,
+      "intent": "execute partner transfer with strong trust requirements",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": false,
+        "latencyMs": 100,
+        "costUsd": 0.004193,
+        "qualityScore": 68.68,
+        "errorReason": "simulatedProviderFailure",
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 114,
+        "costUsd": 0.004931,
+        "qualityScore": 85.33,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": true
+    },
+    {
+      "trialNumber": 11,
+      "intent": "send payroll payout to a verified provider",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 117,
+        "costUsd": 0.005252,
+        "qualityScore": 74.33,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 107,
+        "costUsd": 0.004457,
+        "qualityScore": 82.8,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 12,
+      "intent": "issue contractor payment with low failure risk",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 120,
+        "costUsd": 0.00545,
+        "qualityScore": 75.38,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 95,
+        "costUsd": 0.003746,
+        "qualityScore": 79.01,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 13,
+      "intent": "route supplier settlement for same-day completion",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 104,
+        "costUsd": 0.004475,
+        "qualityScore": 70.18,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 99,
+        "costUsd": 0.003974,
+        "qualityScore": 80.23,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 14,
+      "intent": "send merchant disbursement with latency sensitivity",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 103,
+        "costUsd": 0.004418,
+        "qualityScore": 69.88,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 100,
+        "costUsd": 0.004073,
+        "qualityScore": 80.76,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 15,
+      "intent": "execute partner transfer with strong trust requirements",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": false,
+        "latencyMs": 100,
+        "costUsd": 0.004193,
+        "qualityScore": 68.68,
+        "errorReason": "simulatedProviderFailure",
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 114,
+        "costUsd": 0.004931,
+        "qualityScore": 85.33,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": true
+    },
+    {
+      "trialNumber": 16,
+      "intent": "send payroll payout to a verified provider",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 117,
+        "costUsd": 0.005252,
+        "qualityScore": 74.33,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 107,
+        "costUsd": 0.004457,
+        "qualityScore": 82.8,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 17,
+      "intent": "issue contractor payment with low failure risk",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 120,
+        "costUsd": 0.00545,
+        "qualityScore": 75.38,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 95,
+        "costUsd": 0.003746,
+        "qualityScore": 79.01,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 18,
+      "intent": "route supplier settlement for same-day completion",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 104,
+        "costUsd": 0.004475,
+        "qualityScore": 70.18,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 99,
+        "costUsd": 0.003974,
+        "qualityScore": 80.23,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 19,
+      "intent": "send merchant disbursement with latency sensitivity",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 103,
+        "costUsd": 0.004418,
+        "qualityScore": 69.88,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 100,
+        "costUsd": 0.004073,
+        "qualityScore": 80.76,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 20,
+      "intent": "execute partner transfer with strong trust requirements",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": false,
+        "latencyMs": 100,
+        "costUsd": 0.004193,
+        "qualityScore": 68.68,
+        "errorReason": "simulatedProviderFailure",
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 114,
+        "costUsd": 0.004931,
+        "qualityScore": 85.33,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": true
+    },
+    {
+      "trialNumber": 21,
+      "intent": "send payroll payout to a verified provider",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 117,
+        "costUsd": 0.005252,
+        "qualityScore": 74.33,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 107,
+        "costUsd": 0.004457,
+        "qualityScore": 82.8,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 22,
+      "intent": "issue contractor payment with low failure risk",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 120,
+        "costUsd": 0.00545,
+        "qualityScore": 75.38,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 95,
+        "costUsd": 0.003746,
+        "qualityScore": 79.01,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 23,
+      "intent": "route supplier settlement for same-day completion",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 104,
+        "costUsd": 0.004475,
+        "qualityScore": 70.18,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 99,
+        "costUsd": 0.003974,
+        "qualityScore": 80.23,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 24,
+      "intent": "send merchant disbursement with latency sensitivity",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 103,
+        "costUsd": 0.004418,
+        "qualityScore": 69.88,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 100,
+        "costUsd": 0.004073,
+        "qualityScore": 80.76,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 25,
+      "intent": "execute partner transfer with strong trust requirements",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": false,
+        "latencyMs": 100,
+        "costUsd": 0.004193,
+        "qualityScore": 68.68,
+        "errorReason": "simulatedProviderFailure",
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 114,
+        "costUsd": 0.004931,
+        "qualityScore": 85.33,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": true
+    },
+    {
+      "trialNumber": 26,
+      "intent": "send payroll payout to a verified provider",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 117,
+        "costUsd": 0.005252,
+        "qualityScore": 74.33,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 107,
+        "costUsd": 0.004457,
+        "qualityScore": 82.8,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 27,
+      "intent": "issue contractor payment with low failure risk",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 120,
+        "costUsd": 0.00545,
+        "qualityScore": 75.38,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 95,
+        "costUsd": 0.003746,
+        "qualityScore": 79.01,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 28,
+      "intent": "route supplier settlement for same-day completion",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 104,
+        "costUsd": 0.004475,
+        "qualityScore": 70.18,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 99,
+        "costUsd": 0.003974,
+        "qualityScore": 80.23,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 29,
+      "intent": "send merchant disbursement with latency sensitivity",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": true,
+        "latencyMs": 103,
+        "costUsd": 0.004418,
+        "qualityScore": 69.88,
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 100,
+        "costUsd": 0.004073,
+        "qualityScore": 80.76,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": false
+    },
+    {
+      "trialNumber": 30,
+      "intent": "execute partner transfer with strong trust requirements",
+      "naiveProviderId": "paysh-beta",
+      "radarProviderId": "paysh-delta",
+      "naive": {
+        "success": false,
+        "latencyMs": 100,
+        "costUsd": 0.004193,
+        "qualityScore": 68.68,
+        "errorReason": "simulatedProviderFailure",
+        "mode": "simulated"
+      },
+      "radar": {
+        "success": true,
+        "latencyMs": 114,
+        "costUsd": 0.004931,
+        "qualityScore": 85.33,
+        "mode": "simulated"
+      },
+      "winner": "radar",
+      "radarAvoidedFailure": true
+    }
+  ]
+}
