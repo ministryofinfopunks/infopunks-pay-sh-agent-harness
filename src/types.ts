@@ -1,4 +1,11 @@
 export type DataMode = "live" | "mock" | "fallback-mock";
+export type CatalogMode = "mock" | "live" | "fallback";
+export type RadarMode = "live" | "mock" | "fallback";
+export type ComparisonValidity =
+  | "valid_simulated_same_catalog"
+  | "invalid_mixed_catalogs"
+  | "live_preflight_only";
+export type CandidateProviderSource = "mock" | "live" | "omitted";
 
 export interface ProviderCatalogEntry {
   id: string;
@@ -77,6 +84,10 @@ export interface ProofLog extends RadarProofFields {
   simulatedOrLiveResult: string;
   latencyMs: number;
   success: boolean;
+  comparisonValidity?: ComparisonValidity;
+  catalogMode?: CatalogMode;
+  radarMode?: RadarMode;
+  candidateProviderSource?: CandidateProviderSource;
   comparison?: {
     naiveSelection: ProviderCatalogEntry | null;
     naiveSelectionPolicyStatus: "passes" | "fails" | "unknown";
@@ -106,6 +117,10 @@ export interface BenchmarkTrial {
   radar: ExecutionResult;
   winner: "naive" | "radar" | "tie";
   radarAvoidedFailure: boolean;
+  comparisonValidity?: ComparisonValidity;
+  catalogMode?: CatalogMode;
+  radarMode?: RadarMode;
+  candidateProviderSource?: CandidateProviderSource;
 }
 
 export interface BenchmarkSummary {
@@ -122,4 +137,5 @@ export interface BenchmarkSummary {
   radarWinCount: number;
   naiveWinCount: number;
   tieCount: number;
+  comparisonValidity?: ComparisonValidity;
 }

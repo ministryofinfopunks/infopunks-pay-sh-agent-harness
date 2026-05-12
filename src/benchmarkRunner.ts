@@ -13,8 +13,12 @@ import {
   BenchmarkSummary,
   BenchmarkTrial,
   CandidateProvider,
+  CandidateProviderSource,
+  CatalogMode,
+  ComparisonValidity,
   ExecutionMode,
   ProviderCatalogEntry,
+  RadarMode,
   RejectedProvider,
   RoutingResult,
 } from "./types";
@@ -91,6 +95,14 @@ function pickWinner(naive: BenchmarkTrial["naive"], radar: BenchmarkTrial["radar
   return "tie";
 }
 
+function toCatalogModeLabel(mode: "live" | "mock" | "fallback-mock"): CatalogMode {
+  return mode === "fallback-mock" ? "fallback" : mode;
+}
+
+function shouldOmitCandidatesForPreflight(): boolean {
+  return Boolean(process.env.RADAR_API_BASE_URL?.trim());
+}
+
 function buildRoutingFromPreflight(
   providers: ProviderCatalogEntry[],
   preflight: RadarPreflightResult,
@@ -150,17 +162,24 @@ export async function runBenchmark(options?: {
 }): Promise<BenchmarkRunResult> {
   const trialCount = parseTrialCount(options?.trialsArg);
   const mode = options?.mode ?? "simulated";
+  const omitCandidates = shouldOmitCandidatesForPreflight();
   const trials: BenchmarkTrial[] = [];
 
   for (let trialNumber = 1; trialNumber <= trialCount; trialNumber += 1) {
     const intent = pickIntent(trialNumber, options?.intent);
     const catalogResult = await fetchPayShCatalog(intent);
+    const catalogMode = toCatalogModeLabel(catalogResult.mode);
+    const candidateProviderSource: CandidateProviderSource = omitCandidates
+      ? "omitted"
+      : catalogMode === "live"
+        ? "live"
+        : "mock";
     const naiveProvider = selectNaiveProvider(catalogResult.providers);
 
     const preflightResult = await callRadarPreflight({
       intent,
       constraints: { minTrustScore: getMinTrustScore() },
-      candidateProviders: catalogResult.providers.map((provider) => provider.id),
+      candidateProviders: omitCandidates ? undefined : catalogResult.providers.map((provider) => provider.id),
     });
 
     const preflightRouting = buildRoutingFromPreflight(catalogResult.providers, preflightResult);
@@ -184,7 +203,22 @@ export async function runBenchmark(options?: {
     const naiveExecution = await executeProviderCall(naiveCandidate, intent, mode);
     const radarExecution = await executeProviderCall(radarCandidate, intent, mode);
 
-    const winner = pickWinner(naiveExecution, radarExecution);
+    const radarMode: RadarMode = preflightRouting
+      ? "live"
+      : radarResult.mode === "mock"
+        ? "mock"
+        : radarResult.mode === "live"
+          ? "live"
+          : "fallback";
+    const comparisonValidity: ComparisonValidity =
+      radarMode === "live" && catalogMode !== "live"
+        ? "live_preflight_only"
+        : (catalogMode === "live") === (radarMode === "live")
+          ? "valid_simulated_same_catalog"
+          : "invalid_mixed_catalogs";
+    const winner = comparisonValidity === "live_preflight_only"
+      ? "tie"
+      : pickWinner(naiveExecution, radarExecution);
     const trial: BenchmarkTrial = {
       trialNumber,
       intent,
@@ -193,22 +227,24 @@ export async function runBenchmark(options?: {
       naive: naiveExecution,
       radar: radarExecution,
       winner,
-      radarAvoidedFailure: !naiveExecution.success && radarExecution.success,
+      radarAvoidedFailure:
+        comparisonValidity === "live_preflight_only"
+          ? false
+          : !naiveExecution.success && radarExecution.success,
+      comparisonValidity,
+      catalogMode,
+      radarMode,
+      candidateProviderSource,
     };
     trials.push(trial);
-
-    const radarMode = preflightRouting
-      ? "live"
-      : radarResult.mode === "mock"
-        ? "mock"
-        : radarResult.mode === "live"
-          ? "live"
-          : "fallback";
 
     console.log(
       `[benchmark][trial ${trialNumber}] radar mode=${radarMode} endpoint=${
         preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"
       } timeout=${getRadarTimeoutMs()}ms`,
+    );
+    console.log(
+      `[benchmark][trial ${trialNumber}] catalog mode=${catalogMode} comparisonValidity=${comparisonValidity} candidateProviderSource=${candidateProviderSource}`,
     );
     console.log(
       `[benchmark][trial ${trialNumber}] radar decision=${preflightResult.decision?.decision ?? "local-router"} selected=${radarCandidate?.id ?? "none"}`,
@@ -238,6 +274,10 @@ export async function runBenchmark(options?: {
       simulatedOrLiveResult: mode,
       latencyMs: Math.max(naiveExecution.latencyMs, radarExecution.latencyMs),
       success: radarExecution.success,
+      comparisonValidity,
+      catalogMode,
+      radarMode,
+      candidateProviderSource,
       radarApiUsed: Boolean(preflightRouting),
       radarEndpoint: preflightResult.endpoint ?? radarResult.endpoint,
       radarDecision: preflightResult.decision?.decision,
@@ -252,9 +292,14 @@ export async function runBenchmark(options?: {
             ? "passes"
             : "unknown",
         radarSelectedProviderId: radarCandidate?.id ?? null,
-        radarImprovedRoute: trial.radarAvoidedFailure || trial.winner === "radar",
+        radarImprovedRoute:
+          comparisonValidity === "live_preflight_only"
+            ? false
+            : trial.radarAvoidedFailure || trial.winner === "radar",
         explanation:
-          trial.radarAvoidedFailure
+          comparisonValidity === "live_preflight_only"
+            ? "Live preflight verified. Outcome benchmark requires live Pay.sh catalog/execution."
+            : trial.radarAvoidedFailure
             ? "Radar-assisted path succeeded where naive path failed."
             : trial.winner === "radar"
               ? "Radar-assisted path produced stronger simulated execution outcomes."

@@ -20,10 +20,15 @@ export function buildBenchmarkSummary(trials: BenchmarkTrial[]): BenchmarkSummar
   const totalTrials = trials.length;
   const naiveSuccesses = trials.filter((trial) => trial.naive.success).length;
   const radarSuccesses = trials.filter((trial) => trial.radar.success).length;
-  const radarAvoidedFailureCount = trials.filter((trial) => trial.radarAvoidedFailure).length;
-  const radarWinCount = trials.filter((trial) => trial.winner === "radar").length;
-  const naiveWinCount = trials.filter((trial) => trial.winner === "naive").length;
-  const tieCount = trials.filter((trial) => trial.winner === "tie").length;
+  const hasMixedSources = trials.some(
+    (trial) => trial.comparisonValidity && trial.comparisonValidity !== "valid_simulated_same_catalog",
+  );
+  const radarAvoidedFailureCount = hasMixedSources
+    ? 0
+    : trials.filter((trial) => trial.radarAvoidedFailure).length;
+  const radarWinCount = hasMixedSources ? 0 : trials.filter((trial) => trial.winner === "radar").length;
+  const naiveWinCount = hasMixedSources ? 0 : trials.filter((trial) => trial.winner === "naive").length;
+  const tieCount = hasMixedSources ? 0 : trials.filter((trial) => trial.winner === "tie").length;
 
   return {
     totalTrials,
@@ -39,6 +44,7 @@ export function buildBenchmarkSummary(trials: BenchmarkTrial[]): BenchmarkSummar
     radarWinCount,
     naiveWinCount,
     tieCount,
+    comparisonValidity: hasMixedSources ? "live_preflight_only" : "valid_simulated_same_catalog",
   };
 }
 
@@ -58,6 +64,10 @@ function trialsToCsv(trials: BenchmarkTrial[]): string {
     "radarQualityScore",
     "radarAvoidedFailure",
     "winner",
+    "comparisonValidity",
+    "catalogMode",
+    "radarMode",
+    "candidateProviderSource",
   ];
 
   const rows = trials.map((trial) =>
@@ -76,6 +86,10 @@ function trialsToCsv(trials: BenchmarkTrial[]): string {
       trial.radar.qualityScore,
       trial.radarAvoidedFailure,
       trial.winner,
+      trial.comparisonValidity ?? "",
+      trial.catalogMode ?? "",
+      trial.radarMode ?? "",
+      trial.candidateProviderSource ?? "",
     ].join(","),
   );
 
@@ -97,12 +111,19 @@ function summaryToMarkdown(summary: BenchmarkSummary): string {
     `- radar avg cost: $${summary.radarAvgCostUsd}`,
     `- naive avg quality: ${summary.naiveAvgQualityScore}`,
     `- radar avg quality: ${summary.radarAvgQualityScore}`,
-    `- radar avoided failure count: ${summary.radarAvoidedFailureCount}`,
-    `- radar win count: ${summary.radarWinCount}`,
-    `- naive win count: ${summary.naiveWinCount}`,
-    `- tie count: ${summary.tieCount}`,
+    `- comparison validity: ${summary.comparisonValidity ?? "valid_simulated_same_catalog"}`,
+    hasLivePreflightOnly(summary)
+      ? "- Live preflight verified. Outcome benchmark requires live Pay.sh catalog/execution."
+      : `- radar avoided failure count: ${summary.radarAvoidedFailureCount}`,
+    hasLivePreflightOnly(summary) ? "- radar wins / naive wins / ties: n/a" : `- radar win count: ${summary.radarWinCount}`,
+    hasLivePreflightOnly(summary) ? "- benchmark outcome comparison: n/a" : `- naive win count: ${summary.naiveWinCount}`,
+    hasLivePreflightOnly(summary) ? "- benchmark outcome comparison reason: mixed mock/live sources" : `- tie count: ${summary.tieCount}`,
     "",
   ].join("\n");
+}
+
+function hasLivePreflightOnly(summary: BenchmarkSummary): boolean {
+  return summary.comparisonValidity === "live_preflight_only";
 }
 
 export interface BenchmarkReportPaths {

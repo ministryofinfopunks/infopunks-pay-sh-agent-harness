@@ -25,10 +25,15 @@ async function main(): Promise<void> {
   console.log(
     `Average quality: naive=${result.summary.naiveAvgQualityScore}, radar=${result.summary.radarAvgQualityScore}`,
   );
-  console.log(
-    `Radar wins / naive wins / ties: ${result.summary.radarWinCount} / ${result.summary.naiveWinCount} / ${result.summary.tieCount}`,
-  );
-  console.log(`Radar avoided failure count: ${result.summary.radarAvoidedFailureCount}`);
+  console.log(`Comparison validity: ${result.summary.comparisonValidity ?? "valid_simulated_same_catalog"}`);
+  if (result.summary.comparisonValidity === "live_preflight_only") {
+    console.log("Live preflight verified. Outcome benchmark requires live Pay.sh catalog/execution.");
+  } else {
+    console.log(
+      `Radar wins / naive wins / ties: ${result.summary.radarWinCount} / ${result.summary.naiveWinCount} / ${result.summary.tieCount}`,
+    );
+    console.log(`Radar avoided failure count: ${result.summary.radarAvoidedFailureCount}`);
+  }
   console.log(`Report JSON: ${result.reportPaths.jsonPath}`);
   console.log(`Report CSV: ${result.reportPaths.csvPath}`);
   console.log(`Report Summary: ${result.reportPaths.summaryPath}\n`);

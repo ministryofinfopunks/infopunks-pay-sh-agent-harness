@@ -12,6 +12,7 @@ When `RADAR_API_BASE_URL` is set, the harness calls the live machine-callable Ra
 - `POST {RADAR_API_BASE_URL}/v1/preflight`
 
 If the live preflight call fails or times out, the harness falls back to local mock routing logic.
+When live Radar is configured, `demo:compare` and `benchmark` intentionally omit `candidateProviders` in preflight calls unless candidates are known to come from the same live catalog source.
 
 ### Required env for live Radar
 
@@ -50,6 +51,7 @@ curl -X POST "$RADAR_API_BASE_URL/v1/preflight" \
 - `fallback`: live preflight configured but unavailable; local router used.
 
 `demo:compare` and `benchmark` prefer backend preflight decisions when available, and automatically fall back to local routing otherwise.
+Live Radar preflight can be verified before live Pay.sh execution exists, but outcome comparisons are only meaningful when both naive and Radar paths use the same catalog/execution source.
 
 ## Benchmark mode
 
@@ -60,6 +62,7 @@ Benchmark mode measures whether Radar-assisted routing produces better outcomes 
 The execution layer in this harness is still simulated unless live execution is implemented.
 
 This still does not prove live Pay.sh execution outcomes.
+If the run mixes mock and live sources (for example, mock Pay.sh catalog with live Radar preflight), the harness marks benchmark validity as `live_preflight_only` and avoids reporting Radar vs naive wins as a real comparison.
 
 ### Run benchmark
 
@@ -112,6 +115,10 @@ Proof logs include Radar-specific integration metadata:
 - `radarDataMode`
 - `radarSource`
 - `fallbackReason` (when applicable)
+- `catalogMode` (`mock | live | fallback`)
+- `radarMode` (`live | mock | fallback`)
+- `comparisonValidity` (`valid_simulated_same_catalog | invalid_mixed_catalogs | live_preflight_only`)
+- `candidateProviderSource` (`mock | live | omitted`)
 
 ## What this proves
 

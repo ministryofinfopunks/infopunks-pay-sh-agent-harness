@@ -61,6 +61,22 @@ export interface RadarPreflightDecision {
   source?: string;
 }
 
+function toProviderId(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "object" && value !== null) {
+    const record = value as Record<string, unknown>;
+    if (typeof record.providerId === "string") {
+      return record.providerId;
+    }
+    if (typeof record.id === "string") {
+      return record.id;
+    }
+  }
+  return null;
+}
+
 export interface RadarPreflightResult {
   available: boolean;
   mode: "live" | "mock" | "fallback";
@@ -148,10 +164,10 @@ function normalizePreflightDecision(payload: unknown): RadarPreflightDecision {
     );
   }
 
-  const selectedProvider = typeof obj.selectedProvider === "string" ? obj.selectedProvider : null;
+  const selectedProvider = toProviderId(obj.selectedProvider);
 
   const rejectedProviders = Array.isArray(obj.rejectedProviders)
-    ? obj.rejectedProviders.map((item) => String(item))
+    ? obj.rejectedProviders.map((item) => toProviderId(item)).filter((item): item is string => Boolean(item))
     : [];
 
   const routingPolicy = Array.isArray(obj.routingPolicy)

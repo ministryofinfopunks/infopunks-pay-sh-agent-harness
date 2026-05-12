@@ -8,7 +8,17 @@ import {
 } from "./radarClient";
 import { saveProofLog } from "./proofLog";
 import { routeProvider } from "./router";
-import { CandidateProvider, ProofLog, ProviderCatalogEntry, RejectedProvider, RoutingResult } from "./types";
+import {
+  CandidateProvider,
+  CandidateProviderSource,
+  CatalogMode,
+  ComparisonValidity,
+  ProofLog,
+  ProviderCatalogEntry,
+  RadarMode,
+  RejectedProvider,
+  RoutingResult,
+} from "./types";
 
 function getMinTrustScore(): number {
   const raw = Number(process.env.MIN_TRUST_SCORE);
@@ -31,6 +41,14 @@ function selectNaiveProvider(catalog: ProviderCatalogEntry[]): ProviderCatalogEn
 
 function toFallbackModeLabel(mode: "live" | "mock" | "fallback"): "live" | "mock" | "fallback" {
   return mode;
+}
+
+function toCatalogModeLabel(mode: "live" | "mock" | "fallback-mock"): CatalogMode {
+  return mode === "fallback-mock" ? "fallback" : mode;
+}
+
+function shouldOmitCandidatesForPreflight(): boolean {
+  return Boolean(process.env.RADAR_API_BASE_URL?.trim());
 }
 
 function buildRoutingFromPreflight(
@@ -80,11 +98,18 @@ async function main(): Promise<void> {
 
   const catalogResult = await fetchPayShCatalog(userIntent);
   const naiveSelection = selectNaiveProvider(catalogResult.providers);
+  const catalogMode = toCatalogModeLabel(catalogResult.mode);
+  const omitCandidates = shouldOmitCandidatesForPreflight();
+  const candidateProviderSource: CandidateProviderSource = omitCandidates
+    ? "omitted"
+    : catalogMode === "live"
+      ? "live"
+      : "mock";
 
   const preflightResult = await callRadarPreflight({
     intent: userIntent,
     constraints: { minTrustScore: getMinTrustScore() },
-    candidateProviders: catalogResult.providers.map((provider) => provider.id),
+    candidateProviders: omitCandidates ? undefined : catalogResult.providers.map((provider) => provider.id),
   });
 
   const preflightRouting = buildRoutingFromPreflight(catalogResult.providers, preflightResult);
@@ -136,7 +161,19 @@ async function main(): Promise<void> {
       ? "live"
       : "simulated-or-fallback";
 
-  const radarMode = preflightRouting ? toFallbackModeLabel(preflightResult.mode) : radarResult.mode === "live" ? "live" : radarResult.mode === "mock" ? "mock" : "fallback";
+  const radarMode: RadarMode = preflightRouting
+    ? toFallbackModeLabel(preflightResult.mode)
+    : radarResult.mode === "live"
+      ? "live"
+      : radarResult.mode === "mock"
+        ? "mock"
+        : "fallback";
+  const comparisonValidity: ComparisonValidity =
+    radarMode === "live" && catalogMode !== "live"
+      ? "live_preflight_only"
+      : (catalogMode === "live") === (radarMode === "live")
+        ? "valid_simulated_same_catalog"
+        : "invalid_mixed_catalogs";
   const fallbackReason = !preflightRouting && preflightResult.mode === "fallback"
     ? preflightResult.fallbackReason
     : radarResult.mode === "fallback-mock"
@@ -154,6 +191,10 @@ async function main(): Promise<void> {
     simulatedOrLiveResult,
     latencyMs: elapsedMs,
     success: routed.selectedProvider !== null,
+    comparisonValidity,
+    catalogMode,
+    radarMode,
+    candidateProviderSource,
     radarApiUsed: Boolean(preflightRouting),
     radarEndpoint: preflightResult.endpoint ?? radarResult.endpoint,
     radarDecision: preflightResult.decision?.decision,
@@ -173,7 +214,10 @@ async function main(): Promise<void> {
 
   console.log("\n=== Naive vs Radar-Assisted Comparison ===");
   console.log(`Intent: ${userIntent}`);
+  console.log(`Catalog mode: ${catalogMode}`);
   console.log(`Radar mode: ${radarMode}`);
+  console.log(`Comparison validity: ${comparisonValidity}`);
+  console.log(`Candidate provider source: ${candidateProviderSource}`);
   console.log(`Radar endpoint: ${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`);
   console.log(`Radar timeout: ${getRadarTimeoutMs()}ms`);
   if (fallbackReason) {
@@ -213,8 +257,14 @@ async function main(): Promise<void> {
   console.log(
     `Data mode: catalog=${catalogResult.mode}, radar=${preflightResult.decision?.dataMode ?? radarMode}, result=${simulatedOrLiveResult}`,
   );
-  console.log(`Did Radar improve route? ${radarImprovedRoute ? "yes" : "no"}`);
-  console.log(`Reason: ${explanation}`);
+  if (catalogMode === "mock" && radarMode === "live") {
+    console.log(
+      "Live Radar preflight succeeded, but outcome comparison is not valid because naive path uses mock catalog and Radar uses live catalog.",
+    );
+  } else {
+    console.log(`Did Radar improve route? ${radarImprovedRoute ? "yes" : "no"}`);
+    console.log(`Reason: ${explanation}`);
+  }
   console.log(`Proof log saved: ${outputPath}`);
   console.log(`Comparison latency: ${elapsedMs}ms\n`);
 }
