@@ -186,6 +186,7 @@ Provider endpoint mappings:
 
 | Provider | providerId | Endpoint | Status | Output shape |
 |---|---|---|---|---|
+| QuickNode RPC | quicknode-rpc | https://x402.quicknode.com/solana-mainnet | verified_pay_cli_success | json_rpc_health |
 | StableCrypto | merit-systems-stablecrypto-market-data | https://stablecrypto.dev/api/coingecko/price | verified_pay_cli_success | simple_price |
 | PaySponge CoinGecko | paysponge-coingecko | https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools | verified_pay_cli_success | trending_pools |
 
@@ -226,6 +227,17 @@ LIVE_HEAD_TO_HEAD_PROFILE=solana_trending_pools \
 RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
 RADAR_API_TIMEOUT_MS=15000 \
 npm run benchmark:live-head-to-head -- --trials=30
+```
+
+Solana RPC health profile:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+LIVE_HEAD_TO_HEAD_PROFILE=solana_rpc_health \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run benchmark:live-head-to-head -- --trials=1
 ```
 
 The trending pools profile is the first attempt to test whether Radar chooses PaySponge CoinGecko for a DEX-pools intent instead of StableCrypto.

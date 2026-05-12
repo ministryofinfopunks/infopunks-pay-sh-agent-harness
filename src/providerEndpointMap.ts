@@ -16,6 +16,19 @@ export interface ProviderEndpointMapping {
 
 export const providerEndpointMap: ProviderEndpointMapping[] = [
   {
+    providerId: "quicknode-rpc",
+    label: "QuickNode Solana Mainnet RPC Health",
+    url: "https://x402.quicknode.com/solana-mainnet",
+    method: "POST",
+    body: { jsonrpc: "2.0", id: 1, method: "getHealth", params: [] },
+    category: "compute",
+    capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
+    outputShape: "json_rpc_health",
+    status: "verified_pay_cli_success",
+    endpointMappingSource: "manual_pay_cli_verification",
+    notes: "pay curl succeeded for Solana getHealth and getBalance JSON-RPC requests.",
+  },
+  {
     providerId: "merit-systems-stablecrypto-market-data",
     label: "StableCrypto CoinGecko Price",
     url: "https://stablecrypto.dev/api/coingecko/price",

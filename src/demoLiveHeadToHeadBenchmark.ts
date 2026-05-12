@@ -9,9 +9,12 @@ const DEFAULT_TRIALS = 30;
 const DEFAULT_MARKET_DATA_MIN_TRUST_SCORE = 70;
 const DEFAULT_MARKET_DATA_MAX_LATENCY_MS = 3000;
 const DEFAULT_MARKET_DATA_MAX_COST_USD = 0.05;
+const DEFAULT_SOLANA_RPC_MIN_TRUST_SCORE = 70;
+const DEFAULT_SOLANA_RPC_MAX_LATENCY_MS = 5000;
+const DEFAULT_SOLANA_RPC_MAX_COST_USD = 0.05;
 const RESULTS_DIR = path.resolve(process.cwd(), "benchmark-results", "live-head-to-head");
 
-type ProfileName = "simple_price" | "solana_trending_pools";
+type ProfileName = "simple_price" | "solana_trending_pools" | "solana_rpc_health";
 
 type ComparisonOutcome =
   | "radar_win"
@@ -31,6 +34,11 @@ interface BenchmarkIntentProfile {
   category: string;
   expectedOutputShape: string;
   preferredCapabilities: string[];
+  defaultConstraints: {
+    minTrustScore: number;
+    maxLatencyMs: number;
+    maxCostUsd: number;
+  };
 }
 
 const BENCHMARK_PROFILES: Record<ProfileName, BenchmarkIntentProfile> = {
@@ -40,6 +48,11 @@ const BENCHMARK_PROFILES: Record<ProfileName, BenchmarkIntentProfile> = {
     category: "finance",
     expectedOutputShape: "simple_price",
     preferredCapabilities: ["market_data", "pricing"],
+    defaultConstraints: {
+      minTrustScore: DEFAULT_MARKET_DATA_MIN_TRUST_SCORE,
+      maxLatencyMs: DEFAULT_MARKET_DATA_MAX_LATENCY_MS,
+      maxCostUsd: DEFAULT_MARKET_DATA_MAX_COST_USD,
+    },
   },
   solana_trending_pools: {
     name: "solana_trending_pools",
@@ -47,6 +60,23 @@ const BENCHMARK_PROFILES: Record<ProfileName, BenchmarkIntentProfile> = {
     category: "finance",
     expectedOutputShape: "trending_pools",
     preferredCapabilities: ["market_data", "dex_pools", "trending"],
+    defaultConstraints: {
+      minTrustScore: DEFAULT_MARKET_DATA_MIN_TRUST_SCORE,
+      maxLatencyMs: DEFAULT_MARKET_DATA_MAX_LATENCY_MS,
+      maxCostUsd: DEFAULT_MARKET_DATA_MAX_COST_USD,
+    },
+  },
+  solana_rpc_health: {
+    name: "solana_rpc_health",
+    intent: "check Solana mainnet RPC health",
+    category: "compute",
+    expectedOutputShape: "json_rpc_health",
+    preferredCapabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
+    defaultConstraints: {
+      minTrustScore: DEFAULT_SOLANA_RPC_MIN_TRUST_SCORE,
+      maxLatencyMs: DEFAULT_SOLANA_RPC_MAX_LATENCY_MS,
+      maxCostUsd: DEFAULT_SOLANA_RPC_MAX_COST_USD,
+    },
   },
 };
 
@@ -154,7 +184,9 @@ function findNaiveProvider(category: string): ProviderEndpointMapping | null {
     providerEndpointMap.find(
       (provider) =>
         provider.category.toLowerCase() === category.toLowerCase() &&
-        provider.capabilities.some((capability) => capability === "market_data"),
+        provider.capabilities.some((capability) =>
+          category.toLowerCase() === "compute" ? capability === "rpc" : capability === "market_data",
+        ),
     ) ?? null
   );
 }
@@ -264,9 +296,9 @@ async function main(): Promise<void> {
   const category = profile.category;
   const expectedOutputShape = profile.expectedOutputShape;
   const constraints = {
-    minTrustScore: getEnvNumber("MARKET_DATA_MIN_TRUST_SCORE", DEFAULT_MARKET_DATA_MIN_TRUST_SCORE),
-    maxLatencyMs: getEnvNumber("MARKET_DATA_MAX_LATENCY_MS", DEFAULT_MARKET_DATA_MAX_LATENCY_MS),
-    maxCostUsd: getEnvNumber("MARKET_DATA_MAX_COST_USD", DEFAULT_MARKET_DATA_MAX_COST_USD),
+    minTrustScore: getEnvNumber("MARKET_DATA_MIN_TRUST_SCORE", profile.defaultConstraints.minTrustScore),
+    maxLatencyMs: getEnvNumber("MARKET_DATA_MAX_LATENCY_MS", profile.defaultConstraints.maxLatencyMs),
+    maxCostUsd: getEnvNumber("MARKET_DATA_MAX_COST_USD", profile.defaultConstraints.maxCostUsd),
   };
 
   const liveEnabled = process.env.LIVE_PAYSH_EXECUTION === "true";
