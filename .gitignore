@@ -6,3 +6,6 @@ npm-debug.log*
 benchmark-results/latest.json
 benchmark-results/latest.csv
 benchmark-results/summary.md
+
+# Pay.sh local artifacts
+pay/
