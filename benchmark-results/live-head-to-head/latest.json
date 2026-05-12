@@ -1,0 +1,229 @@
+{
+  "summary": {
+    "totalTrials": 3,
+    "validHeadToHeadComparisonCount": 0,
+    "superiorityEvidenceAvailable": false,
+    "repeatabilitySameProviderCount": 3,
+    "invalidComparisonCount": 0,
+    "radarRouteBlockedCount": 0,
+    "radarRouteApprovedCount": 3,
+    "radarMissingEndpointMappingCount": 0,
+    "radarExecutionAttemptedCount": 3,
+    "radarExecutionSuccessRateAmongAttempted": 100,
+    "naiveExecutionAttemptedCount": 3,
+    "naiveExecutionSuccessRateAmongAttempted": 100,
+    "naiveSuccessRate": 100,
+    "radarSuccessRate": 100,
+    "naiveAvgLatencyMs": 14842,
+    "radarAvgLatencyMs": 4810.33,
+    "naiveParsedJsonSuccessRate": 100,
+    "radarParsedJsonSuccessRate": 100,
+    "radarWins": 0,
+    "naiveWins": 0,
+    "ties": 0,
+    "repeatabilitySameProviderOutcomes": 3,
+    "invalidReasons": {},
+    "uniqueNaiveProviders": [
+      "merit-systems-stablecrypto-market-data"
+    ],
+    "uniqueRadarProviders": [
+      "merit-systems-stablecrypto-market-data"
+    ],
+    "caveat": "Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.",
+    "latencyCaveat": "Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality."
+  },
+  "trials": [
+    {
+      "trialId": 1,
+      "timestamp": "2026-05-12T14:58:14.009Z",
+      "intent": "get crypto market data",
+      "category": "finance",
+      "constraints": {
+        "minTrustScore": 70,
+        "maxLatencyMs": 3000,
+        "maxCostUsd": 0.05
+      },
+      "naiveProvider": "merit-systems-stablecrypto-market-data",
+      "radarProvider": "merit-systems-stablecrypto-market-data",
+      "providersSame": true,
+      "naiveSelectionSource": "endpoint_map_order",
+      "naiveExecutionMode": "live_pay_sh_cli",
+      "radarExecutionMode": "live_pay_sh_cli",
+      "naiveSuccess": true,
+      "radarSuccess": true,
+      "naiveExitCode": 0,
+      "radarExitCode": 0,
+      "naiveParsedJsonAvailable": true,
+      "radarParsedJsonAvailable": true,
+      "naiveExecutionLatencyMs": 35716,
+      "radarExecutionLatencyMs": 4112,
+      "naiveResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "radarResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "naiveErrorReason": null,
+      "radarErrorReason": null,
+      "radarDecision": "route_approved",
+      "radarSelectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 97,
+        "signalScore": 40,
+        "latencyMs": 118,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "radarBlockReason": null,
+      "radarCategoryMatch": true,
+      "radarCapabilityMatch": true,
+      "radarRequiredCapabilities": [
+        "market_data",
+        "pricing"
+      ],
+      "radarRejectionSummary": null,
+      "radarConsideredProvidersRejected": [
+        "agentmail-email",
+        "crushrewards-pricing",
+        "dtelecom-voice",
+        "merit-systems-stabledomains-domains",
+        "merit-systems-stableemail-email"
+      ],
+      "comparisonOutcome": "repeatability_same_provider",
+      "naiveEndpointMapped": true,
+      "radarEndpointMapped": true,
+      "naiveExecutionAttempted": true,
+      "radarExecutionAttempted": true
+    },
+    {
+      "trialId": 2,
+      "timestamp": "2026-05-12T14:58:55.072Z",
+      "intent": "get crypto market data",
+      "category": "finance",
+      "constraints": {
+        "minTrustScore": 70,
+        "maxLatencyMs": 3000,
+        "maxCostUsd": 0.05
+      },
+      "naiveProvider": "merit-systems-stablecrypto-market-data",
+      "radarProvider": "merit-systems-stablecrypto-market-data",
+      "providersSame": true,
+      "naiveSelectionSource": "endpoint_map_order",
+      "naiveExecutionMode": "live_pay_sh_cli",
+      "radarExecutionMode": "live_pay_sh_cli",
+      "naiveSuccess": true,
+      "radarSuccess": true,
+      "naiveExitCode": 0,
+      "radarExitCode": 0,
+      "naiveParsedJsonAvailable": true,
+      "radarParsedJsonAvailable": true,
+      "naiveExecutionLatencyMs": 4177,
+      "radarExecutionLatencyMs": 6545,
+      "naiveResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "radarResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "naiveErrorReason": null,
+      "radarErrorReason": null,
+      "radarDecision": "route_approved",
+      "radarSelectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 97,
+        "signalScore": 40,
+        "latencyMs": 118,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "radarBlockReason": null,
+      "radarCategoryMatch": true,
+      "radarCapabilityMatch": true,
+      "radarRequiredCapabilities": [
+        "market_data",
+        "pricing"
+      ],
+      "radarRejectionSummary": null,
+      "radarConsideredProvidersRejected": [
+        "agentmail-email",
+        "crushrewards-pricing",
+        "dtelecom-voice",
+        "merit-systems-stabledomains-domains",
+        "merit-systems-stableemail-email"
+      ],
+      "comparisonOutcome": "repeatability_same_provider",
+      "naiveEndpointMapped": true,
+      "radarEndpointMapped": true,
+      "naiveExecutionAttempted": true,
+      "radarExecutionAttempted": true
+    },
+    {
+      "trialId": 3,
+      "timestamp": "2026-05-12T14:59:06.235Z",
+      "intent": "get crypto market data",
+      "category": "finance",
+      "constraints": {
+        "minTrustScore": 70,
+        "maxLatencyMs": 3000,
+        "maxCostUsd": 0.05
+      },
+      "naiveProvider": "merit-systems-stablecrypto-market-data",
+      "radarProvider": "merit-systems-stablecrypto-market-data",
+      "providersSame": true,
+      "naiveSelectionSource": "endpoint_map_order",
+      "naiveExecutionMode": "live_pay_sh_cli",
+      "radarExecutionMode": "live_pay_sh_cli",
+      "naiveSuccess": true,
+      "radarSuccess": true,
+      "naiveExitCode": 0,
+      "radarExitCode": 0,
+      "naiveParsedJsonAvailable": true,
+      "radarParsedJsonAvailable": true,
+      "naiveExecutionLatencyMs": 4633,
+      "radarExecutionLatencyMs": 3774,
+      "naiveResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "radarResponsePreview": "{\"solana\":{\"usd\":94.53}}",
+      "naiveErrorReason": null,
+      "radarErrorReason": null,
+      "radarDecision": "route_approved",
+      "radarSelectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 97,
+        "signalScore": 40,
+        "latencyMs": 118,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "radarBlockReason": null,
+      "radarCategoryMatch": true,
+      "radarCapabilityMatch": true,
+      "radarRequiredCapabilities": [
+        "market_data",
+        "pricing"
+      ],
+      "radarRejectionSummary": null,
+      "radarConsideredProvidersRejected": [
+        "agentmail-email",
+        "crushrewards-pricing",
+        "dtelecom-voice",
+        "merit-systems-stabledomains-domains",
+        "merit-systems-stableemail-email"
+      ],
+      "comparisonOutcome": "repeatability_same_provider",
+      "naiveEndpointMapped": true,
+      "radarEndpointMapped": true,
+      "naiveExecutionAttempted": true,
+      "radarExecutionAttempted": true
+    }
+  ]
+}

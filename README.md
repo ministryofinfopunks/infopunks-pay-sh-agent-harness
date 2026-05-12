@@ -172,6 +172,40 @@ Artifacts:
 
 This measures repeatability of one Radar-selected route, not superiority versus naive routing.
 
+## Live naive-vs-Radar benchmark
+
+This benchmark compares:
+- naive endpoint-map selection
+- Radar-selected provider from live `/v1/preflight`
+
+Current scope:
+- only executable providers present in the local endpoint map are run
+- market-data route only (`intent="get crypto market data"`, `category="finance"`)
+
+Interpretation:
+- if both strategies select StableCrypto, that is repeatability evidence, not superiority evidence
+- if both strategies select the same provider, the benchmark reports repeatability_same_provider and does not count it as superiority evidence
+- possible outcomes:
+  - `repeatability_same_provider`: both selected the same executable provider
+  - `radar_route_blocked`: Radar intentionally refused a route under configured policy constraints
+  - `invalid_missing_endpoint`: Radar approved a provider route, but that provider is not executable in the local endpoint map
+- superiority requires more executable provider mappings with different reliability/cost/latency profiles
+
+Run:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run benchmark:live-head-to-head -- --trials=30
+```
+
+Artifacts:
+- `benchmark-results/live-head-to-head/latest.json`
+- `benchmark-results/live-head-to-head/latest.csv`
+- `benchmark-results/live-head-to-head/summary.md`
+
 ## Live Radar Preflight Integration
 
 When `RADAR_API_BASE_URL` is set (current value: `https://infopunks-pay-sh-radar.onrender.com`), the harness calls:
@@ -252,6 +286,7 @@ This is a measurement scaffold. Results are simulated unless live execution is e
 - `npm run demo:compare`: naive catalog route vs Radar-assisted route + proof log.
 - `npm run demo:live-market-data`: Radar preflight plus optional single-provider live Pay.sh execution demo + proof log.
 - `npm run benchmark:live-market-data`: repeated live market-data route benchmark + JSON/CSV/Markdown reports.
+- `npm run benchmark:live-head-to-head`: repeated live naive endpoint-map selection vs Radar-selected provider benchmark for executable market-data mappings.
 - `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.

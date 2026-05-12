@@ -1,0 +1,30 @@
+# Live Naive-vs-Radar Benchmark Summary
+
+- total trials: 3
+- valid head-to-head comparison count (different-provider superiority comparisons only): 0
+- superiority evidence available: false
+- repeatability same-provider count (both strategies selected the same executable provider): 3
+- invalid comparison count: 0
+- Radar route blocked count: 0
+- Radar route approved count: 3
+- Radar missing endpoint mapping count: 0
+- Radar execution attempted count: 3
+- Radar execution success rate among attempted: 100%
+- naive execution attempted count: 3
+- naive execution success rate among attempted: 100%
+- naive success rate: 100%
+- radar success rate: 100%
+- naive avg latency: 14842ms
+- radar avg latency: 4810.33ms
+- parsed JSON success rates: naive=100% radar=100%
+- radar wins: 0
+- naive wins: 0
+- ties: 0
+- repeatability same-provider outcomes: 3
+- invalid reasons: {}
+- `radar_route_blocked` means Radar intentionally refused execution under current policy constraints (not a missing endpoint mapping).
+- unique naive providers: merit-systems-stablecrypto-market-data
+- unique Radar providers: merit-systems-stablecrypto-market-data
+- caveat: Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.
+- caveat: Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality.
+- warning: No superiority evidence available: naive and Radar selected the same executable provider in all comparable trials.

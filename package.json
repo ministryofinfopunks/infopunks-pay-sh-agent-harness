@@ -9,6 +9,7 @@
     "demo:compare": "ts-node src/demoCompare.ts",
     "demo:live-market-data": "ts-node src/demoLiveMarketData.ts",
     "benchmark:live-market-data": "ts-node src/demoLiveMarketDataBenchmark.ts",
+    "benchmark:live-head-to-head": "ts-node src/demoLiveHeadToHeadBenchmark.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
     "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
