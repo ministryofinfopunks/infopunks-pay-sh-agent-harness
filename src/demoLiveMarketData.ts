@@ -14,11 +14,14 @@ interface LiveMarketDataProof {
   selectedProviderDetails: Record<string, unknown> | null;
   requiredCapabilities: string[];
   dataMode: string | null;
-  executionMode: "live_pay_sh" | "skipped";
+  executionMode: "live_pay_sh" | "live_pay_sh_cli" | "skipped";
   executionSuccess: boolean;
   statusCode: number | null;
+  exitCode: number | null;
   latencyMs: number;
   responsePreview: string;
+  stderrPreview: string;
+  parsedJsonAvailable: boolean;
   settlementReference: string | null;
   paymentRequired: boolean;
   paymentRequiredHeaderPresent: boolean;
@@ -141,8 +144,11 @@ async function main(): Promise<void> {
       executionMode: "skipped",
       executionSuccess: false,
       statusCode: null,
+      exitCode: null,
       latencyMs: 0,
       responsePreview: "",
+      stderrPreview: "",
+      parsedJsonAvailable: false,
       settlementReference: null,
       paymentRequired: false,
       paymentRequiredHeaderPresent: false,
@@ -177,8 +183,11 @@ async function main(): Promise<void> {
     executionMode: execution.mode,
     executionSuccess: execution.success,
     statusCode: execution.statusCode ?? null,
+    exitCode: execution.exitCode ?? null,
     latencyMs: execution.latencyMs,
     responsePreview: execution.responsePreview,
+    stderrPreview: execution.stderrPreview ?? "",
+    parsedJsonAvailable: execution.parsedJsonAvailable,
     settlementReference: execution.settlementReference,
     paymentRequired: execution.paymentRequired === true,
     paymentRequiredHeaderPresent: execution.paymentRequiredHeaderPresent === true,
@@ -201,9 +210,11 @@ async function main(): Promise<void> {
 
   const proofPath = await saveLiveMarketDataProof(proof);
   console.log(`Execution mode: ${execution.mode}`);
+  console.log(`Exit code: ${execution.exitCode ?? "n/a"}`);
   console.log(`Execution success: ${execution.success}`);
   console.log(`Status code: ${execution.statusCode ?? "n/a"}`);
   console.log(`Latency: ${execution.latencyMs}ms`);
+  console.log(`Parsed JSON: ${execution.parsedJsonAvailable ? "yes" : "no"}`);
   console.log(`Payment required: ${execution.paymentRequired ? "yes" : "no"}`);
   console.log(`x402Version: ${execution.paymentChallenge?.x402Version ?? "n/a"}`);
   console.log(`Networks: ${JSON.stringify(execution.paymentChallenge?.networks ?? [])}`);
@@ -212,6 +223,9 @@ async function main(): Promise<void> {
     `Bazaar extension present: ${execution.paymentChallenge?.bazaarExtensionPresent === true ? "yes" : "no"}`,
   );
   console.log(`Response preview: ${execution.responsePreview || "<empty>"}`);
+  if (execution.stderrPreview) {
+    console.log(`Stderr preview: ${execution.stderrPreview}`);
+  }
   if (execution.settlementReference) {
     console.log(`Settlement reference: ${execution.settlementReference}`);
   }

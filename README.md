@@ -86,6 +86,20 @@ RADAR_API_TIMEOUT_MS=15000 \
 npm run demo:live-market-data
 ```
 
+Run with live Pay.sh CLI execution (`pay curl`):
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+PAYSH_EXECUTION_URL=https://stablecrypto.dev/api/coingecko/price \
+PAYSH_EXECUTION_METHOD=POST \
+PAYSH_EXECUTION_BODY_JSON='{"ids":["solana"],"vs_currencies":["usd"]}' \
+MARKET_DATA_MAX_LATENCY_MS=3000 \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run demo:live-market-data
+```
+
 ## Benchmark mode
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
@@ -127,7 +141,10 @@ npm run demo:compare
 - `PAYSH_API_BASE_URL` (optional): live Pay.sh catalog API base URL.
 - `LIVE_PAYSH_EXECUTION` (optional): set to `true` to attempt live Pay.sh execution.
 - `PAYSH_EXECUTION_URL` (optional unless live execution enabled): full URL for one live execution endpoint.
+- `PAYSH_EXECUTION_MODE` (default `http`): execution mode (`http` or `pay_cli`).
 - `PAYSH_EXECUTION_METHOD` (optional): HTTP method for execution call (default `GET`).
+- `PAYSH_EXECUTION_BODY_JSON` (optional): JSON request body for live execution.
+- `PAYSH_EXECUTION_HEADERS_JSON` (optional): JSON object of extra request headers for live execution.
 - `PAYSH_AUTH_HEADER` (optional): auth header name for execution call.
 - `PAYSH_AUTH_VALUE` (optional): auth header value for execution call.
 - `MIN_TRUST_SCORE` (default `70`): routing threshold.

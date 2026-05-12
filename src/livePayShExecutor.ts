@@ -1,4 +1,5 @@
 import { LivePayShExecutionResult } from "./types";
+import { spawn } from "node:child_process";
 
 export interface ExecuteLivePayShCallInput {
   providerId: string;
@@ -11,6 +12,9 @@ export interface ExecuteLivePayShCallInput {
 
 const DEFAULT_METHOD = "GET";
 const PREVIEW_MAX_LENGTH = 1000;
+const DEFAULT_EXECUTION_MODE = "http";
+
+type PayShExecutionMode = "http" | "pay_cli";
 
 function getEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -24,7 +28,7 @@ function nowIso(ms: number): string {
 function withSkippedResult(
   input: ExecuteLivePayShCallInput,
   startedAtMs: number,
-  errorReason: "live_pay_sh_execution_disabled" | "missing_live_pay_sh_execution_config",
+  errorReason: "live_pay_sh_execution_disabled" | "missing_live_pay_sh_execution_config" | "pay_cli_missing",
 ): LivePayShExecutionResult {
   const completedMs = Date.now();
   return {
@@ -55,13 +59,41 @@ function getConfiguredEndpointUrl(input: ExecuteLivePayShCallInput): string | un
   return input.endpointUrl?.trim() || getEnv("PAYSH_EXECUTION_URL");
 }
 
+function resolveExecutionMode(): PayShExecutionMode {
+  const raw = getEnv("PAYSH_EXECUTION_MODE")?.toLowerCase();
+  if (raw === "pay_cli") {
+    return "pay_cli";
+  }
+  return DEFAULT_EXECUTION_MODE;
+}
+
 function resolveMethod(input: ExecuteLivePayShCallInput): string {
   const explicit = input.method?.trim();
   return explicit || getEnv("PAYSH_EXECUTION_METHOD") || DEFAULT_METHOD;
 }
 
+function parseJsonFromEnv<T>(name: string): T | undefined {
+  const raw = getEnv(name);
+  if (!raw) {
+    return undefined;
+  }
+
+  const parsed = JSON.parse(raw) as unknown;
+  return parsed as T;
+}
+
 function buildHeaders(input: ExecuteLivePayShCallInput): Record<string, string> {
   const headers: Record<string, string> = { ...(input.headers ?? {}) };
+  const envHeaders = parseJsonFromEnv<Record<string, unknown>>("PAYSH_EXECUTION_HEADERS_JSON");
+  if (envHeaders && typeof envHeaders === "object") {
+    for (const [key, value] of Object.entries(envHeaders)) {
+      if (typeof value === "string") {
+        headers[key] = value;
+      } else if (value !== null && value !== undefined) {
+        headers[key] = String(value);
+      }
+    }
+  }
 
   const authHeader = getEnv("PAYSH_AUTH_HEADER");
   const authValue = getEnv("PAYSH_AUTH_VALUE");
@@ -74,6 +106,13 @@ function buildHeaders(input: ExecuteLivePayShCallInput): Record<string, string> 
   }
 
   return headers;
+}
+
+function resolveBody(input: ExecuteLivePayShCallInput): unknown {
+  if (input.body !== undefined) {
+    return input.body;
+  }
+  return parseJsonFromEnv<unknown>("PAYSH_EXECUTION_BODY_JSON");
 }
 
 function attachBodyIfNeeded(method: string, body: unknown, headers: Record<string, string>): BodyInit | undefined {
@@ -221,9 +260,15 @@ export async function executeLivePayShCall(
 
   const method = resolveMethod(input);
   const headers = buildHeaders(input);
+  const body = resolveBody(input);
+  const executionMode = resolveExecutionMode();
+
+  if (executionMode === "pay_cli") {
+    return executeViaPayCli({ input, endpointUrl, method, headers, body, startedAtMs });
+  }
 
   try {
-    const requestBody = attachBodyIfNeeded(method, input.body, headers);
+    const requestBody = attachBodyIfNeeded(method, body, headers);
     const response = await fetch(endpointUrl, {
       method,
       headers,
@@ -287,6 +332,130 @@ export async function executeLivePayShCall(
       parsedJsonAvailable: false,
       errorReason: error instanceof Error ? error.message : "live_pay_sh_execution_failed",
       mode: "live_pay_sh",
+    };
+  }
+}
+
+interface ExecuteViaPayCliInput {
+  input: ExecuteLivePayShCallInput;
+  endpointUrl: string;
+  method: string;
+  headers: Record<string, string>;
+  body: unknown;
+  startedAtMs: number;
+}
+
+function runCommand(
+  command: string,
+  args: string[],
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk: Buffer | string) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk: Buffer | string) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", (error) => {
+      reject(error);
+    });
+    child.on("close", (exitCode) => {
+      resolve({
+        exitCode: exitCode ?? 1,
+        stdout,
+        stderr,
+      });
+    });
+  });
+}
+
+async function hasPayCli(): Promise<boolean> {
+  try {
+    const result = await runCommand("pay", ["--version"]);
+    return result.exitCode === 0;
+  } catch {
+    return false;
+  }
+}
+
+async function executeViaPayCli({
+  input,
+  endpointUrl,
+  method,
+  headers,
+  body,
+  startedAtMs,
+}: ExecuteViaPayCliInput): Promise<LivePayShExecutionResult> {
+  const payExists = await hasPayCli();
+  if (!payExists) {
+    return withSkippedResult(input, startedAtMs, "pay_cli_missing");
+  }
+
+  const args: string[] = ["curl", endpointUrl];
+  args.push("-X", method.toUpperCase());
+
+  for (const [key, value] of Object.entries(headers)) {
+    args.push("-H", `${key}: ${value}`);
+  }
+
+  const bodyString = attachBodyIfNeeded(method, body, headers);
+  if (typeof bodyString === "string") {
+    args.push("--data", bodyString);
+  }
+
+  try {
+    const result = await runCommand("pay", args);
+    const completedMs = Date.now();
+    const stdoutPreview = sanitizePreview(result.stdout);
+    const stderrPreview = sanitizePreview(result.stderr);
+
+    let parsedJsonAvailable = false;
+    try {
+      JSON.parse(result.stdout);
+      parsedJsonAvailable = true;
+    } catch {
+      parsedJsonAvailable = false;
+    }
+
+    return {
+      providerId: input.providerId,
+      intent: input.intent,
+      endpointUrl,
+      startedAt: nowIso(startedAtMs),
+      completedAt: nowIso(completedMs),
+      latencyMs: completedMs - startedAtMs,
+      success: result.exitCode === 0,
+      exitCode: result.exitCode,
+      costUsd: null,
+      settlementReference: null,
+      responsePreview: stdoutPreview,
+      stderrPreview,
+      parsedJsonAvailable,
+      errorReason: result.exitCode === 0 ? undefined : "pay_cli_execution_failed",
+      mode: "live_pay_sh_cli",
+    };
+  } catch (error) {
+    const completedMs = Date.now();
+    return {
+      providerId: input.providerId,
+      intent: input.intent,
+      endpointUrl,
+      startedAt: nowIso(startedAtMs),
+      completedAt: nowIso(completedMs),
+      latencyMs: completedMs - startedAtMs,
+      success: false,
+      exitCode: 1,
+      costUsd: null,
+      settlementReference: null,
+      responsePreview: "",
+      stderrPreview: "",
+      parsedJsonAvailable: false,
+      errorReason: error instanceof Error ? error.message : "pay_cli_execution_failed",
+      mode: "live_pay_sh_cli",
     };
   }
 }

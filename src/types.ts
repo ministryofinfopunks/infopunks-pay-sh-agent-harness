@@ -100,7 +100,7 @@ export interface ProofLog extends RadarProofFields {
 }
 
 export type RequestedExecutionMode = "simulated" | "live";
-export type ExecutionMode = "simulated" | "live_pay_sh" | "skipped";
+export type ExecutionMode = "simulated" | "live_pay_sh" | "live_pay_sh_cli" | "skipped";
 export type ProviderExecutionMode = ExecutionMode;
 export type BenchmarkExecutionMode = ExecutionMode | "mixed";
 
@@ -113,9 +113,11 @@ export interface LivePayShExecutionResult {
   latencyMs: number;
   success: boolean;
   statusCode?: number;
+  exitCode?: number;
   costUsd: number | null;
   settlementReference: string | null;
   responsePreview: string;
+  stderrPreview?: string;
   parsedJsonAvailable: boolean;
   errorReason?: string;
   paymentRequired?: boolean;
@@ -133,7 +135,7 @@ export interface LivePayShExecutionResult {
     amounts?: string[];
     bazaarExtensionPresent?: boolean;
   };
-  mode: "live_pay_sh" | "skipped";
+  mode: "live_pay_sh" | "live_pay_sh_cli" | "skipped";
 }
 
 export interface ExecutionResult {
