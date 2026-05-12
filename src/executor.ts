@@ -82,6 +82,6 @@ export async function executeProviderCall(
     mode: liveResult.mode,
     statusCode: liveResult.statusCode,
     endpointUrl: liveResult.endpointUrl,
-    settlementReference: liveResult.settlementReference,
+    settlementReference: liveResult.settlementReference ?? undefined,
   };
 }

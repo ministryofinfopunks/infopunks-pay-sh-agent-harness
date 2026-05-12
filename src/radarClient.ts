@@ -52,12 +52,17 @@ export interface RadarPreflightInput {
 
 export interface RadarPreflightDecision {
   decision: string;
+  blockReason?: string | null;
   selectedProvider: string | null;
+  selectedProviderDetails?: Record<string, unknown>;
+  categoryMatch?: boolean;
+  capabilityMatch?: boolean;
+  requiredCapabilities?: string[];
+  dataMode?: string;
   rejectedProviders: string[];
   candidateCount: number;
   routingPolicy: string[];
   generatedAt?: string;
-  dataMode?: string;
   source?: string;
 }
 
@@ -178,7 +183,21 @@ function normalizePreflightDecision(payload: unknown): RadarPreflightDecision {
 
   return {
     decision: obj.decision,
+    blockReason:
+      obj.blockReason === null || typeof obj.blockReason === "string"
+        ? obj.blockReason
+        : undefined,
     selectedProvider,
+    selectedProviderDetails:
+      typeof obj.selectedProviderDetails === "object" && obj.selectedProviderDetails !== null
+        ? (obj.selectedProviderDetails as Record<string, unknown>)
+        : undefined,
+    categoryMatch: typeof obj.categoryMatch === "boolean" ? obj.categoryMatch : undefined,
+    capabilityMatch: typeof obj.capabilityMatch === "boolean" ? obj.capabilityMatch : undefined,
+    requiredCapabilities: Array.isArray(obj.requiredCapabilities)
+      ? obj.requiredCapabilities.map((item) => String(item))
+      : undefined,
+    dataMode: typeof obj.dataMode === "string" ? obj.dataMode : undefined,
     rejectedProviders,
     candidateCount:
       typeof obj.candidateCount === "number" && Number.isFinite(obj.candidateCount)
@@ -186,7 +205,6 @@ function normalizePreflightDecision(payload: unknown): RadarPreflightDecision {
         : rejectedProviders.length + (selectedProvider ? 1 : 0),
     routingPolicy,
     generatedAt: typeof obj.generatedAt === "string" ? obj.generatedAt : undefined,
-    dataMode: typeof obj.dataMode === "string" ? obj.dataMode : undefined,
     source: typeof obj.source === "string" ? obj.source : undefined,
   };
 }
@@ -194,6 +212,7 @@ function normalizePreflightDecision(payload: unknown): RadarPreflightDecision {
 export async function callRadarPreflight(input: RadarPreflightInput): Promise<RadarPreflightResult> {
   const baseUrl = process.env.RADAR_API_BASE_URL?.trim();
   const timeoutMs = getRadarTimeoutMs();
+  const radarDebug = process.env.RADAR_DEBUG === "true";
   if (!baseUrl) {
     return {
       available: false,
@@ -220,12 +239,38 @@ export async function callRadarPreflight(input: RadarPreflightInput): Promise<Ra
     }
 
     const json = (await response.json()) as Record<string, unknown>;
+    if (radarDebug) {
+      console.log("Radar preflight raw response:", JSON.stringify(json, null, 2));
+    }
     const payload = json.data ?? json;
+    if (radarDebug) {
+      console.log("Radar preflight normalized payload:", JSON.stringify(payload, null, 2));
+    }
+    const decision = normalizePreflightDecision(payload);
+    if (radarDebug) {
+      console.log(
+        "Radar preflight mapped fields:",
+        JSON.stringify(
+          {
+            decision: decision.decision,
+            blockReason: decision.blockReason,
+            selectedProvider: decision.selectedProvider,
+            selectedProviderDetails: decision.selectedProviderDetails,
+            categoryMatch: decision.categoryMatch,
+            capabilityMatch: decision.capabilityMatch,
+            requiredCapabilities: decision.requiredCapabilities,
+            dataMode: decision.dataMode,
+          },
+          null,
+          2,
+        ),
+      );
+    }
     return {
       available: true,
       mode: "live",
       endpoint,
-      decision: normalizePreflightDecision(payload),
+      decision,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

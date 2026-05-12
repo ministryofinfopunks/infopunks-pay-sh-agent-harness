@@ -17,9 +17,7 @@ function getIntentFromArgs(): string {
 
 function getExecutionStatusLabel(): "skipped" | "simulated" | "live_pay_sh" {
   if (process.env.LIVE_PAYSH_EXECUTION?.trim() === "true") {
-    return process.env.PAYSH_EXECUTION_API_BASE_URL?.trim() && process.env.PAYSH_EXECUTION_API_KEY?.trim()
-      ? "live_pay_sh"
-      : "skipped";
+    return process.env.PAYSH_EXECUTION_URL?.trim() ? "live_pay_sh" : "skipped";
   }
   return "simulated";
 }

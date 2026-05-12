@@ -118,6 +118,21 @@ export interface LivePayShExecutionResult {
   responsePreview: string;
   parsedJsonAvailable: boolean;
   errorReason?: string;
+  paymentRequired?: boolean;
+  paymentRequiredHeaderPresent?: boolean;
+  wwwAuthenticateHeaderPresent?: boolean;
+  paymentChallenge?: {
+    x402Version?: number;
+    resourceUrl?: string;
+    resourceMethod?: string;
+    resourceDescription?: string;
+    acceptsCount?: number;
+    networks?: string[];
+    assets?: string[];
+    payTo?: string[];
+    amounts?: string[];
+    bazaarExtensionPresent?: boolean;
+  };
   mode: "live_pay_sh" | "skipped";
 }
 

@@ -60,6 +60,31 @@ Live Radar preflight can be verified before live Pay.sh execution exists, but ou
 - Benchmark outcome proof requires `LIVE_PAYSH_EXECUTION=true` and real provider execution calls.
 - Never commit live secrets (API keys/tokens) to git.
 
+## Live market-data execution demo
+
+Live Radar preflight is working today. Live Pay.sh execution is optional and strictly env-gated.
+If `LIVE_PAYSH_EXECUTION=true` and `PAYSH_EXECUTION_URL` are not both configured, the demo will honestly skip execution and record that caveat in proof output.
+
+This is the first single-provider execution path for crypto/market-data style intent routing. It does not yet prove generalized Radar improvement across all providers or intents.
+
+Run preflight-only demo:
+
+```bash
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run demo:live-market-data
+```
+
+Run with optional live Pay.sh execution:
+
+```bash
+LIVE_PAYSH_EXECUTION=true \
+PAYSH_EXECUTION_URL=<gateway-url-from-pay.sh> \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run demo:live-market-data
+```
+
 ## Benchmark mode
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
@@ -100,8 +125,10 @@ npm run demo:compare
 - `RADAR_API_TIMEOUT_MS` (default `15000`): Radar API request timeout.
 - `PAYSH_API_BASE_URL` (optional): live Pay.sh catalog API base URL.
 - `LIVE_PAYSH_EXECUTION` (optional): set to `true` to attempt live Pay.sh execution.
-- `PAYSH_EXECUTION_API_BASE_URL` (optional): base URL for live execution endpoint.
-- `PAYSH_EXECUTION_API_KEY` (optional): bearer token for live execution endpoint.
+- `PAYSH_EXECUTION_URL` (optional unless live execution enabled): full URL for one live execution endpoint.
+- `PAYSH_EXECUTION_METHOD` (optional): HTTP method for execution call (default `GET`).
+- `PAYSH_AUTH_HEADER` (optional): auth header name for execution call.
+- `PAYSH_AUTH_VALUE` (optional): auth header value for execution call.
 - `MIN_TRUST_SCORE` (default `70`): routing threshold.
 - `REQUEST_TIMEOUT_MS` (optional legacy fallback when `RADAR_API_TIMEOUT_MS` is unset): external request timeout.
 
@@ -111,6 +138,7 @@ If base URLs are unset or unavailable, the harness falls back to clearly labeled
 
 - `npm run demo:route`: single Radar-assisted route decision + proof log.
 - `npm run demo:compare`: naive catalog route vs Radar-assisted route + proof log.
+- `npm run demo:live-market-data`: Radar preflight plus optional single-provider live Pay.sh execution demo + proof log.
 - `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.

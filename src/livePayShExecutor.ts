@@ -107,6 +107,104 @@ function toNumberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function toStringArray(values: unknown[]): string[] {
+  return values
+    .map((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed || null;
+      }
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return String(value);
+      }
+      return null;
+    })
+    .filter((value): value is string => value !== null);
+}
+
+function decodeBase64ToUtf8(value: string): string | null {
+  try {
+    return Buffer.from(value, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+function parsePaymentChallengeFromHeader(rawHeader: string | null): LivePayShExecutionResult["paymentChallenge"] {
+  if (!rawHeader) {
+    return undefined;
+  }
+
+  const decoded = decodeBase64ToUtf8(rawHeader);
+  if (!decoded) {
+    return undefined;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(decoded);
+  } catch {
+    return undefined;
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return undefined;
+  }
+
+  const challenge = parsed as Record<string, unknown>;
+  const resource =
+    typeof challenge.resource === "object" && challenge.resource !== null
+      ? (challenge.resource as Record<string, unknown>)
+      : null;
+  const accepts = Array.isArray(challenge.accepts) ? challenge.accepts : [];
+
+  const networks = toStringArray(
+    accepts.map((entry) =>
+      typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>).network : undefined,
+    ),
+  );
+  const assets = toStringArray(
+    accepts.map((entry) =>
+      typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>).asset : undefined,
+    ),
+  );
+  const payTo = toStringArray(
+    accepts.map((entry) =>
+      typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>).payTo : undefined,
+    ),
+  );
+  const amounts = toStringArray(
+    accepts.map((entry) =>
+      typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>).amount : undefined,
+    ),
+  );
+
+  const bazaarExtensionPresent =
+    (typeof challenge.extensions === "object" &&
+      challenge.extensions !== null &&
+      Object.prototype.hasOwnProperty.call(challenge.extensions, "bazaar")) ||
+    Object.prototype.hasOwnProperty.call(challenge, "bazaar");
+
+  const x402Version = toNumberOrNull(challenge.x402Version) ?? undefined;
+  const resourceUrl = toStringOrNull(resource?.url) ?? undefined;
+  const resourceMethod = toStringOrNull(resource?.method) ?? undefined;
+  const resourceDescription = toStringOrNull(resource?.description) ?? undefined;
+  const acceptsCount = accepts.length > 0 ? accepts.length : undefined;
+
+  return {
+    x402Version,
+    resourceUrl,
+    resourceMethod,
+    resourceDescription,
+    acceptsCount,
+    networks: networks.length > 0 ? Array.from(new Set(networks)) : undefined,
+    assets: assets.length > 0 ? Array.from(new Set(assets)) : undefined,
+    payTo: payTo.length > 0 ? Array.from(new Set(payTo)) : undefined,
+    amounts: amounts.length > 0 ? Array.from(new Set(amounts)) : undefined,
+    bazaarExtensionPresent,
+  };
+}
+
 export async function executeLivePayShCall(
   input: ExecuteLivePayShCallInput,
 ): Promise<LivePayShExecutionResult> {
@@ -131,6 +229,10 @@ export async function executeLivePayShCall(
       headers,
       body: requestBody,
     });
+    const paymentRequiredHeaderValue = response.headers.get("Payment-Required");
+    const paymentRequiredHeaderPresent = paymentRequiredHeaderValue !== null;
+    const wwwAuthenticateHeaderPresent = response.headers.get("WWW-Authenticate") !== null;
+    const paymentChallenge = parsePaymentChallengeFromHeader(paymentRequiredHeaderValue);
 
     const completedMs = Date.now();
     const rawBody = await response.text();
@@ -162,7 +264,11 @@ export async function executeLivePayShCall(
       settlementReference: toStringOrNull(parsedJson?.settlementReference),
       responsePreview,
       parsedJsonAvailable,
-      errorReason: response.ok ? undefined : `http_${response.status}`,
+      errorReason: response.ok ? undefined : response.status === 402 ? "payment_required" : `http_${response.status}`,
+      paymentRequired: response.status === 402,
+      paymentRequiredHeaderPresent,
+      wwwAuthenticateHeaderPresent,
+      paymentChallenge,
       mode: "live_pay_sh",
     };
   } catch (error) {
@@ -183,4 +289,8 @@ export async function executeLivePayShCall(
       mode: "live_pay_sh",
     };
   }
+}
+
+export function isLivePayShExecutionConfigured(): boolean {
+  return getEnv("LIVE_PAYSH_EXECUTION") === "true" && Boolean(getEnv("PAYSH_EXECUTION_URL"));
 }
