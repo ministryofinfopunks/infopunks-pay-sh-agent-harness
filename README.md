@@ -5,9 +5,33 @@ Minimal TypeScript/Node.js harness showing one thing: an agent can query **Infop
 > [!IMPORTANT]
 > This is a minimal demo harness. It demonstrates integration shape and decision logging, but real adoption still requires external agent usage against live systems.
 
+## Known live proof
+
+The current live proof path is:
+
+```txt
+intent -> live Radar preflight -> StableCrypto selected -> Pay.sh CLI execution -> live SOL/USD response
+```
+
+Proven route:
+
+- Provider: `merit-systems-stablecrypto-market-data`
+- Endpoint: `https://stablecrypto.dev/api/coingecko/price`
+- Execution mode: `pay_cli`
+- Result example: `{"solana":{"usd":95.33}}`
+
+Proof artifacts are kept in:
+
+- `proofs/`
+- `live-proofs/`
+- `benchmark-results/live-market-data/`
+
+Caveat: this is one market-data route, not a broad Pay.sh benchmark and not proof of Radar superiority over naive routing.
+The 30-trial live repeatability benchmark selected and executed this same StableCrypto route successfully in all 30 trials in the latest local run.
+
 ## Live Radar Preflight Integration
 
-When `RADAR_API_BASE_URL` is set, the harness calls the live machine-callable Radar endpoint:
+When `RADAR_API_BASE_URL` is set (current value: `https://infopunks-pay-sh-radar.onrender.com`), the harness calls the live machine-callable Radar endpoint:
 
 - `POST {RADAR_API_BASE_URL}/v1/preflight`
 
@@ -34,13 +58,30 @@ curl -X POST "$RADAR_API_BASE_URL/v1/preflight" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -d '{
-    "intent": "select provider for a payout request",
+    "intent": "get crypto market data",
+    "category": "finance",
     "constraints": {
       "minTrustScore": 70,
-      "maxLatencyMs": 250,
-      "maxCostUsd": 0.01
-    },
-    "candidateProviders": ["paysh-alpha", "paysh-beta", "paysh-gamma", "paysh-delta"]
+      "maxLatencyMs": 3000,
+      "maxCostUsd": 0.05
+    }
+  }'
+```
+
+Direct backend version:
+
+```bash
+curl -X POST "https://infopunks-pay-sh-radar.onrender.com/v1/preflight" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "intent": "get crypto market data",
+    "category": "finance",
+    "constraints": {
+      "minTrustScore": 70,
+      "maxLatencyMs": 3000,
+      "maxCostUsd": 0.05
+    }
   }'
 ```
 
@@ -65,7 +106,8 @@ Live Radar preflight can be verified before live Pay.sh execution exists, but ou
 Live Radar preflight is working today. Live Pay.sh execution is optional and strictly env-gated.
 If `LIVE_PAYSH_EXECUTION=true` and `PAYSH_EXECUTION_URL` are not both configured, the demo will honestly skip execution and record that caveat in proof output.
 
-This is the first single-provider execution path for crypto/market-data style intent routing. It does not yet prove generalized Radar improvement across all providers or intents.
+This demo uses the proven StableCrypto market-data route. In the first successful run, Radar selected `merit-systems-stablecrypto-market-data`, the harness executed the provider through Pay.sh CLI, and StableCrypto returned live SOL/USD data.
+This proves one Radar-selected Pay.sh route is executable end-to-end. It does not prove Radar outperforms naive routing yet.
 
 Run preflight-only demo:
 
@@ -75,18 +117,20 @@ RADAR_API_TIMEOUT_MS=15000 \
 npm run demo:live-market-data
 ```
 
-Run with optional live Pay.sh execution:
+Run with optional live Pay.sh execution over plain HTTP:
 
 ```bash
 LIVE_PAYSH_EXECUTION=true \
-PAYSH_EXECUTION_URL=<gateway-url-from-pay.sh> \
+PAYSH_EXECUTION_URL=<your-pay-sh-gateway-endpoint> \
+PAYSH_EXECUTION_METHOD=POST \
+PAYSH_EXECUTION_BODY_JSON='<json-body>' \
 MARKET_DATA_MAX_LATENCY_MS=3000 \
 RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
 RADAR_API_TIMEOUT_MS=15000 \
 npm run demo:live-market-data
 ```
 
-Run with live Pay.sh CLI execution (`pay curl`):
+### Proven StableCrypto endpoint
 
 ```bash
 PAYSH_EXECUTION_MODE=pay_cli \
@@ -130,7 +174,7 @@ Artifacts are written to:
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
 
-Benchmark mode measures whether Radar-assisted routing produces better outcomes across repeated trials.
+Benchmark mode provides the measurement scaffold for repeated trials. The live market-data benchmark currently measures repeatability of one Radar-selected route. It does not yet prove Radar-assisted routing beats naive routing.
 
 Pay.sh execution remains simulated unless live execution is explicitly enabled and configured.
 
@@ -146,8 +190,8 @@ npm run benchmark -- --trials=50
 ```
 
 Benchmark writes local generated artifacts to `benchmark-results/latest.json`, `benchmark-results/latest.csv`, and `benchmark-results/summary.md`. These `latest` artifacts are git-ignored so repeated runs do not dirty the repo.
-
-A committed example summary is kept at `benchmark-results/sample-summary.md`.
+Live market-data benchmark artifacts are written under `benchmark-results/live-market-data/`.
+The latest committed live repeatability summary is available at `benchmark-results/live-market-data/summary.md`.
 
 ## Install
 
@@ -162,9 +206,9 @@ npm run demo:compare
 
 `.env` values:
 
-- `RADAR_API_BASE_URL` (optional): live Radar API base URL.
+- `RADAR_API_BASE_URL` (optional): live Radar API base URL (`https://infopunks-pay-sh-radar.onrender.com`).
 - `RADAR_API_TIMEOUT_MS` (default `15000`): Radar API request timeout.
-- `PAYSH_API_BASE_URL` (optional): live Pay.sh catalog API base URL.
+- `PAYSH_API_BASE_URL` (optional): experimental catalog API override. Not required for the proven StableCrypto execution demo.
 - `LIVE_PAYSH_EXECUTION` (optional): set to `true` to attempt live Pay.sh execution.
 - `PAYSH_EXECUTION_URL` (optional unless live execution enabled): full URL for one live execution endpoint.
 - `PAYSH_EXECUTION_MODE` (default `http`): execution mode (`http` or `pay_cli`).
@@ -180,10 +224,12 @@ If base URLs are unset or unavailable, the harness falls back to clearly labeled
 
 ## Use as an agent tool
 
-This harness now exposes two importable functions for agent workflows:
+This repo exposes two functions for local agent workflows:
 
 - `callRadarPreflight` from `src/index.ts`
 - `executeLivePayShCall` from `src/index.ts`
+
+Once packaged, these can become the public import surface.
 
 Example artifacts for agent adoption:
 
@@ -244,17 +290,23 @@ Latency semantics:
 
 ## What this proves
 
-- Agents can query Radar before spending through Pay.sh.
-- Pre-flight policy can block/redirect risky naive routes.
-- Each decision can be logged as JSON proof (`./proofs/*.json`).
-- Live API clients can replace mocks without changing overall harness flow.
+- Agents can query live Infopunks Radar before attempting a Pay.sh call.
+- Radar can select a live Pay.sh provider from the live catalog.
+- The harness can execute a Radar-selected StableCrypto route through Pay.sh CLI.
+- The StableCrypto route has returned live SOL/USD market data.
+- The harness can write machine-readable proof logs for preflight and execution.
+- The live market-data benchmark can repeatedly execute one Radar-selected route.
+
+This proves repeatability for one narrow market-data route. It does not yet prove Radar improves outcomes versus naive routing.
 
 ## What this does not prove yet
 
-- Real-world settlement outcomes.
+- Radar superiority over naive routing.
+- Lower failure rate, lower cost, or better latency versus naive provider selection.
+- Multi-provider or multi-intent reliability.
+- External builder adoption.
 - Production SLA behavior.
-- Live schema compatibility without integration testing.
-- Adoption or business impact without external agent usage.
+- Full settlement/transaction-reference capture inside the harness.
 
 ## Repository Layout
 
