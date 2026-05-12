@@ -102,6 +102,30 @@ npm run demo:live-market-data
 
 Latency caveat for CLI mode: `PAYSH_EXECUTION_MODE=pay_cli` latency includes CLI process startup, payment flow, wallet interaction, and network overhead. Do not interpret it as raw provider latency.
 
+## Live market-data benchmark
+
+Run repeated live Radar preflight + Pay.sh CLI execution trials for the stablecrypto market-data route:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+PAYSH_EXECUTION_URL=https://stablecrypto.dev/api/coingecko/price \
+PAYSH_EXECUTION_METHOD=POST \
+PAYSH_EXECUTION_BODY_JSON='{"ids":["solana"],"vs_currencies":["usd"]}' \
+MARKET_DATA_MAX_LATENCY_MS=3000 \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run benchmark:live-market-data -- --trials=30
+```
+
+`LIVE_MARKET_DATA_TRIALS` can be used instead of `--trials`.
+
+Artifacts are written to:
+
+- `benchmark-results/live-market-data/latest.json`
+- `benchmark-results/live-market-data/latest.csv`
+- `benchmark-results/live-market-data/summary.md`
+
 ## Benchmark mode
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
@@ -159,6 +183,7 @@ If base URLs are unset or unavailable, the harness falls back to clearly labeled
 - `npm run demo:route`: single Radar-assisted route decision + proof log.
 - `npm run demo:compare`: naive catalog route vs Radar-assisted route + proof log.
 - `npm run demo:live-market-data`: Radar preflight plus optional single-provider live Pay.sh execution demo + proof log.
+- `npm run benchmark:live-market-data`: repeated live market-data route benchmark + JSON/CSV/Markdown reports.
 - `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.

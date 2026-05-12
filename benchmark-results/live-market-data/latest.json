@@ -1,0 +1,891 @@
+{
+  "summary": {
+    "totalTrials": 30,
+    "routeApprovedCount": 30,
+    "routeBlockedCount": 0,
+    "executionAttemptedCount": 30,
+    "executionSuccessCount": 30,
+    "executionFailureCount": 0,
+    "parsedJsonSuccessCount": 30,
+    "avgExecutionLatencyMs": 5745.3,
+    "medianExecutionLatencyMs": 5183.5,
+    "minExecutionLatencyMs": 3885,
+    "maxExecutionLatencyMs": 12064,
+    "uniqueSelectedProviders": [
+      "merit-systems-stablecrypto-market-data"
+    ],
+    "caveat": "This benchmark demonstrates repeatability of one Radar-selected route, not naive-vs-Radar superiority."
+  },
+  "trials": [
+    {
+      "trialId": 1,
+      "timestamp": "2026-05-12T13:08:31.191Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 8674,
+      "cliTotalLatencyMs": 8674,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 2,
+      "timestamp": "2026-05-12T13:08:40.442Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 10764,
+      "cliTotalLatencyMs": 10764,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 3,
+      "timestamp": "2026-05-12T13:09:01.527Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4959,
+      "cliTotalLatencyMs": 4959,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 4,
+      "timestamp": "2026-05-12T13:09:07.011Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4327,
+      "cliTotalLatencyMs": 4327,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 5,
+      "timestamp": "2026-05-12T13:09:11.876Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5855,
+      "cliTotalLatencyMs": 5855,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 6,
+      "timestamp": "2026-05-12T13:09:18.135Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 3885,
+      "cliTotalLatencyMs": 3885,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 7,
+      "timestamp": "2026-05-12T13:09:22.451Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 6670,
+      "cliTotalLatencyMs": 6670,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 8,
+      "timestamp": "2026-05-12T13:09:29.526Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4367,
+      "cliTotalLatencyMs": 4367,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 9,
+      "timestamp": "2026-05-12T13:09:34.576Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4117,
+      "cliTotalLatencyMs": 4117,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.28}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 10,
+      "timestamp": "2026-05-12T13:09:39.450Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4627,
+      "cliTotalLatencyMs": 4627,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 11,
+      "timestamp": "2026-05-12T13:09:53.374Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4180,
+      "cliTotalLatencyMs": 4180,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 12,
+      "timestamp": "2026-05-12T13:09:58.150Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 6325,
+      "cliTotalLatencyMs": 6325,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 13,
+      "timestamp": "2026-05-12T13:10:04.897Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 3920,
+      "cliTotalLatencyMs": 3920,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 14,
+      "timestamp": "2026-05-12T13:10:09.254Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4104,
+      "cliTotalLatencyMs": 4104,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 15,
+      "timestamp": "2026-05-12T13:10:13.939Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4829,
+      "cliTotalLatencyMs": 4829,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 16,
+      "timestamp": "2026-05-12T13:10:20.186Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5109,
+      "cliTotalLatencyMs": 5109,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 17,
+      "timestamp": "2026-05-12T13:10:25.892Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 6158,
+      "cliTotalLatencyMs": 6158,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 18,
+      "timestamp": "2026-05-12T13:10:36.807Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5117,
+      "cliTotalLatencyMs": 5117,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 19,
+      "timestamp": "2026-05-12T13:10:42.368Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 59,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 12064,
+      "cliTotalLatencyMs": 12064,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 20,
+      "timestamp": "2026-05-12T13:11:02.026Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 6712,
+      "cliTotalLatencyMs": 6712,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 21,
+      "timestamp": "2026-05-12T13:11:09.284Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5168,
+      "cliTotalLatencyMs": 5168,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 22,
+      "timestamp": "2026-05-12T13:11:15.492Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5901,
+      "cliTotalLatencyMs": 5901,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 23,
+      "timestamp": "2026-05-12T13:11:21.899Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 6910,
+      "cliTotalLatencyMs": 6910,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 24,
+      "timestamp": "2026-05-12T13:11:29.381Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5199,
+      "cliTotalLatencyMs": 5199,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 25,
+      "timestamp": "2026-05-12T13:11:35.054Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5361,
+      "cliTotalLatencyMs": 5361,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 26,
+      "timestamp": "2026-05-12T13:11:40.878Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 4572,
+      "cliTotalLatencyMs": 4572,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 27,
+      "timestamp": "2026-05-12T13:11:56.137Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5118,
+      "cliTotalLatencyMs": 5118,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.3}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 28,
+      "timestamp": "2026-05-12T13:12:01.711Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 6319,
+      "cliTotalLatencyMs": 6319,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.26}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 29,
+      "timestamp": "2026-05-12T13:12:08.473Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5816,
+      "cliTotalLatencyMs": 5816,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.26}}",
+      "errorReason": null,
+      "settlementReference": null
+    },
+    {
+      "trialId": 30,
+      "timestamp": "2026-05-12T13:12:14.769Z",
+      "radarDecision": "route_approved",
+      "selectedProvider": "merit-systems-stablecrypto-market-data",
+      "selectedProviderDetails": {
+        "providerId": "merit-systems-stablecrypto-market-data",
+        "name": "StableCrypto",
+        "category": "finance",
+        "capabilities": [
+          "analytics",
+          "market_data"
+        ],
+        "trustScore": 98,
+        "signalScore": 40,
+        "latencyMs": 67,
+        "costUsd": 0.01,
+        "degradationFlag": false
+      },
+      "executionMode": "live_pay_sh_cli",
+      "executionSuccess": true,
+      "exitCode": 0,
+      "executionLatencyMs": 5232,
+      "cliTotalLatencyMs": 5232,
+      "parsedJsonAvailable": true,
+      "responsePreview": "{\"solana\":{\"usd\":95.26}}",
+      "errorReason": null,
+      "settlementReference": null
+    }
+  ]
+}
