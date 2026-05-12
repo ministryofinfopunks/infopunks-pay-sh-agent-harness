@@ -1,0 +1,21 @@
+{
+  "name": "infopunks-pay-sh-agent-harness",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Minimal TypeScript harness demonstrating Radar-assisted Pay.sh provider routing.",
+  "license": "MIT",
+  "scripts": {
+    "demo:route": "ts-node src/demoRoute.ts",
+    "demo:compare": "ts-node src/demoCompare.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
