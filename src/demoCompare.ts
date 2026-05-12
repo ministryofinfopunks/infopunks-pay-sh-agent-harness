@@ -51,6 +51,15 @@ function shouldOmitCandidatesForPreflight(): boolean {
   return Boolean(process.env.RADAR_API_BASE_URL?.trim());
 }
 
+function getExecutionStatusLabel(): "skipped" | "simulated" | "live_pay_sh" {
+  if (process.env.LIVE_PAYSH_EXECUTION?.trim() === "true") {
+    return process.env.PAYSH_EXECUTION_API_BASE_URL?.trim() && process.env.PAYSH_EXECUTION_API_KEY?.trim()
+      ? "live_pay_sh"
+      : "skipped";
+  }
+  return "simulated";
+}
+
 function buildRoutingFromPreflight(
   providers: ProviderCatalogEntry[],
   preflight: RadarPreflightResult,
@@ -215,7 +224,8 @@ async function main(): Promise<void> {
   console.log("\n=== Naive vs Radar-Assisted Comparison ===");
   console.log(`Intent: ${userIntent}`);
   console.log(`Catalog mode: ${catalogMode}`);
-  console.log(`Radar mode: ${radarMode}`);
+  console.log(`Preflight mode: ${radarMode}`);
+  console.log(`Execution mode: ${getExecutionStatusLabel()}`);
   console.log(`Comparison validity: ${comparisonValidity}`);
   console.log(`Candidate provider source: ${candidateProviderSource}`);
   console.log(`Radar endpoint: ${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`);

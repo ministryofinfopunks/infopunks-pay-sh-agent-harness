@@ -1,4 +1,5 @@
 import { executeProviderCall } from "./executor";
+import { isLivePayShExecutionConfigured } from "./livePayShExecutor";
 import { fetchPayShCatalog } from "./payShClient";
 import { saveProofLog } from "./proofLog";
 import {
@@ -10,16 +11,17 @@ import {
 import { buildBenchmarkSummary, writeBenchmarkReport } from "./benchmarkReport";
 import { routeProvider } from "./router";
 import {
+  BenchmarkExecutionMode,
   BenchmarkSummary,
   BenchmarkTrial,
   CandidateProvider,
   CandidateProviderSource,
   CatalogMode,
   ComparisonValidity,
-  ExecutionMode,
   ProviderCatalogEntry,
   RadarMode,
   RejectedProvider,
+  RequestedExecutionMode,
   RoutingResult,
 } from "./types";
 
@@ -144,6 +146,13 @@ function buildRoutingFromPreflight(
   };
 }
 
+function deriveTrialExecutionMode(naiveMode: string, radarMode: string): BenchmarkExecutionMode {
+  if (naiveMode === radarMode) {
+    return naiveMode as BenchmarkExecutionMode;
+  }
+  return "mixed";
+}
+
 export interface BenchmarkRunResult {
   trialCount: number;
   trials: BenchmarkTrial[];
@@ -158,10 +167,12 @@ export interface BenchmarkRunResult {
 export async function runBenchmark(options?: {
   trialsArg?: string;
   intent?: string;
-  mode?: ExecutionMode;
+  mode?: RequestedExecutionMode;
 }): Promise<BenchmarkRunResult> {
   const trialCount = parseTrialCount(options?.trialsArg);
-  const mode = options?.mode ?? "simulated";
+  const requestedMode = options?.mode ?? "simulated";
+  const liveExecutionConfigured = isLivePayShExecutionConfigured();
+  const mode: RequestedExecutionMode = liveExecutionConfigured ? "live" : requestedMode;
   const omitCandidates = shouldOmitCandidatesForPreflight();
   const trials: BenchmarkTrial[] = [];
 
@@ -202,6 +213,7 @@ export async function runBenchmark(options?: {
 
     const naiveExecution = await executeProviderCall(naiveCandidate, intent, mode);
     const radarExecution = await executeProviderCall(radarCandidate, intent, mode);
+    const executionMode = deriveTrialExecutionMode(naiveExecution.mode, radarExecution.mode);
 
     const radarMode: RadarMode = preflightRouting
       ? "live"
@@ -226,6 +238,7 @@ export async function runBenchmark(options?: {
       radarProviderId: radarCandidate?.id ?? null,
       naive: naiveExecution,
       radar: radarExecution,
+      executionMode,
       winner,
       radarAvoidedFailure:
         comparisonValidity === "live_preflight_only"
@@ -246,6 +259,7 @@ export async function runBenchmark(options?: {
     console.log(
       `[benchmark][trial ${trialNumber}] catalog mode=${catalogMode} comparisonValidity=${comparisonValidity} candidateProviderSource=${candidateProviderSource}`,
     );
+    console.log(`[benchmark][trial ${trialNumber}] execution mode=${executionMode}`);
     console.log(
       `[benchmark][trial ${trialNumber}] radar decision=${preflightResult.decision?.decision ?? "local-router"} selected=${radarCandidate?.id ?? "none"}`,
     );
@@ -272,6 +286,8 @@ export async function runBenchmark(options?: {
       radarSignalsUsed: routed.radarSignalsUsed,
       routingPolicy: routed.routingPolicy,
       simulatedOrLiveResult: mode,
+      executionMode,
+      settlementReference: radarExecution.settlementReference,
       latencyMs: Math.max(naiveExecution.latencyMs, radarExecution.latencyMs),
       success: radarExecution.success,
       comparisonValidity,
@@ -302,15 +318,15 @@ export async function runBenchmark(options?: {
             : trial.radarAvoidedFailure
             ? "Radar-assisted path succeeded where naive path failed."
             : trial.winner === "radar"
-              ? "Radar-assisted path produced stronger simulated execution outcomes."
+              ? "Radar-assisted path produced stronger execution outcomes."
               : trial.winner === "naive"
-                ? "Naive path outperformed Radar-assisted path in this simulated trial."
-                : "Both paths were equivalent in this simulated trial.",
+                ? "Naive path outperformed Radar-assisted path in this trial."
+                : "Both paths were equivalent in this trial.",
       },
     });
   }
 
-  const summary = buildBenchmarkSummary(trials);
+  const summary = buildBenchmarkSummary(trials, liveExecutionConfigured);
   const reportPaths = await writeBenchmarkReport(trials, summary);
   return { trialCount, trials, summary, reportPaths };
 }

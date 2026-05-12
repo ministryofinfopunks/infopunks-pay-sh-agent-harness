@@ -53,15 +53,22 @@ curl -X POST "$RADAR_API_BASE_URL/v1/preflight" \
 `demo:compare` and `benchmark` prefer backend preflight decisions when available, and automatically fall back to local routing otherwise.
 Live Radar preflight can be verified before live Pay.sh execution exists, but outcome comparisons are only meaningful when both naive and Radar paths use the same catalog/execution source.
 
+## Live Pay.sh execution status
+
+- Radar preflight is live-capable today via `RADAR_API_BASE_URL`.
+- Pay.sh execution is env-gated and only attempted when `LIVE_PAYSH_EXECUTION=true`.
+- Benchmark outcome proof requires `LIVE_PAYSH_EXECUTION=true` and real provider execution calls.
+- Never commit live secrets (API keys/tokens) to git.
+
 ## Benchmark mode
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
 
 Benchmark mode measures whether Radar-assisted routing produces better outcomes across repeated trials.
 
-The execution layer in this harness is still simulated unless live execution is implemented.
+Pay.sh execution remains simulated unless live execution is explicitly enabled and configured.
 
-This still does not prove live Pay.sh execution outcomes.
+This still does not prove live Pay.sh settlement outcomes when execution is skipped or simulated.
 If the run mixes mock and live sources (for example, mock Pay.sh catalog with live Radar preflight), the harness marks benchmark validity as `live_preflight_only` and avoids reporting Radar vs naive wins as a real comparison.
 
 ### Run benchmark
@@ -92,6 +99,9 @@ npm run demo:compare
 - `RADAR_API_BASE_URL` (optional): live Radar API base URL.
 - `RADAR_API_TIMEOUT_MS` (default `15000`): Radar API request timeout.
 - `PAYSH_API_BASE_URL` (optional): live Pay.sh catalog API base URL.
+- `LIVE_PAYSH_EXECUTION` (optional): set to `true` to attempt live Pay.sh execution.
+- `PAYSH_EXECUTION_API_BASE_URL` (optional): base URL for live execution endpoint.
+- `PAYSH_EXECUTION_API_KEY` (optional): bearer token for live execution endpoint.
 - `MIN_TRUST_SCORE` (default `70`): routing threshold.
 - `REQUEST_TIMEOUT_MS` (optional legacy fallback when `RADAR_API_TIMEOUT_MS` is unset): external request timeout.
 

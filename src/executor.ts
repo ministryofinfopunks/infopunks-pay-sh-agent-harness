@@ -1,4 +1,5 @@
-import { CandidateProvider, ExecutionMode, ExecutionResult } from "./types";
+import { executeLivePayShCall } from "./livePayShExecutor";
+import { CandidateProvider, ExecutionResult, RequestedExecutionMode } from "./types";
 
 function hashToUnitInterval(input: string): number {
   let hash = 2166136261;
@@ -51,7 +52,7 @@ function simulateProviderCall(provider: CandidateProvider, intent: string): Exec
 export async function executeProviderCall(
   provider: CandidateProvider | null,
   intent: string,
-  mode: ExecutionMode,
+  mode: RequestedExecutionMode,
 ): Promise<ExecutionResult> {
   if (!provider) {
     return {
@@ -60,13 +61,27 @@ export async function executeProviderCall(
       costUsd: 0,
       qualityScore: 0,
       errorReason: "noProviderSelected",
-      mode,
+      mode: mode === "live" ? "skipped" : "simulated",
     };
   }
 
-  if (mode === "live") {
-    throw new Error("Live execution mode is not implemented. Use simulated mode for benchmark scaffolding.");
+  if (mode !== "live") {
+    return simulateProviderCall(provider, intent);
   }
 
-  return simulateProviderCall(provider, intent);
+  const liveResult = await executeLivePayShCall({
+    providerId: provider.id,
+    intent,
+  });
+  return {
+    success: liveResult.success,
+    latencyMs: liveResult.latencyMs,
+    costUsd: liveResult.costUsd ?? 0,
+    qualityScore: liveResult.success ? 100 : 0,
+    errorReason: liveResult.errorReason,
+    mode: liveResult.mode,
+    statusCode: liveResult.statusCode,
+    endpointUrl: liveResult.endpointUrl,
+    settlementReference: liveResult.settlementReference,
+  };
 }

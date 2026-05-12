@@ -82,6 +82,8 @@ export interface ProofLog extends RadarProofFields {
   radarSignalsUsed: RadarSignal[];
   routingPolicy: string[];
   simulatedOrLiveResult: string;
+  executionMode?: BenchmarkExecutionMode;
+  settlementReference?: string;
   latencyMs: number;
   success: boolean;
   comparisonValidity?: ComparisonValidity;
@@ -97,7 +99,27 @@ export interface ProofLog extends RadarProofFields {
   };
 }
 
-export type ExecutionMode = "simulated" | "live";
+export type RequestedExecutionMode = "simulated" | "live";
+export type ExecutionMode = "simulated" | "live_pay_sh" | "skipped";
+export type ProviderExecutionMode = ExecutionMode;
+export type BenchmarkExecutionMode = ExecutionMode | "mixed";
+
+export interface LivePayShExecutionResult {
+  providerId: string;
+  intent: string;
+  endpointUrl?: string;
+  startedAt: string;
+  completedAt: string;
+  latencyMs: number;
+  success: boolean;
+  statusCode?: number;
+  costUsd: number | null;
+  settlementReference: string | null;
+  responsePreview: string;
+  parsedJsonAvailable: boolean;
+  errorReason?: string;
+  mode: "live_pay_sh" | "skipped";
+}
 
 export interface ExecutionResult {
   success: boolean;
@@ -105,7 +127,10 @@ export interface ExecutionResult {
   costUsd: number;
   qualityScore: number;
   errorReason?: string;
-  mode: ExecutionMode;
+  mode: ProviderExecutionMode;
+  statusCode?: number;
+  endpointUrl?: string;
+  settlementReference?: string;
 }
 
 export interface BenchmarkTrial {
@@ -115,6 +140,7 @@ export interface BenchmarkTrial {
   radarProviderId: string | null;
   naive: ExecutionResult;
   radar: ExecutionResult;
+  executionMode: BenchmarkExecutionMode;
   winner: "naive" | "radar" | "tie";
   radarAvoidedFailure: boolean;
   comparisonValidity?: ComparisonValidity;
@@ -137,5 +163,8 @@ export interface BenchmarkSummary {
   radarWinCount: number;
   naiveWinCount: number;
   tieCount: number;
+  executionMode?: BenchmarkExecutionMode;
+  liveExecutionSkippedCount: number;
+  liveExecutionConfigured: boolean;
   comparisonValidity?: ComparisonValidity;
 }

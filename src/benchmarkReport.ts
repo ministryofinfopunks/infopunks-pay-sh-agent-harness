@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { BenchmarkSummary, BenchmarkTrial } from "./types";
+import { BenchmarkExecutionMode, BenchmarkSummary, BenchmarkTrial } from "./types";
 
 const BENCHMARK_RESULTS_DIR = path.resolve(process.cwd(), "benchmark-results");
 
@@ -16,7 +16,18 @@ function round(value: number, digits: number): number {
   return Math.round(value * factor) / factor;
 }
 
-export function buildBenchmarkSummary(trials: BenchmarkTrial[]): BenchmarkSummary {
+function deriveOverallExecutionMode(trials: BenchmarkTrial[]): BenchmarkExecutionMode {
+  const uniqueModes = new Set(trials.map((trial) => trial.executionMode));
+  if (uniqueModes.size === 1) {
+    return trials[0]?.executionMode ?? "simulated";
+  }
+  return "mixed";
+}
+
+export function buildBenchmarkSummary(
+  trials: BenchmarkTrial[],
+  liveExecutionConfigured: boolean,
+): BenchmarkSummary {
   const totalTrials = trials.length;
   const naiveSuccesses = trials.filter((trial) => trial.naive.success).length;
   const radarSuccesses = trials.filter((trial) => trial.radar.success).length;
@@ -29,6 +40,9 @@ export function buildBenchmarkSummary(trials: BenchmarkTrial[]): BenchmarkSummar
   const radarWinCount = hasMixedSources ? 0 : trials.filter((trial) => trial.winner === "radar").length;
   const naiveWinCount = hasMixedSources ? 0 : trials.filter((trial) => trial.winner === "naive").length;
   const tieCount = hasMixedSources ? 0 : trials.filter((trial) => trial.winner === "tie").length;
+  const liveExecutionSkippedCount = trials.filter(
+    (trial) => trial.naive.mode === "skipped" || trial.radar.mode === "skipped",
+  ).length;
 
   return {
     totalTrials,
@@ -44,6 +58,9 @@ export function buildBenchmarkSummary(trials: BenchmarkTrial[]): BenchmarkSummar
     radarWinCount,
     naiveWinCount,
     tieCount,
+    executionMode: deriveOverallExecutionMode(trials),
+    liveExecutionSkippedCount,
+    liveExecutionConfigured,
     comparisonValidity: hasMixedSources ? "live_preflight_only" : "valid_simulated_same_catalog",
   };
 }
@@ -62,6 +79,11 @@ function trialsToCsv(trials: BenchmarkTrial[]): string {
     "radarCostUsd",
     "naiveQualityScore",
     "radarQualityScore",
+    "naiveMode",
+    "radarMode",
+    "executionMode",
+    "naiveSettlementReference",
+    "radarSettlementReference",
     "radarAvoidedFailure",
     "winner",
     "comparisonValidity",
@@ -84,6 +106,11 @@ function trialsToCsv(trials: BenchmarkTrial[]): string {
       trial.radar.costUsd,
       trial.naive.qualityScore,
       trial.radar.qualityScore,
+      trial.naive.mode,
+      trial.radar.mode,
+      trial.executionMode,
+      trial.naive.settlementReference ?? "",
+      trial.radar.settlementReference ?? "",
       trial.radarAvoidedFailure,
       trial.winner,
       trial.comparisonValidity ?? "",
@@ -103,6 +130,10 @@ function summaryToMarkdown(summary: BenchmarkSummary): string {
     "Simulated benchmark shows the measurement framework and expected policy behavior.",
     "",
     `- total trials: ${summary.totalTrials}`,
+    `- preflight mode: ${summary.comparisonValidity === "live_preflight_only" ? "live-preflight-only" : "mixed-or-local"}`,
+    `- execution mode: ${summary.executionMode ?? "simulated"}`,
+    `- live execution configured: ${summary.liveExecutionConfigured}`,
+    `- live execution skipped count: ${summary.liveExecutionSkippedCount}`,
     `- naive success rate: ${summary.naiveSuccessRate}`,
     `- radar success rate: ${summary.radarSuccessRate}`,
     `- naive avg latency: ${summary.naiveAvgLatencyMs}ms`,

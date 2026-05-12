@@ -13,9 +13,14 @@ function parseTrialsArg(): string | undefined {
 async function main(): Promise<void> {
   const result = await runBenchmark({ trialsArg: parseTrialsArg(), mode: "simulated" });
 
-  console.log("\n=== Naive vs Radar Benchmark (Simulated) ===");
-  console.log("Simulated benchmark shows the measurement framework and expected policy behavior.");
+  const preflightMode = result.summary.comparisonValidity === "live_preflight_only" ? "live" : "mock-or-fallback";
+
+  console.log("\n=== Naive vs Radar Benchmark ===");
   console.log(`Trials: ${result.summary.totalTrials}`);
+  console.log(`Preflight mode: ${preflightMode}`);
+  console.log(`Execution mode: ${result.summary.executionMode ?? "simulated"}`);
+  console.log(`Live execution configured: ${result.summary.liveExecutionConfigured}`);
+  console.log(`Pay.sh execution skipped count: ${result.summary.liveExecutionSkippedCount}`);
   console.log(`Naive success rate: ${(result.summary.naiveSuccessRate * 100).toFixed(2)}%`);
   console.log(`Radar success rate: ${(result.summary.radarSuccessRate * 100).toFixed(2)}%`);
   console.log(

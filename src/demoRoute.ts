@@ -15,6 +15,15 @@ function getIntentFromArgs(): string {
   return input || "send payout to a verified provider";
 }
 
+function getExecutionStatusLabel(): "skipped" | "simulated" | "live_pay_sh" {
+  if (process.env.LIVE_PAYSH_EXECUTION?.trim() === "true") {
+    return process.env.PAYSH_EXECUTION_API_BASE_URL?.trim() && process.env.PAYSH_EXECUTION_API_KEY?.trim()
+      ? "live_pay_sh"
+      : "skipped";
+  }
+  return "simulated";
+}
+
 async function main(): Promise<void> {
   const userIntent = getIntentFromArgs();
   const startedAt = Date.now();
@@ -69,7 +78,8 @@ async function main(): Promise<void> {
   if (catalogResult.warning) {
     console.log(`Catalog note: ${catalogResult.warning}`);
   }
-  console.log(`Radar mode: ${preflightResult.available ? "live" : preflightResult.mode}`);
+  console.log(`Preflight mode: ${preflightResult.available ? "live" : preflightResult.mode}`);
+  console.log(`Execution mode: ${getExecutionStatusLabel()}`);
   console.log(`Radar endpoint: ${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`);
   console.log(`Radar timeout: ${getRadarTimeoutMs()}ms`);
   console.log(`Radar decision: ${preflightResult.decision?.decision ?? "local-router"}`);
