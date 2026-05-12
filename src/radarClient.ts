@@ -1,6 +1,6 @@
 import { DataMode, RadarSignal } from "./types";
 
-const DEFAULT_TIMEOUT_MS = 2500;
+const DEFAULT_RADAR_TIMEOUT_MS = 15000;
 
 const MOCK_SIGNALS: RadarSignal[] = [
   {
@@ -76,9 +76,16 @@ export interface RadarClientResult {
   warning?: string;
 }
 
-function getTimeoutMs(): number {
-  const raw = Number(process.env.REQUEST_TIMEOUT_MS);
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
+export function getRadarTimeoutMs(): number {
+  const rawRadarTimeout = Number(process.env.RADAR_API_TIMEOUT_MS);
+  if (Number.isFinite(rawRadarTimeout) && rawRadarTimeout > 0) {
+    return rawRadarTimeout;
+  }
+
+  const rawRequestTimeout = Number(process.env.REQUEST_TIMEOUT_MS);
+  return Number.isFinite(rawRequestTimeout) && rawRequestTimeout > 0
+    ? rawRequestTimeout
+    : DEFAULT_RADAR_TIMEOUT_MS;
 }
 
 function getMockSignalsFor(providerIds: string[]): RadarSignal[] {
@@ -135,6 +142,11 @@ function normalizePreflightDecision(payload: unknown): RadarPreflightDecision {
   if (typeof obj.decision !== "string") {
     throw new Error("Radar preflight response missing decision.");
   }
+  if (obj.decision !== "route_approved" && obj.decision !== "route_blocked") {
+    throw new Error(
+      `Radar preflight response had unsupported decision: ${String(obj.decision)}.`,
+    );
+  }
 
   const selectedProvider = typeof obj.selectedProvider === "string" ? obj.selectedProvider : null;
 
@@ -165,6 +177,7 @@ function normalizePreflightDecision(payload: unknown): RadarPreflightDecision {
 
 export async function callRadarPreflight(input: RadarPreflightInput): Promise<RadarPreflightResult> {
   const baseUrl = process.env.RADAR_API_BASE_URL?.trim();
+  const timeoutMs = getRadarTimeoutMs();
   if (!baseUrl) {
     return {
       available: false,
@@ -178,7 +191,7 @@ export async function callRadarPreflight(input: RadarPreflightInput): Promise<Ra
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      signal: AbortSignal.timeout(getTimeoutMs()),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -190,7 +203,8 @@ export async function callRadarPreflight(input: RadarPreflightInput): Promise<Ra
       throw new Error(`Radar preflight failed with HTTP ${response.status}.`);
     }
 
-    const payload = await response.json();
+    const json = (await response.json()) as Record<string, unknown>;
+    const payload = json.data ?? json;
     return {
       available: true,
       mode: "live",
@@ -203,13 +217,14 @@ export async function callRadarPreflight(input: RadarPreflightInput): Promise<Ra
       available: false,
       mode: "fallback",
       endpoint,
-      fallbackReason: `Radar preflight unavailable (${message}).`,
+      fallbackReason: `Radar preflight unavailable (timeout=${timeoutMs}ms): ${message}.`,
     };
   }
 }
 
 export async function fetchRadarSignals(providerIds: string[]): Promise<RadarClientResult> {
   const baseUrl = process.env.RADAR_API_BASE_URL?.trim();
+  const timeoutMs = getRadarTimeoutMs();
   const query = new URLSearchParams({ providerIds: providerIds.join(",") });
 
   if (!baseUrl) {
@@ -224,7 +239,7 @@ export async function fetchRadarSignals(providerIds: string[]): Promise<RadarCli
 
   try {
     const response = await fetch(endpoint, {
-      signal: AbortSignal.timeout(getTimeoutMs()),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: { Accept: "application/json" },
     });
 
@@ -241,7 +256,7 @@ export async function fetchRadarSignals(providerIds: string[]): Promise<RadarCli
       signals: getMockSignalsFor(providerIds),
       mode: "fallback-mock",
       endpoint,
-      warning: `Radar unavailable (${message}). Falling back to mock signals.`,
+      warning: `Radar unavailable (timeout=${timeoutMs}ms): ${message}. Falling back to mock signals.`,
     };
   }
 }

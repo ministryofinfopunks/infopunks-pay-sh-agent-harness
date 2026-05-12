@@ -16,13 +16,15 @@ If the live preflight call fails or times out, the harness falls back to local m
 ### Required env for live Radar
 
 ```bash
-RADAR_API_BASE_URL=https://your-radar-url
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com
+RADAR_API_TIMEOUT_MS=15000
 ```
 
 Optional related env:
 
 - `MIN_TRUST_SCORE` (default `70`)
-- `REQUEST_TIMEOUT_MS` (default `2500`)
+- `RADAR_API_TIMEOUT_MS` (default `15000`)
+- `REQUEST_TIMEOUT_MS` (optional legacy fallback when `RADAR_API_TIMEOUT_MS` is unset)
 
 ### Curl example
 
@@ -85,9 +87,10 @@ npm run demo:compare
 `.env` values:
 
 - `RADAR_API_BASE_URL` (optional): live Radar API base URL.
+- `RADAR_API_TIMEOUT_MS` (default `15000`): Radar API request timeout.
 - `PAYSH_API_BASE_URL` (optional): live Pay.sh catalog API base URL.
 - `MIN_TRUST_SCORE` (default `70`): routing threshold.
-- `REQUEST_TIMEOUT_MS` (default `2500`): external request timeout.
+- `REQUEST_TIMEOUT_MS` (optional legacy fallback when `RADAR_API_TIMEOUT_MS` is unset): external request timeout.
 
 If base URLs are unset or unavailable, the harness falls back to clearly labeled mock/fallback behavior.
 

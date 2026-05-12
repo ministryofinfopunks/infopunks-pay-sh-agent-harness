@@ -8,6 +8,7 @@
     "demo:route": "ts-node src/demoRoute.ts",
     "demo:compare": "ts-node src/demoCompare.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
+    "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },

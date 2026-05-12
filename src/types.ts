@@ -5,6 +5,7 @@ export interface ProviderCatalogEntry {
   name: string;
   region: string;
   catalogPriority: number;
+  category?: string;
   mockData?: boolean;
 }
 
@@ -21,10 +22,12 @@ export interface CandidateProvider {
   id: string;
   name: string;
   region: string;
+  category?: string;
   trustScore: number;
   degradationActive: boolean;
   signalScore: number;
   latencyMs: number;
+  costUsd?: number;
 }
 
 export interface RejectedProvider {
@@ -39,6 +42,19 @@ export interface RoutingResult {
   rejectedProviders: RejectedProvider[];
   radarSignalsUsed: RadarSignal[];
   routingPolicy: string[];
+  decision?: "route_selected" | "route_blocked";
+  categoryMatch?: boolean;
+  fallbackCategoryUsed?: boolean;
+  selectedProviderDetails?: {
+    providerId: string;
+    name: string;
+    category: string | null;
+    trustScore: number;
+    signalScore: number;
+    latencyMs: number;
+    costUsd: number | null;
+    degradationFlag: boolean;
+  } | null;
 }
 
 export interface RadarProofFields {

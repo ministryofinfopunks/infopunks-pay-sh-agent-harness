@@ -1,7 +1,12 @@
 import { executeProviderCall } from "./executor";
 import { fetchPayShCatalog } from "./payShClient";
 import { saveProofLog } from "./proofLog";
-import { callRadarPreflight, fetchRadarSignals, RadarPreflightResult } from "./radarClient";
+import {
+  callRadarPreflight,
+  fetchRadarSignals,
+  getRadarTimeoutMs,
+  RadarPreflightResult,
+} from "./radarClient";
 import { buildBenchmarkSummary, writeBenchmarkReport } from "./benchmarkReport";
 import { routeProvider } from "./router";
 import {
@@ -201,7 +206,9 @@ export async function runBenchmark(options?: {
           : "fallback";
 
     console.log(
-      `[benchmark][trial ${trialNumber}] radar mode=${radarMode} endpoint=${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`,
+      `[benchmark][trial ${trialNumber}] radar mode=${radarMode} endpoint=${
+        preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"
+      } timeout=${getRadarTimeoutMs()}ms`,
     );
     console.log(
       `[benchmark][trial ${trialNumber}] radar decision=${preflightResult.decision?.decision ?? "local-router"} selected=${radarCandidate?.id ?? "none"}`,

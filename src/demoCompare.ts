@@ -1,6 +1,11 @@
 import "dotenv/config";
 import { fetchPayShCatalog } from "./payShClient";
-import { callRadarPreflight, fetchRadarSignals, RadarPreflightResult } from "./radarClient";
+import {
+  callRadarPreflight,
+  fetchRadarSignals,
+  getRadarTimeoutMs,
+  RadarPreflightResult,
+} from "./radarClient";
 import { saveProofLog } from "./proofLog";
 import { routeProvider } from "./router";
 import { CandidateProvider, ProofLog, ProviderCatalogEntry, RejectedProvider, RoutingResult } from "./types";
@@ -170,6 +175,7 @@ async function main(): Promise<void> {
   console.log(`Intent: ${userIntent}`);
   console.log(`Radar mode: ${radarMode}`);
   console.log(`Radar endpoint: ${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`);
+  console.log(`Radar timeout: ${getRadarTimeoutMs()}ms`);
   if (fallbackReason) {
     console.log(`Radar fallback reason: ${fallbackReason}`);
   }
