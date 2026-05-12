@@ -49,6 +49,9 @@ async function main(): Promise<void> {
     naiveSelection !== null && radarSelectedId !== null
       ? naiveStatus === "fails" || naiveSelection.id !== radarSelectedId
       : naiveStatus === "fails";
+  const naiveRejection = naiveSelection
+    ? routed.rejectedProviders.find((item) => item.providerId === naiveSelection.id)
+    : undefined;
 
   let explanation: string;
   if (!naiveSelection) {
@@ -95,16 +98,30 @@ async function main(): Promise<void> {
   console.log("\n=== Naive vs Radar-Assisted Comparison ===");
   console.log(`Intent: ${userIntent}`);
   console.log(
+    `Pre-flight verdict: ${
+      naiveStatus === "fails"
+        ? "blocked/redirected spend before provider call"
+        : "naive choice passed policy checks"
+    }`,
+  );
+  console.log(
     `Naive catalog selection: ${
       naiveSelection ? `${naiveSelection.name} (${naiveSelection.id})` : "none"
     }`,
   );
+  console.log(`Naive policy status: ${naiveStatus}`);
+  if (naiveRejection) {
+    console.log(`Naive rejection reasons: ${naiveRejection.reasons.join(", ")}`);
+  }
   console.log(
     `Radar-assisted selection: ${
       routed.selectedProvider
         ? `${routed.selectedProvider.name} (${routed.selectedProvider.id})`
         : "none"
     }`,
+  );
+  console.log(
+    `Data mode: catalog=${catalogResult.mode}, radar=${radarResult.mode}, result=${simulatedOrLiveResult}`,
   );
   console.log(`Did Radar improve route? ${radarImprovedRoute ? "yes" : "no"}`);
   console.log(`Reason: ${explanation}`);

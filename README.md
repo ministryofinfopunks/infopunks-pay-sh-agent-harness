@@ -1,15 +1,32 @@
 # infopunks-pay-sh-agent-harness
 
-Minimal TypeScript/Node.js demo harness showing how an autonomous agent can query **Infopunks Radar** before making a **Pay.sh** provider/API decision.
+Minimal TypeScript/Node.js harness showing one thing: an agent can query **Infopunks Radar** before spending through **Pay.sh**, then log machine-readable proof of the decision.
 
-This is intentionally small and runnable in under 2 minutes.
+> [!IMPORTANT]
+> This is a minimal demo harness. It demonstrates integration shape and decision logging, but real adoption still requires external agent usage against live systems.
 
-## Architecture
+## 30-second demo
 
-- **Pay.sh** is the payment/catalog layer (provider list and payment execution surface).
-- **Infopunks Radar** is the pre-flight intelligence layer (trust/signal/degradation/latency inputs).
-- The agent asks Radar first, then routes deterministically.
-- This harness demonstrates pre-flight intelligence usage, not dashboarding.
+```bash
+npm install
+cp .env.example .env
+npm run demo:compare
+```
+
+You should immediately see whether naive catalog routing would have spent on a provider that Radar policy rejects.
+
+## Why pre-flight matters
+
+Payment agents should not call a provider just because it appears first in a catalog.
+
+Pre-flight policy checks from Radar let the agent:
+
+- reject low-trust providers,
+- reject providers currently degraded,
+- choose the best remaining route by signal quality and latency,
+- leave an auditable proof record for each decision.
+
+In this harness, **Pay.sh is the catalog/payment layer** and **Radar is the pre-flight intelligence layer**.
 
 ## Install
 
@@ -24,104 +41,100 @@ npm run demo:compare
 
 `.env` values:
 
-- `RADAR_API_BASE_URL` (optional): base URL for live Radar API.
-- `PAYSH_API_BASE_URL` (optional): base URL for live Pay.sh provider/catalog API.
+- `RADAR_API_BASE_URL` (optional): live Radar API base URL.
+- `PAYSH_API_BASE_URL` (optional): live Pay.sh catalog API base URL.
 - `MIN_TRUST_SCORE` (default `70`): routing threshold.
-- `REQUEST_TIMEOUT_MS` (default `2500`): external call timeout.
+- `REQUEST_TIMEOUT_MS` (default `2500`): external request timeout.
 
-If either base URL is unset or unavailable, the harness falls back to clearly labeled mock data.
+If base URLs are unset or unavailable, the harness falls back to clearly labeled mock data.
 
 ## Scripts
 
-- `npm run demo:route` runs one Radar-assisted route decision and writes proof log JSON.
-- `npm run demo:compare` compares naive catalog choice vs Radar-assisted route and writes proof log JSON.
-- `npm run typecheck` runs TypeScript type checks.
-- `npm run build` compiles to `dist/`.
+- `npm run demo:route`: single Radar-assisted route decision + proof log.
+- `npm run demo:compare`: naive catalog route vs Radar-assisted route + proof log.
+- `npm run typecheck`: TypeScript typecheck.
+- `npm run build`: compile to `dist/`.
+
+## Example Terminal Output (`npm run demo:compare`)
+
+```text
+=== Naive vs Radar-Assisted Comparison ===
+Intent: select provider for a payout request
+Pre-flight verdict: blocked/redirected spend before provider call
+Naive catalog selection: Pay.sh Beta Node (paysh-beta)
+Naive policy status: fails
+Naive rejection reasons: trustScoreBelowMin(62<70)
+Radar-assisted selection: Pay.sh Delta Node (paysh-delta)
+Data mode: catalog=mock, radar=mock, result=simulated-or-fallback
+Did Radar improve route? yes
+Reason: Radar changed the route because the naive provider failed trust/degradation policy checks.
+Proof log saved: /.../proofs/<timestamp>-demo-compare.json
+Comparison latency: <n>ms
+```
+
+## Example Proof JSON Excerpt
+
+```json
+{
+  "timestamp": "2026-05-12T07:05:12.190Z",
+  "userIntent": "select provider for a payout request",
+  "selectedProvider": {
+    "id": "paysh-delta",
+    "trustScore": 85,
+    "degradationActive": false,
+    "signalScore": 88,
+    "latencyMs": 105
+  },
+  "rejectedProviders": [
+    {
+      "providerId": "paysh-beta",
+      "reasons": ["trustScoreBelowMin(62<70)"]
+    }
+  ],
+  "routingPolicy": [
+    "reject trustScore < 70",
+    "reject degradationFlagActive",
+    "prefer higher signalScore",
+    "tie-break by lower latencyMs"
+  ],
+  "simulatedOrLiveResult": "simulated-or-fallback",
+  "success": true,
+  "comparison": {
+    "naiveSelectionPolicyStatus": "fails",
+    "radarImprovedRoute": true
+  }
+}
+```
 
 ## Routing Policy
 
 Deterministic rules in `src/router.ts`:
 
-1. Reject provider if `trustScore < MIN_TRUST_SCORE`.
-2. Reject provider if degradation flag is active.
-3. Among remaining candidates, prefer higher `signalScore`.
-4. If `signalScore` is tied, prefer lower `latencyMs`.
-5. Return selected provider plus rejected providers with explicit reasons.
-
-## Sample Output
-
-`npm run demo:route`
-
-```text
-=== Radar-Assisted Route Decision ===
-Intent: send payout to a verified provider
-Catalog mode: mock
-Catalog note: PAYSH_API_BASE_URL not set. Using mock Pay.sh provider catalog.
-Radar mode: mock
-Radar note: RADAR_API_BASE_URL not set. Using mock Radar signals.
-Selected provider:
-- Pay.sh Delta Node (paysh-delta) | trust=85 signal=88 latency=105ms
-Rejected providers:
-- Pay.sh Beta Node (paysh-beta): trustScoreBelowMin(62<70)
-- Pay.sh Gamma Node (paysh-gamma): degradationFlagActive
-- Pay.sh Alpha Node (paysh-alpha): notTopRanked, higherLatencyOnTie(140>105)
-```
-
-`npm run demo:compare`
-
-```text
-=== Naive vs Radar-Assisted Comparison ===
-Intent: select provider for a payout request
-Naive catalog selection: Pay.sh Beta Node (paysh-beta)
-Radar-assisted selection: Pay.sh Delta Node (paysh-delta)
-Did Radar improve route? yes
-Reason: Radar changed the route because the naive provider failed trust/degradation policy checks.
-```
-
-## Proof Logs
-
-Each run writes a JSON proof file to `./proofs/*.json`.
-
-Proof schema includes:
-
-- `timestamp`
-- `userIntent`
-- `candidateProviders`
-- `selectedProvider`
-- `rejectedProviders`
-- `radarSignalsUsed`
-- `routingPolicy`
-- `simulatedOrLiveResult`
-- `latencyMs`
-- `success`
-
-`demo:compare` also includes a `comparison` block for naive vs Radar outcomes.
+1. Reject if `trustScore < MIN_TRUST_SCORE`.
+2. Reject if degradation flag is active.
+3. Prefer higher `signalScore`.
+4. Tie-break by lower `latencyMs`.
+5. Return selected provider plus rejected providers and reasons.
 
 ## What this proves
 
-- An autonomous agent can call Radar as a pre-flight intelligence layer before provider execution.
-- Deterministic routing can enforce trust/degradation policy and still optimize by signal/latency.
-- Every decision can be auditable via machine-readable proof logs.
-- The architecture is cleanly split so mock clients can be replaced by live API clients.
+- Agents can query Radar before spending through Pay.sh.
+- Pre-flight policy can block/redirect risky naive routes.
+- Each decision can be logged as JSON proof (`./proofs/*.json`).
+- Live API clients can replace mocks without changing routing logic.
 
 ## What this does not prove yet
 
-- Real-world provider execution reliability or settlement outcomes.
-- Production-grade SLA behavior under live traffic.
-- Correctness of live external schemas/endpoints without integration validation.
-- End-to-end value without real external API usage and empirical measurement.
+- Real-world settlement outcomes.
+- Production SLA behavior.
+- Live schema compatibility without integration testing.
+- Adoption or business impact without external agent usage.
 
 ## Repository Layout
 
-- `src/radarClient.ts` Radar intelligence client with fallback behavior.
-- `src/payShClient.ts` Pay.sh provider catalog client with mock fallback.
-- `src/router.ts` deterministic policy routing.
-- `src/proofLog.ts` proof writer to `./proofs`.
-- `src/demoRoute.ts` single route decision demo.
-- `src/demoCompare.ts` naive vs Radar comparison demo.
-
-## Notes
-
-- No secrets are committed.
-- Use environment variables for runtime configuration.
-- Mock payloads are intentionally explicit to make live-client replacement straightforward.
+- `src/radarClient.ts`: Radar intelligence client + fallback.
+- `src/payShClient.ts`: Pay.sh catalog client + mock fallback.
+- `src/router.ts`: deterministic routing policy.
+- `src/proofLog.ts`: JSON proof writer.
+- `src/demoRoute.ts`: single decision demo.
+- `src/demoCompare.ts`: naive vs Radar demo.
