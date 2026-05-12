@@ -5,17 +5,59 @@ Minimal TypeScript/Node.js harness showing one thing: an agent can query **Infop
 > [!IMPORTANT]
 > This is a minimal demo harness. It demonstrates integration shape and decision logging, but real adoption still requires external agent usage against live systems.
 
+## Live Radar Preflight Integration
+
+When `RADAR_API_BASE_URL` is set, the harness calls the live machine-callable Radar endpoint:
+
+- `POST {RADAR_API_BASE_URL}/v1/preflight`
+
+If the live preflight call fails or times out, the harness falls back to local mock routing logic.
+
+### Required env for live Radar
+
+```bash
+RADAR_API_BASE_URL=https://your-radar-url
+```
+
+Optional related env:
+
+- `MIN_TRUST_SCORE` (default `70`)
+- `REQUEST_TIMEOUT_MS` (default `2500`)
+
+### Curl example
+
+```bash
+curl -X POST "$RADAR_API_BASE_URL/v1/preflight" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "intent": "select provider for a payout request",
+    "constraints": {
+      "minTrustScore": 70,
+      "maxLatencyMs": 250,
+      "maxCostUsd": 0.01
+    },
+    "candidateProviders": ["paysh-alpha", "paysh-beta", "paysh-gamma", "paysh-delta"]
+  }'
+```
+
+## Radar modes
+
+- `live`: backend preflight decision came from `POST /v1/preflight`.
+- `mock`: no `RADAR_API_BASE_URL`; local mock Radar data/router used.
+- `fallback`: live preflight configured but unavailable; local router used.
+
+`demo:compare` and `benchmark` prefer backend preflight decisions when available, and automatically fall back to local routing otherwise.
+
 ## Benchmark mode
 
 `demo:compare` proves the routing shape for a single naive-vs-Radar decision.
 
-Benchmark mode starts measuring whether Radar-assisted routing produces better outcomes across repeated trials.
+Benchmark mode measures whether Radar-assisted routing produces better outcomes across repeated trials.
 
-The initial benchmark mode is simulated unless live execution is configured.
+The execution layer in this harness is still simulated unless live execution is implemented.
 
-This still does not prove live Pay.sh value until real endpoint execution is added.
-
-Simulated benchmark shows the measurement framework and expected policy behavior.
+This still does not prove live Pay.sh execution outcomes.
 
 ### Run benchmark
 
@@ -24,40 +66,6 @@ npm run benchmark
 BENCHMARK_TRIALS=50 npm run benchmark
 npm run benchmark -- --trials=50
 ```
-
-### Sample benchmark output
-
-```text
-Naive success rate: 76.67%
-Radar success rate: 100.00%
-Average latency (ms): naive=111.47, radar=104.93
-Average cost (USD): naive=0.005, radar=0.004778
-Average quality: naive=72.26, radar=82.09
-Radar wins / naive wins / ties: 26 / 0 / 4
-```
-
-## 30-second demo
-
-```bash
-npm install
-cp .env.example .env
-npm run demo:compare
-```
-
-You should immediately see whether naive catalog routing would have spent on a provider that Radar policy rejects.
-
-## Why pre-flight matters
-
-Payment agents should not call a provider just because it appears first in a catalog.
-
-Pre-flight policy checks from Radar let the agent:
-
-- reject low-trust providers,
-- reject providers currently degraded,
-- choose the best remaining route by signal quality and latency,
-- leave an auditable proof record for each decision.
-
-In this harness, **Pay.sh is the catalog/payment layer** and **Radar is the pre-flight intelligence layer**.
 
 ## Install
 
@@ -77,7 +85,7 @@ npm run demo:compare
 - `MIN_TRUST_SCORE` (default `70`): routing threshold.
 - `REQUEST_TIMEOUT_MS` (default `2500`): external request timeout.
 
-If base URLs are unset or unavailable, the harness falls back to clearly labeled mock data.
+If base URLs are unset or unavailable, the harness falls back to clearly labeled mock/fallback behavior.
 
 ## Scripts
 
@@ -87,73 +95,23 @@ If base URLs are unset or unavailable, the harness falls back to clearly labeled
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.
 
-## Example Terminal Output (`npm run demo:compare`)
+## Proof log fields
 
-```text
-=== Naive vs Radar-Assisted Comparison ===
-Intent: select provider for a payout request
-Pre-flight verdict: blocked/redirected spend before provider call
-Naive catalog selection: Pay.sh Beta Node (paysh-beta)
-Naive policy status: fails
-Naive rejection reasons: trustScoreBelowMin(62<70)
-Radar-assisted selection: Pay.sh Delta Node (paysh-delta)
-Data mode: catalog=mock, radar=mock, result=simulated-or-fallback
-Did Radar improve route? yes
-Reason: Radar changed the route because the naive provider failed trust/degradation policy checks.
-Proof log saved: /.../proofs/<timestamp>-demo-compare.json
-Comparison latency: <n>ms
-```
+Proof logs include Radar-specific integration metadata:
 
-## Example Proof JSON Excerpt
-
-```json
-{
-  "timestamp": "2026-05-12T07:05:12.190Z",
-  "userIntent": "select provider for a payout request",
-  "selectedProvider": {
-    "id": "paysh-delta",
-    "trustScore": 85,
-    "degradationActive": false,
-    "signalScore": 88,
-    "latencyMs": 105
-  },
-  "rejectedProviders": [
-    {
-      "providerId": "paysh-beta",
-      "reasons": ["trustScoreBelowMin(62<70)"]
-    }
-  ],
-  "routingPolicy": [
-    "reject trustScore < 70",
-    "reject degradationFlagActive",
-    "prefer higher signalScore",
-    "tie-break by lower latencyMs"
-  ],
-  "simulatedOrLiveResult": "simulated-or-fallback",
-  "success": true,
-  "comparison": {
-    "naiveSelectionPolicyStatus": "fails",
-    "radarImprovedRoute": true
-  }
-}
-```
-
-## Routing Policy
-
-Deterministic rules in `src/router.ts`:
-
-1. Reject if `trustScore < MIN_TRUST_SCORE`.
-2. Reject if degradation flag is active.
-3. Prefer higher `signalScore`.
-4. Tie-break by lower `latencyMs`.
-5. Return selected provider plus rejected providers and reasons.
+- `radarApiUsed`
+- `radarEndpoint`
+- `radarDecision`
+- `radarDataMode`
+- `radarSource`
+- `fallbackReason` (when applicable)
 
 ## What this proves
 
 - Agents can query Radar before spending through Pay.sh.
 - Pre-flight policy can block/redirect risky naive routes.
 - Each decision can be logged as JSON proof (`./proofs/*.json`).
-- Live API clients can replace mocks without changing routing logic.
+- Live API clients can replace mocks without changing overall harness flow.
 
 ## What this does not prove yet
 
@@ -164,9 +122,10 @@ Deterministic rules in `src/router.ts`:
 
 ## Repository Layout
 
-- `src/radarClient.ts`: Radar intelligence client + fallback.
+- `src/radarClient.ts`: Radar intelligence client + live preflight + fallback.
 - `src/payShClient.ts`: Pay.sh catalog client + mock fallback.
-- `src/router.ts`: deterministic routing policy.
+- `src/router.ts`: deterministic local routing policy.
 - `src/proofLog.ts`: JSON proof writer.
 - `src/demoRoute.ts`: single decision demo.
 - `src/demoCompare.ts`: naive vs Radar demo.
+- `src/benchmarkRunner.ts`: benchmark orchestration.

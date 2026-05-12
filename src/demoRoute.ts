@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { fetchPayShCatalog } from "./payShClient";
-import { fetchRadarSignals } from "./radarClient";
+import { callRadarPreflight, fetchRadarSignals } from "./radarClient";
 import { saveProofLog } from "./proofLog";
 import { routeProvider } from "./router";
 import { ProofLog } from "./types";
@@ -21,6 +21,13 @@ async function main(): Promise<void> {
 
   const catalogResult = await fetchPayShCatalog(userIntent);
   const providerIds = catalogResult.providers.map((provider) => provider.id);
+
+  const preflightResult = await callRadarPreflight({
+    intent: userIntent,
+    constraints: { minTrustScore: getMinTrustScore() },
+    candidateProviders: providerIds,
+  });
+
   const radarResult = await fetchRadarSignals(providerIds);
 
   const routing = routeProvider({
@@ -46,6 +53,12 @@ async function main(): Promise<void> {
     simulatedOrLiveResult,
     latencyMs: elapsedMs,
     success: routing.selectedProvider !== null,
+    radarApiUsed: preflightResult.available,
+    radarEndpoint: preflightResult.endpoint ?? radarResult.endpoint,
+    radarDecision: preflightResult.decision?.decision,
+    radarDataMode: preflightResult.decision?.dataMode,
+    radarSource: preflightResult.decision?.source,
+    fallbackReason: preflightResult.available ? undefined : preflightResult.fallbackReason,
   };
 
   const outputPath = await saveProofLog("demo-route", proof);
@@ -56,9 +69,11 @@ async function main(): Promise<void> {
   if (catalogResult.warning) {
     console.log(`Catalog note: ${catalogResult.warning}`);
   }
-  console.log(`Radar mode: ${radarResult.mode}`);
-  if (radarResult.warning) {
-    console.log(`Radar note: ${radarResult.warning}`);
+  console.log(`Radar mode: ${preflightResult.available ? "live" : preflightResult.mode}`);
+  console.log(`Radar endpoint: ${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`);
+  console.log(`Radar decision: ${preflightResult.decision?.decision ?? "local-router"}`);
+  if (preflightResult.fallbackReason) {
+    console.log(`Radar fallback reason: ${preflightResult.fallbackReason}`);
   }
 
   if (routing.selectedProvider) {

@@ -1,10 +1,18 @@
 import { executeProviderCall } from "./executor";
 import { fetchPayShCatalog } from "./payShClient";
 import { saveProofLog } from "./proofLog";
-import { fetchRadarSignals } from "./radarClient";
+import { callRadarPreflight, fetchRadarSignals, RadarPreflightResult } from "./radarClient";
 import { buildBenchmarkSummary, writeBenchmarkReport } from "./benchmarkReport";
 import { routeProvider } from "./router";
-import { BenchmarkSummary, BenchmarkTrial, CandidateProvider, ExecutionMode, ProviderCatalogEntry } from "./types";
+import {
+  BenchmarkSummary,
+  BenchmarkTrial,
+  CandidateProvider,
+  ExecutionMode,
+  ProviderCatalogEntry,
+  RejectedProvider,
+  RoutingResult,
+} from "./types";
 
 const DEFAULT_BENCHMARK_TRIALS = 30;
 const DEFAULT_INTENTS = [
@@ -78,6 +86,47 @@ function pickWinner(naive: BenchmarkTrial["naive"], radar: BenchmarkTrial["radar
   return "tie";
 }
 
+function buildRoutingFromPreflight(
+  providers: ProviderCatalogEntry[],
+  preflight: RadarPreflightResult,
+): RoutingResult | null {
+  if (!preflight.available || !preflight.decision) {
+    return null;
+  }
+
+  const candidateProviders: CandidateProvider[] = providers.map((provider) => ({
+    id: provider.id,
+    name: provider.name,
+    region: provider.region,
+    trustScore: 0,
+    degradationActive: false,
+    signalScore: 0,
+    latencyMs: 0,
+  }));
+
+  const providerById = new Map(candidateProviders.map((provider) => [provider.id, provider]));
+  const selectedProvider = preflight.decision.selectedProvider
+    ? (providerById.get(preflight.decision.selectedProvider) ?? null)
+    : null;
+
+  const rejectedProviders: RejectedProvider[] = preflight.decision.rejectedProviders.map((providerId) => {
+    const provider = providerById.get(providerId);
+    return {
+      providerId,
+      providerName: provider?.name ?? providerId,
+      reasons: ["backendRejected"],
+    };
+  });
+
+  return {
+    selectedProvider,
+    candidateProviders,
+    rejectedProviders,
+    radarSignalsUsed: [],
+    routingPolicy: preflight.decision.routingPolicy,
+  };
+}
+
 export interface BenchmarkRunResult {
   trialCount: number;
   trials: BenchmarkTrial[];
@@ -103,12 +152,25 @@ export async function runBenchmark(options?: {
     const catalogResult = await fetchPayShCatalog(intent);
     const naiveProvider = selectNaiveProvider(catalogResult.providers);
 
-    const radarResult = await fetchRadarSignals(catalogResult.providers.map((provider) => provider.id));
-    const routed = routeProvider({
-      providers: catalogResult.providers,
-      radarSignals: radarResult.signals,
-      minTrustScore: getMinTrustScore(),
+    const preflightResult = await callRadarPreflight({
+      intent,
+      constraints: { minTrustScore: getMinTrustScore() },
+      candidateProviders: catalogResult.providers.map((provider) => provider.id),
     });
+
+    const preflightRouting = buildRoutingFromPreflight(catalogResult.providers, preflightResult);
+
+    const radarResult = preflightRouting
+      ? { signals: [], mode: "live" as const, endpoint: preflightResult.endpoint }
+      : await fetchRadarSignals(catalogResult.providers.map((provider) => provider.id));
+
+    const routed =
+      preflightRouting ??
+      routeProvider({
+        providers: catalogResult.providers,
+        radarSignals: radarResult.signals,
+        minTrustScore: getMinTrustScore(),
+      });
 
     const candidateById = new Map(routed.candidateProviders.map((candidate) => [candidate.id, candidate]));
     const naiveCandidate = toCandidateProvider(naiveProvider, candidateById);
@@ -130,6 +192,34 @@ export async function runBenchmark(options?: {
     };
     trials.push(trial);
 
+    const radarMode = preflightRouting
+      ? "live"
+      : radarResult.mode === "mock"
+        ? "mock"
+        : radarResult.mode === "live"
+          ? "live"
+          : "fallback";
+
+    console.log(
+      `[benchmark][trial ${trialNumber}] radar mode=${radarMode} endpoint=${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`,
+    );
+    console.log(
+      `[benchmark][trial ${trialNumber}] radar decision=${preflightResult.decision?.decision ?? "local-router"} selected=${radarCandidate?.id ?? "none"}`,
+    );
+    console.log(
+      `[benchmark][trial ${trialNumber}] rejected=${
+        routed.rejectedProviders.length > 0
+          ? routed.rejectedProviders.map((provider) => provider.providerId).join(",")
+          : "none"
+      }`,
+    );
+
+    const fallbackReason = !preflightRouting && preflightResult.mode === "fallback"
+      ? preflightResult.fallbackReason
+      : radarResult.mode === "fallback-mock"
+        ? radarResult.warning
+        : undefined;
+
     await saveProofLog("benchmark-trial", {
       timestamp: new Date().toISOString(),
       userIntent: intent,
@@ -141,6 +231,12 @@ export async function runBenchmark(options?: {
       simulatedOrLiveResult: mode,
       latencyMs: Math.max(naiveExecution.latencyMs, radarExecution.latencyMs),
       success: radarExecution.success,
+      radarApiUsed: Boolean(preflightRouting),
+      radarEndpoint: preflightResult.endpoint ?? radarResult.endpoint,
+      radarDecision: preflightResult.decision?.decision,
+      radarDataMode: preflightResult.decision?.dataMode,
+      radarSource: preflightResult.decision?.source,
+      fallbackReason,
       comparison: {
         naiveSelection: naiveProvider,
         naiveSelectionPolicyStatus: naiveProvider && routed.rejectedProviders.some((r) => r.providerId === naiveProvider.id)

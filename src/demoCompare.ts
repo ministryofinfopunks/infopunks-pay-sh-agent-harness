@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { fetchPayShCatalog } from "./payShClient";
-import { fetchRadarSignals } from "./radarClient";
+import { callRadarPreflight, fetchRadarSignals, RadarPreflightResult } from "./radarClient";
 import { saveProofLog } from "./proofLog";
 import { routeProvider } from "./router";
-import { ProofLog, ProviderCatalogEntry } from "./types";
+import { CandidateProvider, ProofLog, ProviderCatalogEntry, RejectedProvider, RoutingResult } from "./types";
 
 function getMinTrustScore(): number {
   const raw = Number(process.env.MIN_TRUST_SCORE);
@@ -24,6 +24,51 @@ function selectNaiveProvider(catalog: ProviderCatalogEntry[]): ProviderCatalogEn
   return sorted[0] ?? null;
 }
 
+function toFallbackModeLabel(mode: "live" | "mock" | "fallback"): "live" | "mock" | "fallback" {
+  return mode;
+}
+
+function buildRoutingFromPreflight(
+  providers: ProviderCatalogEntry[],
+  preflight: RadarPreflightResult,
+): RoutingResult | null {
+  if (!preflight.available || !preflight.decision) {
+    return null;
+  }
+
+  const candidateProviders: CandidateProvider[] = providers.map((provider) => ({
+    id: provider.id,
+    name: provider.name,
+    region: provider.region,
+    trustScore: 0,
+    degradationActive: false,
+    signalScore: 0,
+    latencyMs: 0,
+  }));
+
+  const providerById = new Map(candidateProviders.map((provider) => [provider.id, provider]));
+  const selectedProvider = preflight.decision.selectedProvider
+    ? (providerById.get(preflight.decision.selectedProvider) ?? null)
+    : null;
+
+  const rejectedProviders: RejectedProvider[] = preflight.decision.rejectedProviders.map((providerId) => {
+    const provider = providerById.get(providerId);
+    return {
+      providerId,
+      providerName: provider?.name ?? providerId,
+      reasons: ["backendRejected"],
+    };
+  });
+
+  return {
+    selectedProvider,
+    candidateProviders,
+    rejectedProviders,
+    radarSignalsUsed: [],
+    routingPolicy: preflight.decision.routingPolicy,
+  };
+}
+
 async function main(): Promise<void> {
   const userIntent = getIntentFromArgs();
   const startedAt = Date.now();
@@ -31,12 +76,25 @@ async function main(): Promise<void> {
   const catalogResult = await fetchPayShCatalog(userIntent);
   const naiveSelection = selectNaiveProvider(catalogResult.providers);
 
-  const radarResult = await fetchRadarSignals(catalogResult.providers.map((provider) => provider.id));
-  const routed = routeProvider({
-    providers: catalogResult.providers,
-    radarSignals: radarResult.signals,
-    minTrustScore: getMinTrustScore(),
+  const preflightResult = await callRadarPreflight({
+    intent: userIntent,
+    constraints: { minTrustScore: getMinTrustScore() },
+    candidateProviders: catalogResult.providers.map((provider) => provider.id),
   });
+
+  const preflightRouting = buildRoutingFromPreflight(catalogResult.providers, preflightResult);
+
+  const radarResult = preflightRouting
+    ? { signals: [], mode: "live" as const, endpoint: preflightResult.endpoint }
+    : await fetchRadarSignals(catalogResult.providers.map((provider) => provider.id));
+
+  const routed =
+    preflightRouting ??
+    routeProvider({
+      providers: catalogResult.providers,
+      radarSignals: radarResult.signals,
+      minTrustScore: getMinTrustScore(),
+    });
 
   const naiveStatus = naiveSelection
     ? routed.rejectedProviders.some((item) => item.providerId === naiveSelection.id)
@@ -69,9 +127,16 @@ async function main(): Promise<void> {
 
   const elapsedMs = Date.now() - startedAt;
   const simulatedOrLiveResult =
-    catalogResult.mode === "live" && radarResult.mode === "live"
+    catalogResult.mode === "live" && (preflightRouting || radarResult.mode === "live")
       ? "live"
       : "simulated-or-fallback";
+
+  const radarMode = preflightRouting ? toFallbackModeLabel(preflightResult.mode) : radarResult.mode === "live" ? "live" : radarResult.mode === "mock" ? "mock" : "fallback";
+  const fallbackReason = !preflightRouting && preflightResult.mode === "fallback"
+    ? preflightResult.fallbackReason
+    : radarResult.mode === "fallback-mock"
+      ? radarResult.warning
+      : undefined;
 
   const proof: ProofLog = {
     timestamp: new Date().toISOString(),
@@ -84,6 +149,12 @@ async function main(): Promise<void> {
     simulatedOrLiveResult,
     latencyMs: elapsedMs,
     success: routed.selectedProvider !== null,
+    radarApiUsed: Boolean(preflightRouting),
+    radarEndpoint: preflightResult.endpoint ?? radarResult.endpoint,
+    radarDecision: preflightResult.decision?.decision,
+    radarDataMode: preflightResult.decision?.dataMode,
+    radarSource: preflightResult.decision?.source,
+    fallbackReason,
     comparison: {
       naiveSelection,
       naiveSelectionPolicyStatus: naiveStatus,
@@ -97,6 +168,12 @@ async function main(): Promise<void> {
 
   console.log("\n=== Naive vs Radar-Assisted Comparison ===");
   console.log(`Intent: ${userIntent}`);
+  console.log(`Radar mode: ${radarMode}`);
+  console.log(`Radar endpoint: ${preflightResult.endpoint ?? radarResult.endpoint ?? "n/a"}`);
+  if (fallbackReason) {
+    console.log(`Radar fallback reason: ${fallbackReason}`);
+  }
+  console.log(`Radar decision: ${preflightResult.decision?.decision ?? "local-router"}`);
   console.log(
     `Pre-flight verdict: ${
       naiveStatus === "fails"
@@ -114,14 +191,21 @@ async function main(): Promise<void> {
     console.log(`Naive rejection reasons: ${naiveRejection.reasons.join(", ")}`);
   }
   console.log(
-    `Radar-assisted selection: ${
+    `Selected provider: ${
       routed.selectedProvider
         ? `${routed.selectedProvider.name} (${routed.selectedProvider.id})`
         : "none"
     }`,
   );
   console.log(
-    `Data mode: catalog=${catalogResult.mode}, radar=${radarResult.mode}, result=${simulatedOrLiveResult}`,
+    `Rejected providers: ${
+      routed.rejectedProviders.length > 0
+        ? routed.rejectedProviders.map((provider) => provider.providerId).join(", ")
+        : "none"
+    }`,
+  );
+  console.log(
+    `Data mode: catalog=${catalogResult.mode}, radar=${preflightResult.decision?.dataMode ?? radarMode}, result=${simulatedOrLiveResult}`,
   );
   console.log(`Did Radar improve route? ${radarImprovedRoute ? "yes" : "no"}`);
   console.log(`Reason: ${explanation}`);

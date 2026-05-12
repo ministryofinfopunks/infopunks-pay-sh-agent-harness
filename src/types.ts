@@ -41,7 +41,16 @@ export interface RoutingResult {
   routingPolicy: string[];
 }
 
-export interface ProofLog {
+export interface RadarProofFields {
+  radarApiUsed: boolean;
+  radarEndpoint?: string;
+  radarDecision?: string;
+  radarDataMode?: string;
+  radarSource?: string;
+  fallbackReason?: string;
+}
+
+export interface ProofLog extends RadarProofFields {
   timestamp: string;
   userIntent: string;
   candidateProviders: CandidateProvider[];
