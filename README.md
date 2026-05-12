@@ -80,6 +80,7 @@ Run with optional live Pay.sh execution:
 ```bash
 LIVE_PAYSH_EXECUTION=true \
 PAYSH_EXECUTION_URL=<gateway-url-from-pay.sh> \
+MARKET_DATA_MAX_LATENCY_MS=3000 \
 RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
 RADAR_API_TIMEOUT_MS=15000 \
 npm run demo:live-market-data

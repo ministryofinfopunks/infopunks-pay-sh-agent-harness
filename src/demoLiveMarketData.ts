@@ -38,6 +38,19 @@ interface LiveMarketDataProof {
 }
 
 const PROOFS_DIR = path.resolve(process.cwd(), "proofs");
+const DEFAULT_MARKET_DATA_MIN_TRUST_SCORE = 70;
+const DEFAULT_MARKET_DATA_MAX_LATENCY_MS = 3000;
+const DEFAULT_MARKET_DATA_MAX_COST_USD = 0.05;
+
+function getEnvNumber(name: string, defaultValue: number): number {
+  const rawValue = process.env[name];
+  if (!rawValue) {
+    return defaultValue;
+  }
+
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
 
 function safeFileSuffix(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -55,14 +68,15 @@ async function saveLiveMarketDataProof(proof: LiveMarketDataProof): Promise<stri
 async function main(): Promise<void> {
   const intent = "get crypto market data";
   const category = "finance";
+  const constraints = {
+    minTrustScore: getEnvNumber("MARKET_DATA_MIN_TRUST_SCORE", DEFAULT_MARKET_DATA_MIN_TRUST_SCORE),
+    maxLatencyMs: getEnvNumber("MARKET_DATA_MAX_LATENCY_MS", DEFAULT_MARKET_DATA_MAX_LATENCY_MS),
+    maxCostUsd: getEnvNumber("MARKET_DATA_MAX_COST_USD", DEFAULT_MARKET_DATA_MAX_COST_USD),
+  };
   const preflightRequest: RadarPreflightInput = {
-    intent: "get crypto market data",
-    category: "finance",
-    constraints: {
-      minTrustScore: 70,
-      maxLatencyMs: 2000,
-      maxCostUsd: 0.05,
-    },
+    intent,
+    category,
+    constraints,
   };
 
   console.log("Radar preflight request:", JSON.stringify(preflightRequest, null, 2));
@@ -99,6 +113,7 @@ async function main(): Promise<void> {
   console.log("\n=== Live Market-Data Demo ===");
   console.log(`Intent: ${intent}`);
   console.log(`Category: ${category}`);
+  console.log(`Final constraints: ${JSON.stringify(constraints)}`);
   console.log(`Radar timeout: ${getRadarTimeoutMs()}ms`);
   console.log(`Radar endpoint: ${preflight.endpoint ?? "n/a"}`);
   console.log(`Radar decision: ${radarDecision}`);
