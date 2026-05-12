@@ -6,21 +6,21 @@
 - valid head-to-head comparison count (different-provider executable comparisons): 0
 - routing fit evidence available: false
 - superiority evidence available: false
-- same-answer quality comparison available: true
+- same-answer quality comparison available: false
 - repeatability same-provider count (both strategies selected the same executable provider): 1
 - invalid comparison count: 0
 - Radar route blocked count: 0
 - Radar route approved count: 1
 - Radar missing endpoint mapping count: 0
 - Radar execution attempted count: 1
-- Radar execution success rate among attempted: 100%
+- Radar execution success rate among attempted: 0%
 - naive execution attempted count: 1
-- naive execution success rate among attempted: 100%
-- naive success rate: 100%
-- radar success rate: 100%
-- naive avg latency: 11146ms
-- radar avg latency: 10617ms
-- parsed JSON success rates: naive=100% radar=100%
+- naive execution success rate among attempted: 0%
+- naive success rate: 0%
+- radar success rate: 0%
+- naive avg latency: 5223ms
+- radar avg latency: 2859ms
+- parsed JSON success rates: naive=0% radar=0%
 - radar wins: 0
 - naive wins: 0
 - ties: 0
@@ -34,7 +34,7 @@
 - unique Radar providers: quicknode-rpc
 - unique endpoint mappings used: quicknode-rpc
 - output shapes observed: json_rpc_health
-- qualityComparisonAvailable count: 1
+- qualityComparisonAvailable count: 0
 - caveat: Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.
 - caveat: Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality.
 - caveat: different output shapes allow execution reliability comparison, not same-answer quality comparison.
