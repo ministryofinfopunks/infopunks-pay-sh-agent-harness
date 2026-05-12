@@ -332,7 +332,7 @@ async function main(): Promise<void> {
       !providersSame && bothVerified && !outputShapesSame
         ? "providers executed successfully but returned different market-data shapes"
         : null;
-    let qualityComparisonAvailable = true;
+    let qualityComparisonAvailable = false;
 
     let naiveExecutionMode = "skipped";
     let radarExecutionMode = "skipped";
@@ -462,9 +462,7 @@ async function main(): Promise<void> {
         comparisonOutcome = "tie";
       }
 
-      if (!outputShapesSame) {
-        qualityComparisonAvailable = false;
-      }
+      qualityComparisonAvailable = naiveSuccess && radarSuccess && outputShapesSame;
     }
 
     const trial: HeadToHeadTrial = {
@@ -531,11 +529,17 @@ async function main(): Promise<void> {
       trial.naiveEndpointMapped &&
       trial.radarEndpointMapped &&
       trial.naiveExecutionAttempted &&
+      trial.radarExecutionAttempted,
+  );
+  const comparableTrials = benchmarkTrials.filter(
+    (trial) =>
+      trial.naiveEndpointMapped &&
+      trial.radarEndpointMapped &&
+      trial.naiveExecutionAttempted &&
       trial.radarExecutionAttempted &&
       trial.comparisonOutcome !== "radar_route_blocked" &&
       trial.comparisonOutcome !== "invalid_missing_endpoint" &&
-      trial.comparisonOutcome !== "invalid_execution_skipped" &&
-      trial.qualityComparisonAvailable,
+      trial.comparisonOutcome !== "invalid_execution_skipped",
   );
   const invalidComparisons = benchmarkTrials.filter(
     (trial) =>
@@ -593,6 +597,12 @@ async function main(): Promise<void> {
   }, {});
 
   const qualityComparisonAvailableCount = benchmarkTrials.filter((trial) => trial.qualityComparisonAvailable).length;
+  const sameAnswerQualityComparisonAvailable = qualityComparisonAvailableCount > 0;
+  const routingFitEvidenceAvailable = benchmarkTrials.some(
+    (trial) =>
+      (trial.comparisonOutcome === "radar_win" || trial.comparisonOutcome === "naive_win") &&
+      trial.winReason === "better_output_shape_fit",
+  );
   const outputShapesObserved = Array.from(
     new Set(
       benchmarkTrials
@@ -627,7 +637,9 @@ async function main(): Promise<void> {
     expectedOutputShape,
     totalTrials: benchmarkTrials.length,
     validHeadToHeadComparisonCount: validComparisons.length,
-    superiorityEvidenceAvailable: validComparisons.length > 0,
+    routingFitEvidenceAvailable,
+    superiorityEvidenceAvailable: routingFitEvidenceAvailable,
+    sameAnswerQualityComparisonAvailable,
     repeatabilitySameProviderCount: repeatabilityCount,
     invalidComparisonCount: invalidComparisons,
     radarRouteBlockedCount,
@@ -778,8 +790,10 @@ async function main(): Promise<void> {
     `- profile: ${summary.profile}`,
     `- expected output shape: ${summary.expectedOutputShape}`,
     `- total trials: ${summary.totalTrials}`,
-    `- valid head-to-head comparison count (different-provider superiority comparisons only): ${summary.validHeadToHeadComparisonCount}`,
+    `- valid head-to-head comparison count (different-provider executable comparisons): ${summary.validHeadToHeadComparisonCount}`,
+    `- routing fit evidence available: ${summary.routingFitEvidenceAvailable}`,
     `- superiority evidence available: ${summary.superiorityEvidenceAvailable}`,
+    `- same-answer quality comparison available: ${summary.sameAnswerQualityComparisonAvailable}`,
     `- repeatability same-provider count (both strategies selected the same executable provider): ${summary.repeatabilitySameProviderCount}`,
     `- invalid comparison count: ${summary.invalidComparisonCount}`,
     `- Radar route blocked count: ${summary.radarRouteBlockedCount}`,
@@ -808,11 +822,18 @@ async function main(): Promise<void> {
     `- unique endpoint mappings used: ${summary.uniqueEndpointMappingsUsed.join(", ") || "none"}`,
     `- output shapes observed: ${summary.outputShapesObserved.join(", ") || "none"}`,
     `- qualityComparisonAvailable count: ${summary.qualityComparisonAvailableCount}`,
+    ...(summary.routingFitEvidenceAvailable && summary.radarWins > 0
+      ? [
+          "- Routing-fit superiority evidence available: Radar selected the provider whose output shape matched the requested intent.",
+          "- caveat: This is routing-fit evidence, not full answer-quality superiority.",
+        ]
+      : []),
     `- caveat: ${summary.caveat}`,
     `- caveat: ${summary.latencyCaveat}`,
     `- caveat: ${summary.outputShapeCaveat}`,
     `- caveat: ${summary.outputShapeFitCaveat}`,
-    ...(!summary.superiorityEvidenceAvailable
+    ...((comparableTrials.length > 0 &&
+    comparableTrials.every((trial) => trial.comparisonOutcome === "repeatability_same_provider"))
       ? [
           "- warning: No superiority evidence available: naive and Radar selected the same executable provider in all comparable trials.",
         ]

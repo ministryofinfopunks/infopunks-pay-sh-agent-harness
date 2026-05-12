@@ -194,10 +194,14 @@ Note: The PaySponge `/x402/onchain/networks` route returned API-key-missing and 
 Interpretation:
 - if both strategies select StableCrypto, that is repeatability evidence, not superiority evidence
 - if both strategies select the same provider, the benchmark reports repeatability_same_provider and does not count it as superiority evidence
+- if `comparisonOutcome=radar_win` with `winReason=better_output_shape_fit`, that is a narrow routing-fit win
+- routing-fit wins mean Radar selected a provider whose output shape matches the requested intent better than naive routing
+- routing-fit wins are not the same as full answer-quality superiority comparisons
 - possible outcomes:
   - `repeatability_same_provider`: both selected the same executable provider
   - `radar_route_blocked`: Radar intentionally refused a route under configured policy constraints
   - `invalid_missing_endpoint`: Radar approved a provider route, but that provider is not executable in the local endpoint map
+  - `radar_win`/`naive_win` with `better_output_shape_fit`: output-shape routing-fit superiority signal only
 - superiority requires more executable provider mappings with different reliability/cost/latency profiles
 
 Run:
