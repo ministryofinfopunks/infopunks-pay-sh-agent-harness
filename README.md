@@ -2,12 +2,29 @@
 
 **Query Infopunks Radar before an agent spends through Pay.sh. Route, execute, and write proof logs.**
 
-Current proof:
-- Live Radar preflight works
-- StableCrypto selected from live Pay.sh catalog
-- Pay.sh CLI execution works
-- 30/30 live StableCrypto benchmark succeeded in latest local run
-- Not yet a naive-vs-Radar superiority benchmark
+## Current live proof
+
+10/10 live routing-fit wins for `solana_trending_pools`.
+
+- Naive selected `merit-systems-stablecrypto-market-data` / StableCrypto simple price.
+- Radar selected `paysponge-coingecko` / PaySponge CoinGecko trending pools.
+- Caveat: this is a routing-fit proof, not broad platform superiority.
+
+Reproduce the Solana DEX pools routing-fit proof:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run proof:solana-dex-pools
+```
+
+Inspect endpoint mapping status:
+
+```bash
+npm run mappings:status
+```
 
 ## Stress test this now
 
@@ -58,9 +75,7 @@ Tested locally with:
 
 ## Package status
 
-Not published to npm yet.
-
-Planned package name:
+Not published to npm yet. Package metadata is prepared for local packing under:
 
 `@infopunks/pay-sh-harness`
 
@@ -232,6 +247,16 @@ RADAR_API_TIMEOUT_MS=15000 \
 npm run benchmark:live-head-to-head -- --trials=30
 ```
 
+Dedicated Solana DEX pools proof command:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+RADAR_API_TIMEOUT_MS=15000 \
+npm run proof:solana-dex-pools
+```
+
 Solana RPC health profile:
 
 ```bash
@@ -371,6 +396,8 @@ This is a measurement scaffold. Results are simulated unless live execution is e
 - `npm run benchmark:live-market-data`: repeated live market-data route benchmark + JSON/CSV/Markdown reports.
 - `npm run benchmark:live-head-to-head`: repeated live naive endpoint-map selection vs Radar-selected provider benchmark for executable market-data mappings.
 - `npm run benchmark:live-rpc`: repeated live QuickNode Solana JSON-RPC health/balance/slot benchmark + JSON/CSV/Markdown reports.
+- `npm run proof:solana-dex-pools`: dedicated Solana DEX pools routing-fit proof wrapper with concise artifact summary.
+- `npm run mappings:status`: endpoint mapping status grouped by execution/readiness state.
 - `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
 - `npm run typecheck`: TypeScript typecheck.
 - `npm run build`: compile to `dist/`.

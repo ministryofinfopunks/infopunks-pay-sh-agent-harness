@@ -1,8 +1,15 @@
 {
-  "name": "infopunks-pay-sh-agent-harness",
+  "name": "@infopunks/pay-sh-harness",
   "version": "0.1.0",
   "private": false,
   "description": "Minimal TypeScript harness demonstrating Radar-assisted Pay.sh provider routing.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "examples"
+  ],
   "license": "MIT",
   "scripts": {
     "demo:route": "ts-node src/demoRoute.ts",
@@ -11,11 +18,14 @@
     "benchmark:live-market-data": "ts-node src/demoLiveMarketDataBenchmark.ts",
     "benchmark:live-head-to-head": "ts-node src/demoLiveHeadToHeadBenchmark.ts",
     "benchmark:live-rpc": "ts-node src/demoLiveRpcBenchmark.ts",
+    "proof:solana-dex-pools": "ts-node src/demoProofSolanaDexPools.ts",
+    "mappings:status": "ts-node src/demoMappingStatus.ts",
     "debug:pay-cli-parity": "ts-node src/demoPayCliParity.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
     "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

@@ -15,7 +15,7 @@ const DEFAULT_SOLANA_RPC_MAX_LATENCY_MS = 5000;
 const DEFAULT_SOLANA_RPC_MAX_COST_USD = 0.05;
 const RESULTS_DIR = path.resolve(process.cwd(), "benchmark-results", "live-head-to-head");
 
-type ProfileName = "simple_price" | "solana_trending_pools" | "solana_rpc_health";
+export type ProfileName = "simple_price" | "solana_trending_pools" | "solana_rpc_health";
 
 type ComparisonOutcome =
   | "radar_win"
@@ -153,6 +153,28 @@ interface HeadToHeadTrial {
   radarValidationError: string | null;
 }
 
+export interface LiveHeadToHeadBenchmarkSummary {
+  profile: ProfileName;
+  expectedOutputShape: string;
+  totalTrials: number;
+  radarWins: number;
+  naiveWins: number;
+  ties: number;
+  outputShapeFitWins: Record<string, number>;
+  uniqueNaiveProviders: string[];
+  uniqueRadarProviders: string[];
+}
+
+export interface LiveHeadToHeadBenchmarkRunResult {
+  summary: LiveHeadToHeadBenchmarkSummary;
+  trials: HeadToHeadTrial[];
+  reportPaths: {
+    jsonPath: string;
+    csvPath: string;
+    summaryPath: string;
+  };
+}
+
 function getEnvNumber(name: string, defaultValue: number): number {
   const rawValue = process.env[name];
   if (!rawValue) {
@@ -162,17 +184,17 @@ function getEnvNumber(name: string, defaultValue: number): number {
   return Number.isFinite(parsed) ? parsed : defaultValue;
 }
 
-function getTrialsFromArgsOrEnv(): number {
+function getTrialsFromArgsOrEnv(defaultTrials = DEFAULT_TRIALS): number {
   const arg = process.argv.find((entry) => entry.startsWith("--trials="));
   const fromArg = arg ? Number(arg.slice("--trials=".length)) : undefined;
-  const value = fromArg ?? DEFAULT_TRIALS;
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : DEFAULT_TRIALS;
+  const value = fromArg ?? defaultTrials;
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : defaultTrials;
 }
 
-function getProfileFromArgsOrEnv(): BenchmarkIntentProfile {
+function getProfileFromArgsOrEnv(defaultProfile: ProfileName = "simple_price"): BenchmarkIntentProfile {
   const arg = process.argv.find((entry) => entry.startsWith("--profile="));
-  const raw = (arg ? arg.slice("--profile=".length) : process.env.LIVE_HEAD_TO_HEAD_PROFILE ?? "simple_price").trim();
-  const profile = (raw in BENCHMARK_PROFILES ? raw : "simple_price") as ProfileName;
+  const raw = (arg ? arg.slice("--profile=".length) : process.env.LIVE_HEAD_TO_HEAD_PROFILE ?? defaultProfile).trim();
+  const profile = (raw in BENCHMARK_PROFILES ? raw : defaultProfile) as ProfileName;
   return BENCHMARK_PROFILES[profile];
 }
 
@@ -325,9 +347,12 @@ function getOutputShapeFitOutcome(
   return "neither_fit";
 }
 
-async function main(): Promise<void> {
-  const trials = getTrialsFromArgsOrEnv();
-  const profile = getProfileFromArgsOrEnv();
+export async function runLiveHeadToHeadBenchmark(options?: {
+  trials?: number;
+  profileName?: ProfileName;
+}): Promise<LiveHeadToHeadBenchmarkRunResult> {
+  const trials = options?.trials ?? getTrialsFromArgsOrEnv();
+  const profile = options?.profileName ? BENCHMARK_PROFILES[options.profileName] : getProfileFromArgsOrEnv();
   const intent = profile.intent;
   const category = profile.category;
   const expectedOutputShape = profile.expectedOutputShape;
@@ -1024,9 +1049,21 @@ async function main(): Promise<void> {
   console.log(`- ${jsonPath}`);
   console.log(`- ${csvPath}`);
   console.log(`- ${summaryPath}`);
+
+  return {
+    summary,
+    trials: benchmarkTrials,
+    reportPaths: {
+      jsonPath,
+      csvPath,
+      summaryPath,
+    },
+  };
 }
 
-main().catch((error) => {
-  console.error("benchmark:live-head-to-head failed", error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  runLiveHeadToHeadBenchmark().catch((error) => {
+    console.error("benchmark:live-head-to-head failed", error);
+    process.exitCode = 1;
+  });
+}
