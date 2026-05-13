@@ -1,42 +1,43 @@
 # Live Naive-vs-Radar Benchmark Summary
 
-- profile: solana_rpc_health
-- expected output shape: json_rpc_health
-- total trials: 1
-- valid head-to-head comparison count (different-provider executable comparisons): 0
-- routing fit evidence available: false
-- superiority evidence available: false
+- profile: solana_trending_pools
+- expected output shape: trending_pools
+- total trials: 3
+- valid head-to-head comparison count (different-provider executable comparisons): 3
+- routing fit evidence available: true
+- superiority evidence available: true
 - same-answer quality comparison available: false
-- repeatability same-provider count (both strategies selected the same executable provider): 1
+- repeatability same-provider count (both strategies selected the same executable provider): 0
 - invalid comparison count: 0
 - Radar route blocked count: 0
-- Radar route approved count: 1
+- Radar route approved count: 3
 - Radar missing endpoint mapping count: 0
-- Radar execution attempted count: 1
-- Radar execution success rate among attempted: 0%
-- naive execution attempted count: 1
-- naive execution success rate among attempted: 0%
-- naive success rate: 0%
-- radar success rate: 0%
-- naive avg latency: 5223ms
-- radar avg latency: 2859ms
-- parsed JSON success rates: naive=0% radar=0%
-- radar wins: 0
+- Radar execution attempted count: 3
+- Radar execution success rate among attempted: 100%
+- naive execution attempted count: 3
+- naive execution success rate among attempted: 100%
+- naive success rate: 100%
+- radar success rate: 100%
+- naive avg latency: 3633ms
+- radar avg latency: 4789.67ms
+- parsed JSON success rates: naive=100% radar=100%
+- radar wins: 3
 - naive wins: 0
 - ties: 0
-- repeatability same-provider outcomes: 1
+- repeatability same-provider outcomes: 0
 - invalid reasons: {}
 - `radar_route_blocked` means Radar intentionally refused execution under current policy constraints (not a missing endpoint mapping).
-- naive output shape fit count: 1
-- radar output shape fit count: 1
-- output-shape fit wins: {"same_provider":1}
-- unique naive providers: quicknode-rpc
-- unique Radar providers: quicknode-rpc
-- unique endpoint mappings used: quicknode-rpc
-- output shapes observed: json_rpc_health
+- naive output shape fit count: 0
+- radar output shape fit count: 3
+- output-shape fit wins: {"radar_better_fit":3}
+- unique naive providers: merit-systems-stablecrypto-market-data
+- unique Radar providers: paysponge-coingecko
+- unique endpoint mappings used: merit-systems-stablecrypto-market-data, paysponge-coingecko
+- output shapes observed: simple_price, trending_pools
 - qualityComparisonAvailable count: 0
+- Routing-fit superiority evidence available: Radar selected the provider whose output shape matched the requested intent.
+- caveat: This is routing-fit evidence, not full answer-quality superiority.
 - caveat: Same-provider outcomes prove repeatability of an executable route, not Radar superiority. Radar superiority requires multiple executable providers with different reliability/cost/latency profiles.
 - caveat: Latency differences in same-provider trials may reflect CLI/payment/session effects, not routing quality.
 - caveat: different output shapes allow execution reliability comparison, not same-answer quality comparison.
 - caveat: output-shape fit is a routing-fit signal, not full answer-quality evaluation.
-- warning: No superiority evidence available: naive and Radar selected the same executable provider in all comparable trials.
