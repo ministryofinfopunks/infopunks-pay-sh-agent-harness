@@ -10,3 +10,6 @@ verification-results/
 
 # Pay.sh local artifacts
 pay/
+
+# Local npm package artifacts
+*.tgz
