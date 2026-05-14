@@ -146,6 +146,28 @@ test("actual wrong provider still fails", () => {
   assert.equal(result.errorReason, "wrong_provider");
 });
 
+test("messaging_status regression: paysponge-textbelt expected and selected should match", () => {
+  const row = {
+    profile: "messaging_status",
+    expectedProvider: "paysponge-textbelt",
+    selectedProvider: "paysponge-textbelt",
+  } as const;
+
+  const preflight = makeAvailablePreflight({
+    decision: {
+      decision: "route_approved",
+      selectedProvider: row.selectedProvider,
+      rejectedProviders: [],
+      candidateCount: 1,
+      routingPolicy: [],
+    },
+  });
+
+  const result = classifyTrialOutcome(preflight, row.expectedProvider);
+  assert.equal(result.outcome, "expected_provider_success");
+  assert.equal(result.errorReason, null);
+});
+
 test("expected provider success classification", () => {
   const preflight = makeAvailablePreflight({
     decision: {

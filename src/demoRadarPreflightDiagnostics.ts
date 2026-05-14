@@ -44,10 +44,10 @@ const BASE_PROFILES: DiagnosticProfile[] = MULTI_CATEGORY_PROFILES.map((profile)
 
 const MESSAGING_PROFILE: DiagnosticProfile = {
   profile: "messaging_status",
-  intent: "check messaging delivery status",
+  intent: "check SMS delivery status",
   category: "messaging",
-  expectedProvider: "agentmail",
-  expectedOutputShape: "messaging_status",
+  expectedProvider: "paysponge-textbelt",
+  expectedOutputShape: "sms_status",
   includeByDefault: false,
 };
 
