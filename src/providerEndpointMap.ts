@@ -51,10 +51,9 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     category: "compute",
     capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
     outputShape: "json_rpc_balance",
-    status: "intermittent_pay_cli_success",
+    status: "verified_pay_cli_success",
     endpointMappingSource: "manual_pay_cli_verification",
-    notes:
-      "Manual pay curl previously succeeded for getHealth/getBalance, but current pay-cli calls can fail with Server returned 402 again after payment. Do not execute by default until stable.",
+    notes: "Verified via pay-cli execution with parsed Solana mainnet getBalance JSON-RPC response.",
   },
   {
     endpointMappingId: "quicknode-rpc-slot",
@@ -66,10 +65,9 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     category: "compute",
     capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
     outputShape: "json_rpc_slot",
-    status: "intermittent_pay_cli_success",
+    status: "verified_pay_cli_success",
     endpointMappingSource: "manual_pay_cli_verification",
-    notes:
-      "Manual pay curl previously succeeded for getHealth/getBalance, but current pay-cli calls can fail with Server returned 402 again after payment. Do not execute by default until stable.",
+    notes: "Verified via pay-cli execution with parsed Solana mainnet getSlot JSON-RPC response.",
   },
   {
     endpointMappingId: "stablecrypto-price",
