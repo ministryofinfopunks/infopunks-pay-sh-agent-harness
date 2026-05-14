@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classifyTrialOutcome, getSelectedDiagnosticProfiles, percentile } from "./demoRadarPreflightDiagnostics";
+import {
+  classifyTrialOutcome,
+  getSelectedDiagnosticProfiles,
+  normalizeProviderId,
+  percentile,
+} from "./demoRadarPreflightDiagnostics";
 import type { RadarPreflightResult } from "./radarClient";
 
 function makeAvailablePreflight(overrides: Partial<RadarPreflightResult>): RadarPreflightResult {
@@ -59,6 +64,84 @@ test("wrong provider classification", () => {
   });
 
   const result = classifyTrialOutcome(preflight, "quicknode-rpc");
+  assert.equal(result.outcome, "wrong_provider");
+  assert.equal(result.errorReason, "wrong_provider");
+});
+
+test("normalizeProviderId slash and hyphen semantics", () => {
+  assert.equal(normalizeProviderId("paysponge/textbelt"), "paysponge-textbelt");
+  assert.equal(normalizeProviderId("paysponge-textbelt"), "paysponge-textbelt");
+  assert.equal(normalizeProviderId("paysponge/perplexity"), "paysponge-perplexity");
+  assert.equal(
+    normalizeProviderId("solana-foundation/google/places"),
+    "solana-foundation-google-places",
+  );
+  assert.equal(
+    normalizeProviderId("solana-foundation-google-places"),
+    "solana-foundation-google-places",
+  );
+});
+
+test("paysponge/textbelt expected matches paysponge-textbelt selected", () => {
+  const preflight = makeAvailablePreflight({
+    decision: {
+      decision: "route_approved",
+      selectedProvider: "paysponge-textbelt",
+      rejectedProviders: [],
+      candidateCount: 1,
+      routingPolicy: [],
+    },
+  });
+
+  const result = classifyTrialOutcome(preflight, "paysponge/textbelt");
+  assert.equal(result.outcome, "expected_provider_success");
+  assert.equal(result.errorReason, null);
+});
+
+test("paysponge/perplexity expected matches paysponge-perplexity selected", () => {
+  const preflight = makeAvailablePreflight({
+    decision: {
+      decision: "route_approved",
+      selectedProvider: "paysponge-perplexity",
+      rejectedProviders: [],
+      candidateCount: 1,
+      routingPolicy: [],
+    },
+  });
+
+  const result = classifyTrialOutcome(preflight, "paysponge/perplexity");
+  assert.equal(result.outcome, "expected_provider_success");
+  assert.equal(result.errorReason, null);
+});
+
+test("solana-foundation/google/places expected matches solana-foundation-google-places selected", () => {
+  const preflight = makeAvailablePreflight({
+    decision: {
+      decision: "route_approved",
+      selectedProvider: "solana-foundation-google-places",
+      rejectedProviders: [],
+      candidateCount: 1,
+      routingPolicy: [],
+    },
+  });
+
+  const result = classifyTrialOutcome(preflight, "solana-foundation/google/places");
+  assert.equal(result.outcome, "expected_provider_success");
+  assert.equal(result.errorReason, null);
+});
+
+test("actual wrong provider still fails", () => {
+  const preflight = makeAvailablePreflight({
+    decision: {
+      decision: "route_approved",
+      selectedProvider: "quicknode-rpc",
+      rejectedProviders: [],
+      candidateCount: 1,
+      routingPolicy: [],
+    },
+  });
+
+  const result = classifyTrialOutcome(preflight, "paysponge/textbelt");
   assert.equal(result.outcome, "wrong_provider");
   assert.equal(result.errorReason, "wrong_provider");
 });

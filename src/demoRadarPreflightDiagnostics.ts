@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { MULTI_CATEGORY_PROFILES, classifyProviderMatch } from "./demoMultiCategoryBenchmark";
+import { MULTI_CATEGORY_PROFILES } from "./demoMultiCategoryBenchmark";
 import { providerEndpointMap } from "./providerEndpointMap";
 import { callRadarPreflight, RadarPreflightInput, RadarPreflightResult } from "./radarClient";
 
@@ -57,7 +57,9 @@ export interface RadarPreflightTrialRow {
   intent: string;
   category: string;
   expectedProvider: string;
+  expectedProviderNormalized: string;
   selectedProvider: string | null;
+  selectedProviderNormalized: string;
   providerMatched: boolean;
   decision: string;
   latencyMs: number;
@@ -113,6 +115,21 @@ function average(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+export function normalizeProviderId(id: string | null | undefined): string {
+  return (id ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\//g, "-")
+    .replace(/-+/g, "-");
+}
+
+function classifyProviderMatch(expectedProvider: string, selectedProvider: string | null): boolean {
+  if (!selectedProvider) {
+    return false;
+  }
+  return normalizeProviderId(expectedProvider) === normalizeProviderId(selectedProvider);
+}
+
 export function percentile(values: number[], percentileValue: number): number {
   if (values.length === 0) {
     return 0;
@@ -137,19 +154,32 @@ function getCandidateProviders(profile: DiagnosticProfile): string[] {
 export function classifyTrialOutcome(
   preflight: RadarPreflightResult,
   expectedProvider: string,
-): { outcome: Outcome; decision: string; errorReason: string | null; selectedProvider: string | null; radarSource: string } {
+): {
+  outcome: Outcome;
+  decision: string;
+  errorReason: string | null;
+  selectedProvider: string | null;
+  expectedProviderNormalized: string;
+  selectedProviderNormalized: string;
+  radarSource: string;
+} {
+  const expectedProviderNormalized = normalizeProviderId(expectedProvider);
+
   if (!preflight.available) {
     return {
       outcome: "radar_preflight_unavailable",
       decision: "preflight_unavailable",
       errorReason: "radar_preflight_unavailable",
       selectedProvider: null,
+      expectedProviderNormalized,
+      selectedProviderNormalized: "",
       radarSource: preflight.mode,
     };
   }
 
   const decision = preflight.decision?.decision ?? "route_blocked";
   const selectedProvider = preflight.decision?.selectedProvider ?? null;
+  const selectedProviderNormalized = normalizeProviderId(selectedProvider);
   const blockReason = (preflight.decision?.blockReason ?? "").trim().toLowerCase();
   const radarSource = preflight.decision?.source ?? preflight.mode;
 
@@ -159,6 +189,8 @@ export function classifyTrialOutcome(
       decision,
       errorReason: "no_candidates",
       selectedProvider: null,
+      expectedProviderNormalized,
+      selectedProviderNormalized: "",
       radarSource,
     };
   }
@@ -169,6 +201,8 @@ export function classifyTrialOutcome(
       decision,
       errorReason: "route_blocked",
       selectedProvider,
+      expectedProviderNormalized,
+      selectedProviderNormalized,
       radarSource,
     };
   }
@@ -179,6 +213,8 @@ export function classifyTrialOutcome(
       decision,
       errorReason: "wrong_provider",
       selectedProvider,
+      expectedProviderNormalized,
+      selectedProviderNormalized,
       radarSource,
     };
   }
@@ -188,6 +224,8 @@ export function classifyTrialOutcome(
     decision,
     errorReason: null,
     selectedProvider,
+    expectedProviderNormalized,
+    selectedProviderNormalized,
     radarSource,
   };
 }
@@ -320,7 +358,7 @@ export async function runRadarPreflightDiagnostics(): Promise<{
       const preflight = await callRadarPreflight(preflightInput);
       const classification = classifyTrialOutcome(preflight, profile.expectedProvider);
       const latencyMs = Date.now() - startedAt;
-      const providerMatched = classifyProviderMatch(profile.expectedProvider, classification.selectedProvider);
+      const providerMatched = classification.expectedProviderNormalized === classification.selectedProviderNormalized;
 
       rows.push({
         trialId,
@@ -328,7 +366,9 @@ export async function runRadarPreflightDiagnostics(): Promise<{
         intent: profile.intent,
         category: profile.category,
         expectedProvider: profile.expectedProvider,
+        expectedProviderNormalized: classification.expectedProviderNormalized,
         selectedProvider: classification.selectedProvider,
+        selectedProviderNormalized: classification.selectedProviderNormalized,
         providerMatched,
         decision: classification.decision,
         latencyMs,
@@ -357,7 +397,9 @@ export async function runRadarPreflightDiagnostics(): Promise<{
     "intent",
     "category",
     "expectedProvider",
+    "expectedProviderNormalized",
     "selectedProvider",
+    "selectedProviderNormalized",
     "providerMatched",
     "decision",
     "latencyMs",
@@ -373,7 +415,9 @@ export async function runRadarPreflightDiagnostics(): Promise<{
       row.intent,
       row.category,
       row.expectedProvider,
+      row.expectedProviderNormalized,
       row.selectedProvider ?? "",
+      row.selectedProviderNormalized,
       row.providerMatched,
       row.decision,
       row.latencyMs,
