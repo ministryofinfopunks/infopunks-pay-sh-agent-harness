@@ -2,34 +2,36 @@
 
 - profile: solana_trending_pools
 - expected output shape: trending_pools
-- total trials: 3
-- valid head-to-head comparison count (different-provider executable comparisons): 3
+- total trials: 10
+- valid head-to-head comparison count (different-provider executable comparisons): 9
 - routing fit evidence available: true
 - superiority evidence available: true
 - same-answer quality comparison available: false
 - repeatability same-provider count (both strategies selected the same executable provider): 0
-- invalid comparison count: 0
+- invalid comparison count: 1
 - Radar route blocked count: 0
-- Radar route approved count: 3
+- Radar preflight unavailable count: 1
+- Radar route approved count: 9
 - Radar missing endpoint mapping count: 0
-- Radar execution attempted count: 3
+- Radar execution attempted count: 9
 - Radar execution success rate among attempted: 100%
-- naive execution attempted count: 3
+- naive execution attempted count: 10
 - naive execution success rate among attempted: 100%
 - naive success rate: 100%
-- radar success rate: 100%
-- naive avg latency: 3633ms
-- radar avg latency: 4789.67ms
-- parsed JSON success rates: naive=100% radar=100%
-- radar wins: 3
+- radar success rate: 90%
+- naive avg latency: 5530.2ms
+- radar avg latency: 6975.33ms
+- parsed JSON success rates: naive=100% radar=90%
+- radar wins: 9
 - naive wins: 0
 - ties: 0
 - repeatability same-provider outcomes: 0
-- invalid reasons: {}
-- `radar_route_blocked` means Radar intentionally refused execution under current policy constraints (not a missing endpoint mapping).
+- invalid reasons: {"radar_preflight_unavailable":1}
+- `radar_policy_blocked` means Radar intentionally refused execution under current policy constraints.
+- `radar_preflight_unavailable` means the Radar preflight API timed out or was unavailable, so no Radar execution was attempted.
 - naive output shape fit count: 0
-- radar output shape fit count: 3
-- output-shape fit wins: {"radar_better_fit":3}
+- radar output shape fit count: 9
+- output-shape fit wins: {"radar_better_fit":9,"neither_fit":1}
 - unique naive providers: merit-systems-stablecrypto-market-data
 - unique Radar providers: paysponge-coingecko
 - unique endpoint mappings used: merit-systems-stablecrypto-market-data, paysponge-coingecko
