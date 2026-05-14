@@ -1,3 +1,5 @@
+import type { RadarPreflightResult } from "./radarClient";
+
 export type DataMode = "live" | "mock" | "fallback-mock";
 export type CatalogMode = "mock" | "live" | "fallback";
 export type RadarMode = "live" | "mock" | "fallback";
@@ -188,4 +190,77 @@ export interface BenchmarkSummary {
   liveExecutionSkippedCount: number;
   liveExecutionConfigured: boolean;
   comparisonValidity?: ComparisonValidity;
+}
+
+export type HarnessProviderCandidate = string | ProviderCatalogEntry | CandidateProvider;
+export type HarnessExecutionMode = "auto" | "preflight_only";
+export type HarnessRoutingSource = "radar_preflight" | "local_router";
+export type HarnessSkippedExecutionReason =
+  | "radar_route_blocked"
+  | "route_not_approved"
+  | "missing_selected_provider"
+  | "execution_disabled_by_input"
+  | "live_pay_sh_execution_disabled"
+  | "missing_live_pay_sh_execution_config"
+  | "pay_cli_missing"
+  | "execution_exception";
+
+export interface HarnessConstraints {
+  minTrustScore?: number;
+  maxLatencyMs?: number;
+  maxCostUsd?: number;
+}
+
+export interface HarnessExecutionConfig {
+  enabled?: boolean;
+  providerId?: string;
+  endpointUrl?: string;
+  method?: string;
+  body?: unknown;
+  bodyJson?: unknown;
+  headers?: Record<string, string>;
+}
+
+export interface HarnessProofConfig {
+  enabled?: boolean;
+  kind?: string;
+}
+
+export interface RadarPreflightAndExecuteInput {
+  intent: string;
+  category?: string;
+  constraints?: HarnessConstraints;
+  candidateProviders?: HarnessProviderCandidate[];
+  execution?: HarnessExecutionConfig;
+  proof?: boolean | HarnessProofConfig;
+  executionMode?: HarnessExecutionMode;
+}
+
+export interface RadarPreflightAndExecuteMetadata {
+  radarMode: RadarMode;
+  catalogMode?: CatalogMode;
+  routingSource: HarnessRoutingSource;
+  executionMode?: ExecutionMode;
+  livePayShExecutionConfigured: boolean;
+  radarEndpoint?: string;
+}
+
+export interface RadarPreflightAndExecuteDecision {
+  approved: boolean;
+  decision: "route_approved" | "route_blocked";
+  selectedProviderId: string | null;
+  blockReason?: string;
+  source: HarnessRoutingSource;
+}
+
+export interface RadarPreflightAndExecuteResult {
+  success: boolean;
+  decision: RadarPreflightAndExecuteDecision;
+  routingResult?: RoutingResult;
+  preflightResult: RadarPreflightResult;
+  executionResult?: LivePayShExecutionResult;
+  proofPath?: string;
+  skippedExecutionReason?: HarnessSkippedExecutionReason | string;
+  metadata: RadarPreflightAndExecuteMetadata;
+  timestamp: string;
 }

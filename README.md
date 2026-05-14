@@ -117,11 +117,9 @@ Tested locally with:
 
 ## Package status
 
-Not published to npm yet. Package metadata is prepared for local packing under:
-
-`@infopunks/pay-sh-harness`
-
-Local imports work today through `src/index.ts`.
+- Package metadata is prepared.
+- Public API is exported from `src/index.ts` and builds to `dist/index.js`.
+- Not published to npm yet unless release has been completed.
 
 ## How to break it
 
@@ -140,7 +138,7 @@ Open an issue with terminal output, proof logs, and the command that broke it.
 ## Drop into an agent
 
 ```ts
-import { callRadarPreflight } from "./src";
+import { callRadarPreflight } from "@infopunks/pay-sh-harness";
 
 const route = await callRadarPreflight({
   intent: "get crypto market data",
@@ -148,7 +146,34 @@ const route = await callRadarPreflight({
   constraints: { minTrustScore: 70, maxLatencyMs: 3000, maxCostUsd: 0.05 }
 });
 
-if (route.decision !== "route_approved") throw new Error("No safe Pay.sh route");
+if (route.decision?.decision !== "route_approved") throw new Error("No safe Pay.sh route");
+```
+
+## Use as a harness
+
+```ts
+import { radarPreflightAndExecute } from "@infopunks/pay-sh-harness";
+
+const result = await radarPreflightAndExecute({
+  intent: "get Solana trending pools",
+  category: "finance",
+  constraints: {
+    minTrustScore: 70,
+    maxLatencyMs: 3000,
+    maxCostUsd: 0.05
+  },
+  execution: {
+    endpointUrl: "https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools",
+    method: "GET"
+  },
+  proof: {
+    enabled: true
+  }
+});
+
+if (!result.success) {
+  console.log(result.skippedExecutionReason ?? result.executionResult?.errorReason);
+}
 ```
 
 ## OpenAI tool copy-paste
