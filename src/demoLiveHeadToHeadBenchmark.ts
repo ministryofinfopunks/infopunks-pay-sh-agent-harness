@@ -2,7 +2,7 @@ import "dotenv/config";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { executeLivePayShCall } from "./livePayShExecutor";
-import { callRadarPreflight, RadarPreflightInput } from "./radarClient";
+import { callRadarPreflight, RadarPreflightInput, RadarPreflightResult } from "./radarClient";
 import { providerEndpointMap, ProviderEndpointMapping } from "./providerEndpointMap";
 import { validateJsonRpcResponse } from "./jsonRpcValidator";
 
@@ -22,7 +22,8 @@ type ComparisonOutcome =
   | "naive_win"
   | "tie"
   | "repeatability_same_provider"
-  | "radar_route_blocked"
+  | "radar_policy_blocked"
+  | "radar_preflight_unavailable"
   | "invalid_missing_endpoint"
   | "invalid_unverified_execution_mapping"
   | "invalid_execution_skipped";
@@ -347,6 +348,20 @@ function getOutputShapeFitOutcome(
   return "neither_fit";
 }
 
+export function classifyRadarBlockedOutcome(
+  preflight: RadarPreflightResult,
+  radarBlockReason: string | null,
+): "radar_policy_blocked" | "radar_preflight_unavailable" {
+  const reason = (radarBlockReason ?? "").toLowerCase();
+  if (!preflight.available || preflight.mode === "fallback") {
+    return "radar_preflight_unavailable";
+  }
+  if (reason.includes("radar preflight unavailable")) {
+    return "radar_preflight_unavailable";
+  }
+  return "radar_policy_blocked";
+}
+
 export async function runLiveHeadToHeadBenchmark(options?: {
   trials?: number;
   profileName?: ProfileName;
@@ -485,8 +500,8 @@ export async function runLiveHeadToHeadBenchmark(options?: {
       naiveResponsePreview = naiveRun.responsePreview;
       naiveErrorReason = normalizeErrorReason(naiveRun.errorReason);
 
-      radarErrorReason = radarBlockReason || "radar_route_blocked";
-      comparisonOutcome = "radar_route_blocked";
+      comparisonOutcome = classifyRadarBlockedOutcome(preflight, radarBlockReason);
+      radarErrorReason = radarBlockReason || comparisonOutcome;
       radarExecutionMode = "skipped";
       radarExecutionAttempted = false;
     } else if (radarDecision === "route_approved" && radarProvider && !radarProviderMapping) {
@@ -519,8 +534,8 @@ export async function runLiveHeadToHeadBenchmark(options?: {
       naiveResponsePreview = naiveRun.responsePreview;
       naiveErrorReason = normalizeErrorReason(naiveRun.errorReason);
 
-      radarErrorReason = radarBlockReason || "radar_route_blocked";
-      comparisonOutcome = "radar_route_blocked";
+      comparisonOutcome = classifyRadarBlockedOutcome(preflight, radarBlockReason);
+      radarErrorReason = radarBlockReason || comparisonOutcome;
       radarExecutionMode = "skipped";
       radarExecutionAttempted = false;
     } else {
@@ -702,7 +717,8 @@ export async function runLiveHeadToHeadBenchmark(options?: {
       trial.radarEndpointMapped &&
       trial.naiveExecutionAttempted &&
       trial.radarExecutionAttempted &&
-      trial.comparisonOutcome !== "radar_route_blocked" &&
+      trial.comparisonOutcome !== "radar_policy_blocked" &&
+      trial.comparisonOutcome !== "radar_preflight_unavailable" &&
       trial.comparisonOutcome !== "invalid_missing_endpoint" &&
       trial.comparisonOutcome !== "invalid_unverified_execution_mapping" &&
       trial.comparisonOutcome !== "invalid_execution_skipped",
@@ -711,7 +727,8 @@ export async function runLiveHeadToHeadBenchmark(options?: {
     (trial) =>
       trial.comparisonOutcome === "invalid_missing_endpoint" ||
       trial.comparisonOutcome === "invalid_unverified_execution_mapping" ||
-      trial.comparisonOutcome === "radar_route_blocked" ||
+      trial.comparisonOutcome === "radar_policy_blocked" ||
+      trial.comparisonOutcome === "radar_preflight_unavailable" ||
       trial.comparisonOutcome === "invalid_execution_skipped",
   ).length;
   const repeatabilityCount = benchmarkTrials.filter(
@@ -734,7 +751,12 @@ export async function runLiveHeadToHeadBenchmark(options?: {
     benchmarkTrials.length === 0 ? 0 : benchmarkTrials.filter((trial) => trial.naiveParsedJsonAvailable).length / benchmarkTrials.length;
   const radarParsedJsonRate =
     benchmarkTrials.length === 0 ? 0 : benchmarkTrials.filter((trial) => trial.radarParsedJsonAvailable).length / benchmarkTrials.length;
-  const radarRouteBlockedCount = benchmarkTrials.filter((trial) => trial.radarDecision === "route_blocked").length;
+  const radarRouteBlockedCount = benchmarkTrials.filter(
+    (trial) => trial.comparisonOutcome === "radar_policy_blocked",
+  ).length;
+  const radarPreflightUnavailableCount = benchmarkTrials.filter(
+    (trial) => trial.comparisonOutcome === "radar_preflight_unavailable",
+  ).length;
   const radarRouteApprovedCount = benchmarkTrials.filter((trial) => trial.radarDecision === "route_approved").length;
   const radarMissingEndpointMappingCount = benchmarkTrials.filter(
     (trial) => trial.comparisonOutcome === "invalid_missing_endpoint",
@@ -751,8 +773,11 @@ export async function runLiveHeadToHeadBenchmark(options?: {
       : benchmarkTrials.filter((trial) => trial.naiveExecutionAttempted && trial.naiveSuccess).length / naiveExecutionAttemptedCount;
 
   const invalidReasons = benchmarkTrials.reduce<Record<string, number>>((acc, trial) => {
-    if (trial.comparisonOutcome === "radar_route_blocked") {
-      acc.radar_route_blocked = (acc.radar_route_blocked ?? 0) + 1;
+    if (trial.comparisonOutcome === "radar_policy_blocked") {
+      acc.radar_policy_blocked = (acc.radar_policy_blocked ?? 0) + 1;
+    }
+    if (trial.comparisonOutcome === "radar_preflight_unavailable") {
+      acc.radar_preflight_unavailable = (acc.radar_preflight_unavailable ?? 0) + 1;
     }
     if (trial.comparisonOutcome === "invalid_missing_endpoint") {
       acc.invalid_missing_endpoint = (acc.invalid_missing_endpoint ?? 0) + 1;
@@ -813,6 +838,7 @@ export async function runLiveHeadToHeadBenchmark(options?: {
     repeatabilitySameProviderCount: repeatabilityCount,
     invalidComparisonCount: invalidComparisons,
     radarRouteBlockedCount,
+    radarPreflightUnavailableCount,
     radarRouteApprovedCount,
     radarMissingEndpointMappingCount,
     radarExecutionAttemptedCount,
@@ -997,6 +1023,7 @@ export async function runLiveHeadToHeadBenchmark(options?: {
     `- repeatability same-provider count (both strategies selected the same executable provider): ${summary.repeatabilitySameProviderCount}`,
     `- invalid comparison count: ${summary.invalidComparisonCount}`,
     `- Radar route blocked count: ${summary.radarRouteBlockedCount}`,
+    `- Radar preflight unavailable count: ${summary.radarPreflightUnavailableCount}`,
     `- Radar route approved count: ${summary.radarRouteApprovedCount}`,
     `- Radar missing endpoint mapping count: ${summary.radarMissingEndpointMappingCount}`,
     `- Radar execution attempted count: ${summary.radarExecutionAttemptedCount}`,
@@ -1013,7 +1040,8 @@ export async function runLiveHeadToHeadBenchmark(options?: {
     `- ties: ${summary.ties}`,
     `- repeatability same-provider outcomes: ${summary.repeatabilitySameProviderOutcomes}`,
     `- invalid reasons: ${JSON.stringify(summary.invalidReasons)}`,
-    "- `radar_route_blocked` means Radar intentionally refused execution under current policy constraints (not a missing endpoint mapping).",
+    "- `radar_policy_blocked` means Radar intentionally refused execution under current policy constraints.",
+    "- `radar_preflight_unavailable` means the Radar preflight API timed out or was unavailable, so no Radar execution was attempted.",
     `- naive output shape fit count: ${summary.naiveOutputShapeFitCount}`,
     `- radar output shape fit count: ${summary.radarOutputShapeFitCount}`,
     `- output-shape fit wins: ${JSON.stringify(summary.outputShapeFitWins)}`,

@@ -284,7 +284,8 @@ Interpretation:
 - routing-fit wins are not the same as full answer-quality superiority comparisons
 - possible outcomes:
   - `repeatability_same_provider`: both selected the same executable provider
-  - `radar_route_blocked`: Radar intentionally refused a route under configured policy constraints
+  - `radar_policy_blocked`: Radar intentionally refused a route under configured policy constraints
+  - `radar_preflight_unavailable`: Radar preflight timed out or was unavailable, so no Radar execution was attempted
   - `invalid_missing_endpoint`: Radar approved a provider route, but that provider is not executable in the local endpoint map
   - `invalid_unverified_execution_mapping`: Radar approved a mapped provider, but mapping status is not executable by default
   - `radar_win`/`naive_win` with `better_output_shape_fit`: output-shape routing-fit superiority signal only
