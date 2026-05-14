@@ -20,6 +20,7 @@
     "benchmark:live-rpc": "ts-node src/demoLiveRpcBenchmark.ts",
     "proof:solana-dex-pools": "ts-node src/demoProofSolanaDexPools.ts",
     "mappings:status": "ts-node src/demoMappingStatus.ts",
+    "verify:mapping": "ts-node src/demoVerifyProviderMapping.ts",
     "debug:pay-cli-parity": "ts-node src/demoPayCliParity.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
     "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",

@@ -26,6 +26,48 @@ Inspect endpoint mapping status:
 npm run mappings:status
 ```
 
+## Verify a candidate mapping
+
+Use the verification helper to distinguish:
+- x402 challenge exists (`verified_402`)
+- paid execution actually succeeds (`verified_pay_cli_success`)
+
+StableCrypto example:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+VERIFY_PROVIDER_ID=merit-systems-stablecrypto-market-data \
+VERIFY_ENDPOINT_MAPPING_ID=stablecrypto-coingecko-price \
+VERIFY_LABEL="StableCrypto CoinGecko Price" \
+VERIFY_ENDPOINT_URL=https://stablecrypto.dev/api/coingecko/price \
+VERIFY_METHOD=POST \
+VERIFY_BODY_JSON='{"ids":["solana"],"vs_currencies":["usd"]}' \
+VERIFY_CATEGORY=finance \
+VERIFY_CAPABILITIES='market_data,pricing' \
+VERIFY_OUTPUT_SHAPE=simple_price \
+npm run verify:mapping
+```
+
+402-only verification example (StableEnrich):
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+VERIFY_PROVIDER_ID=merit-systems-stableenrich-enrichment \
+VERIFY_ENDPOINT_MAPPING_ID=stableenrich-exa-search \
+VERIFY_LABEL="StableEnrich Exa Web Search" \
+VERIFY_ENDPOINT_URL=https://stableenrich.dev/api/exa/search \
+VERIFY_METHOD=POST \
+VERIFY_BODY_JSON='{"query":"latest Solana agent payments"}' \
+VERIFY_CATEGORY=data \
+VERIFY_CAPABILITIES='search,web_search,research,enrichment,data' \
+VERIFY_OUTPUT_SHAPE=web_search_results \
+npm run verify:mapping
+```
+
+Do not promote a mapping to `verified_pay_cli_success` unless this helper returns `success=true` and `parsedJsonAvailable=true`.
+
 ## Stress test this now
 
 Fast path:
