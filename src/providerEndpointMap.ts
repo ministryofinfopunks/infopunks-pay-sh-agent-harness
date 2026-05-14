@@ -156,4 +156,21 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     endpointMappingSource: "manual_pay_cli_verification",
     notes: "Unpaid request returned x402 challenge; pay-cli exited 0 with parsed JSON labelAnnotations response.",
   },
+  {
+    endpointMappingId: "paysponge-perplexity-search",
+    providerId: "paysponge/perplexity",
+    label: "PaySponge Perplexity Search",
+    url: "https://pplx.x402.paysponge.com/search",
+    method: "POST",
+    body: {
+      query: "latest Solana agent payments",
+      max_results: 1,
+    },
+    category: "ai_ml",
+    capabilities: ["research", "web_search", "citations", "answer", "ai_ml"],
+    outputShape: "research_answer",
+    status: "verified_pay_cli_success",
+    endpointMappingSource: "manual_pay_cli_verification",
+    notes: "Verified via pay-cli execution with parsed Perplexity search results.",
+  },
 ];
