@@ -1,6 +1,6 @@
 {
   "name": "@infopunks/pay-sh-harness",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Minimal TypeScript harness demonstrating Radar-assisted Pay.sh provider routing.",
   "main": "dist/index.js",
@@ -26,7 +26,8 @@
     "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

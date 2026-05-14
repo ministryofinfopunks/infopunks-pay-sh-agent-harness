@@ -247,6 +247,25 @@ function buildProofLog(input: {
   };
 }
 
+/**
+ * Runs the full harness flow for an agent request: Radar preflight, provider routing,
+ * optional Pay.sh execution, and optional proof-log persistence.
+ *
+ * Executes a live Pay.sh call only when the route is approved and execution is enabled.
+ * Skips execution when Radar blocks the route, no provider is selected, or preflight-only mode is requested.
+ * When proof logging is enabled, writes a single proof record for the preflight/routing/execution outcome.
+ *
+ * @example
+ * ```ts
+ * const result = await radarPreflightAndExecute({
+ *   intent: "get trending Solana DEX pools",
+ *   category: "finance",
+ *   constraints: { minTrustScore: 70, maxLatencyMs: 3000, maxCostUsd: 0.05 },
+ *   execution: { endpointUrl: "https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools", method: "GET" },
+ *   proof: { enabled: true },
+ * });
+ * ```
+ */
 export async function radarPreflightAndExecute(
   input: RadarPreflightAndExecuteInput,
 ): Promise<RadarPreflightAndExecuteResult> {

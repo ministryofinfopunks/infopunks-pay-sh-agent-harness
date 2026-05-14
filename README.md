@@ -1,6 +1,138 @@
 # Infopunks Pay.sh Agent Harness
 
-**Query Infopunks Radar before an agent spends through Pay.sh. Route, execute, and write proof logs.**
+**Radar preflight + Pay.sh execution + proof logs in one function for agents.**
+
+- Pay.sh is the spend rail.
+- Radar is the intelligence layer.
+- This harness is the proof adapter between them.
+- Agents call Radar before spending through Pay.sh.
+
+## Install from GitHub
+
+```bash
+npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness
+```
+
+Pinned branch/tag examples:
+
+```bash
+npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness#main
+npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness#v0.1.1
+```
+
+Tarball fallback:
+
+```bash
+npm install https://github.com/ministryofinfopunks/infopunks-pay-sh-agent-harness/archive/main.tar.gz
+```
+
+## GitHub-only distribution notes
+
+- `npm publish` is intentionally deferred during validation.
+- The harness remains dependency-light.
+- GitHub install keeps distribution narrower while proofs and provider mappings mature.
+- npm release can come later after Trusted Publishing, provenance, and 2FA hardening.
+
+## Drop into an agent
+
+```ts
+import { radarPreflightAndExecute } from "@infopunks/pay-sh-harness";
+
+const result = await radarPreflightAndExecute({
+  intent: "get trending Solana DEX pools",
+  category: "finance",
+  constraints: {
+    minTrustScore: 70,
+    maxLatencyMs: 3000,
+    maxCostUsd: 0.05
+  },
+  execution: {
+    endpointUrl: "https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools",
+    method: "GET"
+  },
+  proof: {
+    enabled: true
+  }
+});
+
+if (!result.success) {
+  console.log(result.skippedExecutionReason ?? result.executionResult?.errorReason);
+}
+```
+
+## Usage variants
+
+Preflight only / no live execution:
+
+```ts
+const result = await radarPreflightAndExecute({
+  intent: "get crypto market data",
+  category: "finance",
+  executionMode: "preflight_only",
+  proof: { enabled: true }
+});
+```
+
+Live Pay.sh CLI execution through env vars:
+
+```bash
+PAYSH_EXECUTION_MODE=pay_cli \
+LIVE_PAYSH_EXECUTION=true \
+RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
+npm run demo:live-market-data
+```
+
+Proof logging disabled:
+
+```ts
+const result = await radarPreflightAndExecute({
+  intent: "get crypto market data",
+  category: "finance",
+  proof: { enabled: false }
+});
+```
+
+Handling `radar_preflight_unavailable`:
+
+```ts
+if (!result.preflightResult.available && result.preflightResult.fallbackReason === "radar_preflight_unavailable") {
+  console.log("Radar unavailable, local router fallback used.");
+}
+```
+
+Checking `executionResult.success`:
+
+```ts
+if (result.executionResult?.success) {
+  console.log("Pay.sh execution succeeded");
+} else {
+  console.log(result.executionResult?.errorReason ?? result.skippedExecutionReason);
+}
+```
+
+## Advanced: preflight only
+
+```ts
+import { callRadarPreflight } from "@infopunks/pay-sh-harness";
+
+const route = await callRadarPreflight({
+  intent: "get crypto market data",
+  category: "finance",
+  constraints: { minTrustScore: 70, maxLatencyMs: 3000, maxCostUsd: 0.05 }
+});
+
+if (route.decision?.decision !== "route_approved") {
+  throw new Error("No safe Pay.sh route");
+}
+```
+
+## Public API
+
+- `radarPreflightAndExecute(input)`: end-to-end helper that runs Radar preflight, routes (Radar or local fallback), optionally executes through Pay.sh, and optionally saves a proof log.
+- `callRadarPreflight(input)`: run Radar preflight directly and inspect decision metadata.
+- `executeLivePayShCall(input)`: execute a selected Pay.sh provider call through configured live execution mode.
+- `routeProvider(...)`: local router using provider metadata and Radar signals.
+- `saveProofLog(...)`: persist proof records for preflight/execution outcomes.
 
 ## Current live proof
 
@@ -72,46 +204,6 @@ npm run verify:mapping
 
 Do not promote a mapping to `verified_pay_cli_success` unless this helper returns `success=true` and `parsedJsonAvailable=true`.
 
-## Stress test this now
-
-Fast path:
-
-```bash
-git clone https://github.com/ministryofinfopunks/infopunks-pay-sh-agent-harness.git
-cd infopunks-pay-sh-agent-harness
-npm install
-cp .env.example .env
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com npm run demo:compare
-```
-
-Hammer the proven live route after Pay.sh CLI is installed and configured:
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-PAYSH_EXECUTION_URL=https://stablecrypto.dev/api/coingecko/price \
-PAYSH_EXECUTION_METHOD=POST \
-PAYSH_EXECUTION_BODY_JSON='{"ids":["solana"],"vs_currencies":["usd"]}' \
-MARKET_DATA_MAX_LATENCY_MS=3000 \
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
-RADAR_API_TIMEOUT_MS=15000 \
-npm run benchmark:live-market-data -- --trials=30
-```
-
-Expected: Radar selects `merit-systems-stablecrypto-market-data`, Pay.sh CLI executes the route, and benchmark artifacts are written under `benchmark-results/live-market-data/`.
-
-Caveat: this proves repeatability of one live Radar-selected route, not superiority versus naive routing.
-
-Break it without live payments:
-
-```bash
-npm run demo:route
-npm run demo:compare
-npm run benchmark -- --trials=50
-```
-
-Use this when Pay.sh CLI is not configured. These paths exercise routing, fallback behavior, proof logging, and benchmark scaffolding without live payment execution.
-
 ## Tested runtime
 
 Tested locally with:
@@ -124,61 +216,6 @@ Tested locally with:
 - Package metadata is prepared.
 - Public API is exported from `src/index.ts` and builds to `dist/index.js`.
 - Not published to npm yet unless release has been completed.
-
-## How to break it
-
-Try:
-- set `MARKET_DATA_MAX_LATENCY_MS=50` and confirm Radar blocks the route
-- unset `RADAR_API_BASE_URL` and confirm mock/fallback mode is clearly labeled
-- set an invalid `PAYSH_EXECUTION_BODY_JSON` and confirm execution fails safely
-- run `benchmark:live-market-data` with `--trials=100`
-- run concurrent benchmark processes and look for proof/artifact collisions
-- test bad intents like `"execute payout"` or `"generate image"` against the finance route
-- point `PAYSH_EXECUTION_URL` at a broken endpoint
-- try a second Pay.sh provider and add an endpoint mapping
-
-Open an issue with terminal output, proof logs, and the command that broke it.
-
-## Drop into an agent
-
-```ts
-import { callRadarPreflight } from "@infopunks/pay-sh-harness";
-
-const route = await callRadarPreflight({
-  intent: "get crypto market data",
-  category: "finance",
-  constraints: { minTrustScore: 70, maxLatencyMs: 3000, maxCostUsd: 0.05 }
-});
-
-if (route.decision?.decision !== "route_approved") throw new Error("No safe Pay.sh route");
-```
-
-## Use as a harness
-
-```ts
-import { radarPreflightAndExecute } from "@infopunks/pay-sh-harness";
-
-const result = await radarPreflightAndExecute({
-  intent: "get Solana trending pools",
-  category: "finance",
-  constraints: {
-    minTrustScore: 70,
-    maxLatencyMs: 3000,
-    maxCostUsd: 0.05
-  },
-  execution: {
-    endpointUrl: "https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools",
-    method: "GET"
-  },
-  proof: {
-    enabled: true
-  }
-});
-
-if (!result.success) {
-  console.log(result.skippedExecutionReason ?? result.executionResult?.errorReason);
-}
-```
 
 ## OpenAI tool copy-paste
 
@@ -217,311 +254,3 @@ npx ts-node examples/langchain-tool.ts
 ```bash
 npm install @langchain/core zod
 ```
-
-## What this proves
-
-- Agents can query live Infopunks Radar before attempting a Pay.sh call.
-- Radar can select a live Pay.sh provider from the live catalog.
-- The harness can execute the StableCrypto route through Pay.sh CLI.
-- The live market-data route has been run repeatedly.
-- Proof logs can capture preflight + execution metadata.
-
-## What this does not prove
-
-- Radar beats naive routing.
-- Lower cost/failure/latency versus naive selection.
-- Multi-provider or multi-intent reliability.
-- External adoption.
-- Production SLA.
-- Full transaction/settlement-reference capture inside the harness.
-
-## Run the live benchmark
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-PAYSH_EXECUTION_URL=https://stablecrypto.dev/api/coingecko/price \
-PAYSH_EXECUTION_METHOD=POST \
-PAYSH_EXECUTION_BODY_JSON='{"ids":["solana"],"vs_currencies":["usd"]}' \
-MARKET_DATA_MAX_LATENCY_MS=3000 \
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
-RADAR_API_TIMEOUT_MS=15000 \
-npm run benchmark:live-market-data -- --trials=30
-```
-
-`LIVE_MARKET_DATA_TRIALS=30` can be used instead of `-- --trials=30`.
-
-Artifacts:
-- `benchmark-results/live-market-data/latest.json`
-- `benchmark-results/live-market-data/latest.csv`
-- `benchmark-results/live-market-data/summary.md`
-
-This measures repeatability of one Radar-selected route, not superiority versus naive routing.
-
-## Live naive-vs-Radar benchmark
-
-This benchmark compares:
-- naive endpoint-map selection
-- Radar-selected provider from live `/v1/preflight`
-
-Current scope:
-- only executable providers present in the local endpoint map are run
-- market-data route only (`intent="get crypto market data"`, `category="finance"`)
-
-Provider endpoint mappings:
-
-| Provider | providerId | Endpoint | Status | Output shape |
-|---|---|---|---|---|
-| QuickNode RPC | quicknode-rpc | https://x402.quicknode.com/solana-mainnet | intermittent_pay_cli_success | json_rpc_health |
-| StableCrypto | merit-systems-stablecrypto-market-data | https://stablecrypto.dev/api/coingecko/price | verified_pay_cli_success | simple_price |
-| PaySponge CoinGecko | paysponge-coingecko | https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools | verified_pay_cli_success | trending_pools |
-| StableEnrich Exa Search | merit-systems-stableenrich-enrichment | https://stableenrich.dev/api/exa/search | verified_402 | web_search_results |
-
-Note: The PaySponge `/x402/onchain/networks` route returned API-key-missing and is not mapped. Only the verified `trending_pools` route is mapped.
-Note: StableEnrich Exa Search is x402-verified but paid execution currently returns Settlement failed.
-
-Interpretation:
-- if both strategies select StableCrypto, that is repeatability evidence, not superiority evidence
-- if both strategies select the same provider, the benchmark reports repeatability_same_provider and does not count it as superiority evidence
-- if `comparisonOutcome=radar_win` with `winReason=better_output_shape_fit`, that is a narrow routing-fit win
-- routing-fit wins mean Radar selected a provider whose output shape matches the requested intent better than naive routing
-- routing-fit wins are not the same as full answer-quality superiority comparisons
-- possible outcomes:
-  - `repeatability_same_provider`: both selected the same executable provider
-  - `radar_policy_blocked`: Radar intentionally refused a route under configured policy constraints
-  - `radar_preflight_unavailable`: Radar preflight timed out or was unavailable, so no Radar execution was attempted
-  - `radar_preflight_unavailable` means the Radar preflight API timed out or was unavailable, so no Radar execution was attempted. It is not treated as an intentional policy block.
-  - `invalid_missing_endpoint`: Radar approved a provider route, but that provider is not executable in the local endpoint map
-  - `invalid_unverified_execution_mapping`: Radar approved a mapped provider, but mapping status is not executable by default
-  - `radar_win`/`naive_win` with `better_output_shape_fit`: output-shape routing-fit superiority signal only
-- superiority requires more executable provider mappings with different reliability/cost/latency profiles
-
-Run:
-
-Simple price profile:
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-LIVE_HEAD_TO_HEAD_PROFILE=simple_price \
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
-RADAR_API_TIMEOUT_MS=15000 \
-npm run benchmark:live-head-to-head -- --trials=30
-```
-
-Trending pools profile:
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-LIVE_HEAD_TO_HEAD_PROFILE=solana_trending_pools \
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
-RADAR_API_TIMEOUT_MS=15000 \
-npm run benchmark:live-head-to-head -- --trials=30
-```
-
-Dedicated Solana DEX pools proof command:
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
-RADAR_API_TIMEOUT_MS=15000 \
-npm run proof:solana-dex-pools
-```
-
-Solana RPC health profile:
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-LIVE_HEAD_TO_HEAD_PROFILE=solana_rpc_health \
-RADAR_API_BASE_URL=https://infopunks-pay-sh-radar.onrender.com \
-RADAR_API_TIMEOUT_MS=15000 \
-npm run benchmark:live-head-to-head -- --trials=1
-```
-
-The trending pools profile is the first attempt to test whether Radar chooses PaySponge CoinGecko for a DEX-pools intent instead of StableCrypto.
-
-Artifacts:
-- `benchmark-results/live-head-to-head/latest.json`
-- `benchmark-results/live-head-to-head/latest.csv`
-- `benchmark-results/live-head-to-head/summary.md`
-
-## QuickNode RPC proof
-
-This benchmark expands proof depth for QuickNode on Solana mainnet:
-- `getHealth` proves route health.
-- `getBalance` proves live account state access.
-- `getSlot` proves current chain progress/freshness.
-- Manual `pay curl` verification exists historically for `getHealth` and `getBalance`.
-
-This is coverage/state-access proof, not routing superiority proof.
-Current pay-cli calls may fail with `Server returned 402 again after payment`.
-QuickNode is treated as diagnostic/intermittent until stable.
-By default, intermittent mappings are not executed in `benchmark:live-rpc`; set `INCLUDE_INTERMITTENT_PROVIDER_MAPPINGS=true` to force execution.
-Do not treat failing live-rpc artifacts as proof.
-
-Run:
-
-```bash
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-npm run benchmark:live-rpc -- --trials=5
-```
-
-Lowest-cost smoke:
-
-```bash
-INCLUDE_INTERMITTENT_PROVIDER_MAPPINGS=true \
-PAYSH_EXECUTION_MODE=pay_cli \
-LIVE_PAYSH_EXECUTION=true \
-LIVE_RPC_METHODS=getHealth \
-LIVE_RPC_TRIAL_MODE=single \
-LIVE_RPC_CALL_DELAY_MS=3000 \
-npm run benchmark:live-rpc -- --trials=1
-```
-
-Artifacts:
-- `benchmark-results/live-rpc/latest.json`
-- `benchmark-results/live-rpc/latest.csv`
-- `benchmark-results/live-rpc/summary.md`
-
-## Live Radar Preflight Integration
-
-When `RADAR_API_BASE_URL` is set (current value: `https://infopunks-pay-sh-radar.onrender.com`), the harness calls:
-- `POST {RADAR_API_BASE_URL}/v1/preflight`
-
-If live preflight fails or times out, the harness falls back to local routing logic.
-
-Example:
-
-```bash
-curl -X POST "$RADAR_API_BASE_URL/v1/preflight" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json" \
-  -d '{
-    "intent": "get crypto market data",
-    "category": "finance",
-    "constraints": {
-      "minTrustScore": 70,
-      "maxLatencyMs": 3000,
-      "maxCostUsd": 0.05
-    }
-  }'
-```
-
-Direct backend version:
-
-```bash
-curl -X POST "https://infopunks-pay-sh-radar.onrender.com/v1/preflight" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json" \
-  -d '{
-    "intent": "get crypto market data",
-    "category": "finance",
-    "constraints": {
-      "minTrustScore": 70,
-      "maxLatencyMs": 3000,
-      "maxCostUsd": 0.05
-    }
-  }'
-```
-
-Modes:
-- `live`: decision came from backend preflight.
-- `mock`: no `RADAR_API_BASE_URL`; local mock router used.
-- `fallback`: live preflight configured but unavailable; local router used.
-
-## Environment Setup
-
-`.env` values:
-
-- `RADAR_API_BASE_URL` (optional): live Radar API base URL (`https://infopunks-pay-sh-radar.onrender.com`).
-- `RADAR_API_TIMEOUT_MS` (default `15000`): Radar API request timeout.
-- `PAYSH_API_BASE_URL` (optional): experimental catalog API override. Not required for the proven StableCrypto execution demo.
-- `LIVE_PAYSH_EXECUTION` (optional): set to `true` to attempt live Pay.sh execution.
-- `PAYSH_EXECUTION_URL` (optional unless live execution enabled): full URL for one live execution endpoint.
-- `PAYSH_EXECUTION_MODE` (default `http`): execution mode (`http` or `pay_cli`).
-- `PAYSH_EXECUTION_METHOD` (optional): HTTP method for execution call (default `GET`).
-- `PAYSH_EXECUTION_BODY_JSON` (optional): JSON request body for live execution.
-- `PAYSH_EXECUTION_HEADERS_JSON` (optional): JSON object of extra request headers for live execution.
-- `PAYSH_AUTH_HEADER` (optional): auth header name for execution call.
-- `PAYSH_AUTH_VALUE` (optional): auth header value for execution call.
-- `MIN_TRUST_SCORE` (default `70`): routing threshold.
-- `REQUEST_TIMEOUT_MS` (optional legacy fallback when `RADAR_API_TIMEOUT_MS` is unset): external request timeout.
-
-## Simulated benchmark mode
-
-```bash
-npm run benchmark
-BENCHMARK_TRIALS=50 npm run benchmark
-npm run benchmark -- --trials=50
-```
-
-This is a measurement scaffold. Results are simulated unless live execution is explicitly configured.
-
-## Scripts
-
-- `npm run demo:route`: single Radar-assisted route decision + proof log.
-- `npm run demo:compare`: naive catalog route vs Radar-assisted route + proof log.
-- `npm run demo:live-market-data`: Radar preflight plus optional single-provider live Pay.sh execution demo + proof log.
-- `npm run benchmark:live-market-data`: repeated live market-data route benchmark + JSON/CSV/Markdown reports.
-- `npm run benchmark:live-head-to-head`: repeated live naive endpoint-map selection vs Radar-selected provider benchmark for executable market-data mappings.
-- `npm run benchmark:live-rpc`: repeated live QuickNode Solana JSON-RPC health/balance/slot benchmark + JSON/CSV/Markdown reports.
-- `npm run proof:solana-dex-pools`: dedicated Solana DEX pools routing-fit proof wrapper with concise artifact summary.
-- `npm run mappings:status`: endpoint mapping status grouped by execution/readiness state.
-- `npm run benchmark`: repeated naive vs Radar benchmark + JSON/CSV/Markdown reports.
-- `npm run typecheck`: TypeScript typecheck.
-- `npm run build`: compile to `dist/`.
-
-## Proof log fields
-
-- `radarApiUsed`
-- `radarEndpoint`
-- `radarDecision`
-- `radarDataMode`
-- `radarSource`
-- `fallbackReason` (when applicable)
-- `catalogMode` (`mock | live | fallback`)
-- `radarMode` (`live | mock | fallback`)
-- `comparisonValidity` (`valid_simulated_same_catalog | invalid_mixed_catalogs | live_preflight_only`)
-- `candidateProviderSource` (`mock | live | omitted`)
-
-## Latency semantics
-
-- `latencyMs`: legacy execution latency field.
-- `executionLatencyMs`: explicit execution-latency field.
-- `cliTotalLatencyMs`: populated in `pay_cli` mode.
-- `radarProviderLatencyMs`: provider telemetry latency from Radar.
-- `providerReportedLatencyMs`: `null` unless provider response includes timing.
-
-## Repository Layout
-
-- `src/radarClient.ts`: Radar intelligence client + live preflight + fallback.
-- `src/payShClient.ts`: Pay.sh catalog client + mock fallback.
-- `src/router.ts`: deterministic local routing policy.
-- `src/proofLog.ts`: JSON proof writer.
-- `src/demoRoute.ts`: single decision demo.
-- `src/demoCompare.ts`: naive vs Radar demo.
-- `src/benchmarkRunner.ts`: benchmark orchestration.
-
-## Contribute
-
-Clone it. Break it. Ship agents with it.
-
-Useful contributions:
-- additional Pay.sh provider endpoint mappings
-- naive-vs-Radar live benchmarks
-- concurrency stress tests
-- OpenAI / LangChain / Cursor agent integrations
-- better settlement-reference capture
-- cleaner package export surface
-
-Open issues with:
-- command run
-- terminal output
-- proof log path
-- expected vs actual behavior
-
-Tag `@carbonsheikh` with results.
