@@ -23,7 +23,7 @@
     "verify:mapping": "ts-node src/demoVerifyProviderMapping.ts",
     "debug:pay-cli-parity": "ts-node src/demoPayCliParity.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
-    "test": "node --test -r ts-node/register \"src/**/*.test.ts\"",
+    "test": "find src -name \"*.test.ts\" -print0 | xargs -0 node --test -r ts-node/register",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "prepack": "npm run build",
