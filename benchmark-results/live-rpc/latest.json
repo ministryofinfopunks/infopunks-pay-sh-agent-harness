@@ -1,0 +1,49 @@
+{
+  "summary": {
+    "totalTrials": 1,
+    "totalCalls": 1,
+    "successCount": 0,
+    "jsonRpcValidCount": 0,
+    "resultShapeValidCount": 0,
+    "getHealthOkCount": 0,
+    "getBalanceValidCount": 0,
+    "getSlotValidCount": 0,
+    "paymentReplayOrSettlementFailedCount": 1,
+    "executionFailureCount": 0,
+    "jsonRpcValidationFailureCount": 0,
+    "avgLatencyMs": 115110,
+    "medianLatencyMs": 115110,
+    "observedSlotMin": null,
+    "observedSlotMax": null,
+    "observedApiVersions": []
+  },
+  "calls": [
+    {
+      "trialId": 1,
+      "timestamp": "2026-05-12T19:01:31.046Z",
+      "endpointMappingId": "quicknode-rpc-health",
+      "providerId": "quicknode-rpc",
+      "methodName": "getHealth",
+      "outputShape": "json_rpc_health",
+      "success": false,
+      "exitCode": 1,
+      "executionMode": "live_pay_sh_cli",
+      "latencyMs": 115110,
+      "parsedJsonAvailable": false,
+      "responsePreview": "",
+      "stderrPreview": "{\"error\":{\"message\":\"Server returned 402 again after payment\"}}\n",
+      "endpointUrl": "https://x402.quicknode.com/solana-mainnet",
+      "requestMethod": "POST",
+      "requestBodyPreview": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getHealth\",\"params\":[]}",
+      "commandShape": "pay curl 'https://x402.quicknode.com/solana-mainnet' -X POST -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getHealth\",\"params\":[]}'",
+      "errorReason": "pay_cli_execution_failed",
+      "jsonRpcValid": false,
+      "jsonRpcMethod": "getHealth",
+      "jsonRpcResultShapeValid": false,
+      "slot": null,
+      "apiVersion": null,
+      "validationError": "response_not_json_object",
+      "errorClassification": "payment_replay_or_settlement_failed"
+    }
+  ]
+}

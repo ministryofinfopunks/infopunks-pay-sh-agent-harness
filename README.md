@@ -4,11 +4,15 @@
 
 ## Current live proof
 
-10/10 live routing-fit wins for `solana_trending_pools`.
+Latest validation:
 
+- 3/3 Radar wins in the dedicated `proof:solana-dex-pools` run.
+- 9/9 Radar wins across valid approved comparisons in a 10-trial live head-to-head run.
+- 1/10 trial was excluded as `radar_preflight_unavailable` due to Radar API timeout.
 - Naive selected `merit-systems-stablecrypto-market-data` / StableCrypto simple price.
 - Radar selected `paysponge-coingecko` / PaySponge CoinGecko trending pools.
-- Caveat: this is a routing-fit proof, not broad platform superiority.
+- Both mapped providers execute through Pay.sh CLI.
+- Caveat: this is routing-fit proof, not broad platform superiority.
 
 Reproduce the Solana DEX pools routing-fit proof:
 
@@ -286,6 +290,7 @@ Interpretation:
   - `repeatability_same_provider`: both selected the same executable provider
   - `radar_policy_blocked`: Radar intentionally refused a route under configured policy constraints
   - `radar_preflight_unavailable`: Radar preflight timed out or was unavailable, so no Radar execution was attempted
+  - `radar_preflight_unavailable` means the Radar preflight API timed out or was unavailable, so no Radar execution was attempted. It is not treated as an intentional policy block.
   - `invalid_missing_endpoint`: Radar approved a provider route, but that provider is not executable in the local endpoint map
   - `invalid_unverified_execution_mapping`: Radar approved a mapped provider, but mapping status is not executable by default
   - `radar_win`/`naive_win` with `better_output_shape_fit`: output-shape routing-fit superiority signal only
