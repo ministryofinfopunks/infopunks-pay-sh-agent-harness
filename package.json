@@ -1,6 +1,6 @@
 {
   "name": "@infopunks/pay-sh-harness",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "description": "Minimal TypeScript harness demonstrating Radar-assisted Pay.sh provider routing.",
   "main": "dist/index.js",
