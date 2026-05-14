@@ -125,6 +125,7 @@ export interface LivePayShExecutionResult {
   requestMethod?: string;
   requestBodyPreview?: string;
   parsedJsonAvailable: boolean;
+  parsedJson?: unknown;
   errorReason?: string;
   paymentRequired?: boolean;
   paymentRequiredHeaderPresent?: boolean;

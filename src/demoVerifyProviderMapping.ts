@@ -99,9 +99,14 @@ function parseResponseJson(result: LivePayShExecutionResult): Record<string, unk
   if (!result.parsedJsonAvailable) {
     return null;
   }
+  if (typeof result.parsedJson === "object" && result.parsedJson !== null) {
+    return result.parsedJson as Record<string, unknown>;
+  }
   try {
-    const parsed = JSON.parse(result.responsePreview) as unknown;
-    return typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>) : null;
+    const parsedFallback = JSON.parse(result.responsePreview) as unknown;
+    return typeof parsedFallback === "object" && parsedFallback !== null
+      ? (parsedFallback as Record<string, unknown>)
+      : null;
   } catch {
     return null;
   }
@@ -186,9 +191,30 @@ function hasOutputShape(payload: Record<string, unknown>, outputShape: string): 
     return Array.isArray(payload.places);
   }
   if (outputShape === "research_answer") {
+    const choices = payload.choices;
+    const hasChoiceMessageContent = Array.isArray(choices) && choices.some((choice) => {
+      if (typeof choice !== "object" || choice === null) {
+        return false;
+      }
+      const choiceObj = choice as Record<string, unknown>;
+      const message = choiceObj.message;
+      if (typeof message !== "object" || message === null) {
+        return false;
+      }
+      const messageObj = message as Record<string, unknown>;
+      const content = messageObj.content;
+      const citations = messageObj.citations;
+      const hasContent = typeof content === "string" || Array.isArray(content);
+      const hasValidCitations = citations === undefined || Array.isArray(citations);
+      return hasContent && hasValidCitations;
+    });
+
     return (
       typeof payload.answer === "string" ||
+      typeof payload.content === "string" ||
       Array.isArray(payload.results) ||
+      Array.isArray(payload.search_results) ||
+      hasChoiceMessageContent ||
       typeof payload.research_answer === "string" ||
       typeof payload.cited_answer === "string"
     );

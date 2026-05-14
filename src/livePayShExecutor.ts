@@ -48,6 +48,7 @@ function withSkippedResult(
       ? sanitizePreview(JSON.stringify(input.body ?? input.bodyJson))
       : undefined,
     parsedJsonAvailable: false,
+    parsedJson: undefined,
     errorReason,
     mode: "skipped",
   };
@@ -296,17 +297,18 @@ export async function executeLivePayShCall(
     const responsePreview = sanitizePreview(rawBody);
 
     let parsedJsonAvailable = false;
-    let parsedJson: Record<string, unknown> | null = null;
+    let parsedJson: unknown = undefined;
 
     try {
       const maybeJson = JSON.parse(rawBody) as unknown;
-      if (typeof maybeJson === "object" && maybeJson !== null) {
-        parsedJsonAvailable = true;
-        parsedJson = maybeJson as Record<string, unknown>;
-      }
+      parsedJsonAvailable = true;
+      parsedJson = maybeJson;
     } catch {
       parsedJsonAvailable = false;
     }
+
+    const parsedJsonObject =
+      typeof parsedJson === "object" && parsedJson !== null ? (parsedJson as Record<string, unknown>) : null;
 
     return {
       providerId: input.providerId,
@@ -317,12 +319,13 @@ export async function executeLivePayShCall(
       latencyMs: completedMs - startedAtMs,
       success: response.ok,
       statusCode: response.status,
-      costUsd: toNumberOrNull(parsedJson?.costUsd),
-      settlementReference: toStringOrNull(parsedJson?.settlementReference),
+      costUsd: toNumberOrNull(parsedJsonObject?.costUsd),
+      settlementReference: toStringOrNull(parsedJsonObject?.settlementReference),
       responsePreview,
       requestMethod: method.toUpperCase(),
       requestBodyPreview,
       parsedJsonAvailable,
+      parsedJson,
       errorReason: response.ok ? undefined : response.status === 402 ? "payment_required" : `http_${response.status}`,
       paymentRequired: response.status === 402,
       paymentRequiredHeaderPresent,
@@ -347,6 +350,7 @@ export async function executeLivePayShCall(
       requestMethod: method.toUpperCase(),
       requestBodyPreview: getRequestBodyPreview(requestBody),
       parsedJsonAvailable: false,
+      parsedJson: undefined,
       errorReason: error instanceof Error ? error.message : "live_pay_sh_execution_failed",
       mode: "live_pay_sh",
     };
@@ -457,8 +461,9 @@ async function executeViaPayCli({
     const stderrPreview = sanitizePreview(result.stderr);
 
     let parsedJsonAvailable = false;
+    let parsedJson: unknown = undefined;
     try {
-      JSON.parse(result.stdout);
+      parsedJson = JSON.parse(result.stdout);
       parsedJsonAvailable = true;
     } catch {
       parsedJsonAvailable = false;
@@ -481,6 +486,7 @@ async function executeViaPayCli({
       requestMethod: method.toUpperCase(),
       requestBodyPreview,
       parsedJsonAvailable,
+      parsedJson,
       errorReason: result.exitCode === 0 ? undefined : "pay_cli_execution_failed",
       mode: "live_pay_sh_cli",
     };
@@ -503,6 +509,7 @@ async function executeViaPayCli({
       requestMethod: method.toUpperCase(),
       requestBodyPreview,
       parsedJsonAvailable: false,
+      parsedJson: undefined,
       errorReason: error instanceof Error ? error.message : "pay_cli_execution_failed",
       mode: "live_pay_sh_cli",
     };
