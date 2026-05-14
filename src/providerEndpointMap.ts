@@ -31,7 +31,7 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     category: "compute",
     capabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
     outputShape: "json_rpc_health",
-    status: "intermittent_pay_cli_success",
+    status: "verified_pay_cli_success",
     endpointMappingSource: "manual_pay_cli_verification",
     notes:
       "Manual pay curl previously succeeded for getHealth/getBalance, but current pay-cli calls can fail with Server returned 402 again after payment. Do not execute by default until stable.",
@@ -113,7 +113,7 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     status: "verified_402",
     endpointMappingSource: "manual_402_verification",
     notes:
-      "Unpaid curl returned x402 Payment Required. pay curl returned Settlement failed, so this mapping is not executed by default.",
+      "Unpaid x402 challenge verified, but pay-cli execution returns {\"success\":false,\"error\":\"Settlement failed\"}.",
   },
   {
     endpointMappingId: "google-places-search-text",
