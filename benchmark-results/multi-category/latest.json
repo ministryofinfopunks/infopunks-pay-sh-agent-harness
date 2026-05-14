@@ -1,14 +1,18 @@
 {
   "summary": {
     "totalProfiles": 4,
-    "profilesPassed": 0,
-    "profilesFailed": 4,
-    "expectedProviderMatchCount": 0,
-    "expectedOutputShapeMatchCount": 0,
-    "executionAttemptedCount": 0,
-    "executionSuccessCount": 0,
-    "parsedJsonSuccessCount": 0,
-    "applicationSuccessCount": 0
+    "profilesPassed": 2,
+    "profilesFailed": 2,
+    "expectedProviderMatchCount": 2,
+    "expectedOutputShapeMatchCount": 2,
+    "executionAttemptedCount": 2,
+    "executionSuccessCount": 2,
+    "parsedJsonSuccessCount": 2,
+    "applicationSuccessCount": 2,
+    "routingMode": "live_radar",
+    "liveRadarUnavailableCount": 2,
+    "liveRadarNoCandidatesCount": 0,
+    "localRouterUsedCount": 0
   },
   "results": [
     {
@@ -25,25 +29,29 @@
       "parsedJsonAvailable": false,
       "applicationSuccess": false,
       "latencyMs": null,
-      "errorReason": "RADAR_API_BASE_URL not set.",
-      "notes": "route_not_approved"
+      "errorReason": "radar_preflight_unavailable",
+      "notes": "Radar preflight unavailable (timeout=30000ms): The operation was aborted due to timeout.",
+      "routingMode": "live_radar",
+      "selectionSource": "live_radar"
     },
     {
       "profile": "solana_rpc_health",
       "intent": "check Solana RPC health",
       "category": "compute",
       "expectedProvider": "quicknode-rpc",
-      "selectedProvider": null,
-      "providerMatched": false,
+      "selectedProvider": "quicknode-rpc",
+      "providerMatched": true,
       "expectedOutputShape": "json_rpc_health",
-      "actualOutputShape": null,
-      "outputShapeMatched": false,
-      "executionSuccess": false,
-      "parsedJsonAvailable": false,
-      "applicationSuccess": false,
-      "latencyMs": null,
-      "errorReason": "RADAR_API_BASE_URL not set.",
-      "notes": "route_not_approved"
+      "actualOutputShape": "json_rpc_health",
+      "outputShapeMatched": true,
+      "executionSuccess": true,
+      "parsedJsonAvailable": true,
+      "applicationSuccess": true,
+      "latencyMs": 11216,
+      "errorReason": null,
+      "notes": "execution_attempted",
+      "routingMode": "live_radar",
+      "selectionSource": "live_radar"
     },
     {
       "profile": "research_answer",
@@ -59,25 +67,29 @@
       "parsedJsonAvailable": false,
       "applicationSuccess": false,
       "latencyMs": null,
-      "errorReason": "RADAR_API_BASE_URL not set.",
-      "notes": "route_not_approved"
+      "errorReason": "radar_preflight_unavailable",
+      "notes": "Radar preflight unavailable (timeout=30000ms): The operation was aborted due to timeout.",
+      "routingMode": "live_radar",
+      "selectionSource": "live_radar"
     },
     {
       "profile": "places_search",
       "intent": "find coffee shops in Colombo Sri Lanka",
       "category": "maps",
       "expectedProvider": "solana-foundation/google/places",
-      "selectedProvider": null,
-      "providerMatched": false,
+      "selectedProvider": "solana-foundation-google-places",
+      "providerMatched": true,
       "expectedOutputShape": "places_search",
-      "actualOutputShape": null,
-      "outputShapeMatched": false,
-      "executionSuccess": false,
-      "parsedJsonAvailable": false,
-      "applicationSuccess": false,
-      "latencyMs": null,
-      "errorReason": "RADAR_API_BASE_URL not set.",
-      "notes": "route_not_approved"
+      "actualOutputShape": "places_search",
+      "outputShapeMatched": true,
+      "executionSuccess": true,
+      "parsedJsonAvailable": true,
+      "applicationSuccess": true,
+      "latencyMs": 7043,
+      "errorReason": null,
+      "notes": "execution_attempted",
+      "routingMode": "live_radar",
+      "selectionSource": "live_radar"
     }
   ]
 }

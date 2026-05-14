@@ -7,6 +7,9 @@ import { callRadarPreflight, RadarPreflightInput } from "./radarClient";
 
 const RESULTS_DIR = path.resolve(process.cwd(), "benchmark-results", "multi-category");
 
+export type BenchmarkRoutingMode = "local_verified_router" | "live_radar";
+export type SelectionSource = "local_verified_router" | "live_radar";
+
 type ProfileName =
   | "solana_trending_pools"
   | "solana_rpc_health"
@@ -21,6 +24,7 @@ interface MultiCategoryProfile {
   expectedProvider: string;
   expectedOutputShape: string;
   includeByDefault: boolean;
+  preferredCapabilities: string[];
 }
 
 export const MULTI_CATEGORY_PROFILES: MultiCategoryProfile[] = [
@@ -31,6 +35,7 @@ export const MULTI_CATEGORY_PROFILES: MultiCategoryProfile[] = [
     expectedProvider: "paysponge-coingecko",
     expectedOutputShape: "trending_pools",
     includeByDefault: true,
+    preferredCapabilities: ["market_data", "dex_pools", "trending"],
   },
   {
     profile: "solana_rpc_health",
@@ -39,6 +44,7 @@ export const MULTI_CATEGORY_PROFILES: MultiCategoryProfile[] = [
     expectedProvider: "quicknode-rpc",
     expectedOutputShape: "json_rpc_health",
     includeByDefault: true,
+    preferredCapabilities: ["rpc", "blockchain", "solana", "onchain", "compute"],
   },
   {
     profile: "research_answer",
@@ -47,6 +53,7 @@ export const MULTI_CATEGORY_PROFILES: MultiCategoryProfile[] = [
     expectedProvider: "paysponge/perplexity",
     expectedOutputShape: "research_answer",
     includeByDefault: true,
+    preferredCapabilities: ["research", "web_search", "citations", "answer", "ai_ml"],
   },
   {
     profile: "places_search",
@@ -55,6 +62,7 @@ export const MULTI_CATEGORY_PROFILES: MultiCategoryProfile[] = [
     expectedProvider: "solana-foundation/google/places",
     expectedOutputShape: "places_search",
     includeByDefault: true,
+    preferredCapabilities: ["maps", "search", "places"],
   },
   {
     profile: "image_labels",
@@ -63,6 +71,7 @@ export const MULTI_CATEGORY_PROFILES: MultiCategoryProfile[] = [
     expectedProvider: "solana-foundation/google/vision",
     expectedOutputShape: "image_labels",
     includeByDefault: false,
+    preferredCapabilities: ["ai_ml", "vision", "ocr", "image_labels"],
   },
 ];
 
@@ -82,9 +91,11 @@ export interface MultiCategoryProfileResult {
   latencyMs: number | null;
   errorReason: string | null;
   notes: string;
+  routingMode: BenchmarkRoutingMode;
+  selectionSource: SelectionSource;
 }
 
-interface MultiCategorySummary {
+export interface MultiCategorySummary {
   totalProfiles: number;
   profilesPassed: number;
   profilesFailed: number;
@@ -94,6 +105,10 @@ interface MultiCategorySummary {
   executionSuccessCount: number;
   parsedJsonSuccessCount: number;
   applicationSuccessCount: number;
+  routingMode: BenchmarkRoutingMode;
+  liveRadarUnavailableCount: number;
+  liveRadarNoCandidatesCount: number;
+  localRouterUsedCount: number;
 }
 
 function normalizeProviderId(value: string | null | undefined): string {
@@ -172,16 +187,60 @@ function hasApplicationError(payload: Record<string, unknown>): string | null {
 }
 
 function evaluateApplication(payload: Record<string, unknown>, expectedOutputShape: string): boolean {
-  const actualShape = detectOutputShape(payload);
-  return classifyOutputShapeMatch(expectedOutputShape, actualShape);
+  return classifyOutputShapeMatch(expectedOutputShape, detectOutputShape(payload));
 }
 
-function getProfileMappings(profile: MultiCategoryProfile): ProviderEndpointMapping[] {
-  return providerEndpointMap.filter(
+function toCsvCell(value: unknown): string {
+  const text = value === null || value === undefined ? "" : String(value);
+  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+function getArgValue(argv: string[], key: string): string | undefined {
+  const hit = argv.find((entry) => entry.startsWith(`--${key}=`));
+  return hit ? hit.slice(key.length + 3).trim() : undefined;
+}
+
+export function resolveRoutingMode(argv: string[] = process.argv, env: NodeJS.ProcessEnv = process.env): BenchmarkRoutingMode {
+  const fromArg = getArgValue(argv, "routing-mode");
+  const fromEnv = env.BENCHMARK_ROUTING_MODE?.trim();
+  const raw = (fromArg || fromEnv || "local_verified_router").toLowerCase();
+  return raw === "live_radar" ? "live_radar" : "local_verified_router";
+}
+
+export function getSelectedProfiles(argv: string[] = process.argv, env: NodeJS.ProcessEnv = process.env): MultiCategoryProfile[] {
+  const requestedProfile = getArgValue(argv, "profile");
+  if (requestedProfile) {
+    const selected = MULTI_CATEGORY_PROFILES.find((profile) => profile.profile === requestedProfile);
+    return selected ? [selected] : MULTI_CATEGORY_PROFILES.filter((profile) => profile.includeByDefault);
+  }
+
+  const includeImageLabels = argv.includes("--include-image-labels") || env.BENCHMARK_INCLUDE_IMAGE_LABELS === "true";
+  return MULTI_CATEGORY_PROFILES.filter((profile) => profile.includeByDefault || includeImageLabels);
+}
+
+export function selectLocalVerifiedMapping(profile: MultiCategoryProfile): ProviderEndpointMapping | null {
+  const exact = providerEndpointMap.find(
     (mapping) =>
       mapping.status === "verified_pay_cli_success" &&
       mapping.category === profile.category &&
-      mapping.outputShape === profile.expectedOutputShape,
+      mapping.outputShape === profile.expectedOutputShape &&
+      normalizeProviderId(mapping.providerId) === normalizeProviderId(profile.expectedProvider),
+  );
+  if (exact) {
+    return exact;
+  }
+
+  return (
+    providerEndpointMap.find(
+      (mapping) =>
+        mapping.status === "verified_pay_cli_success" &&
+        mapping.category === profile.category &&
+        mapping.outputShape === profile.expectedOutputShape &&
+        profile.preferredCapabilities.some((capability) => mapping.capabilities.includes(capability)),
+    ) ?? null
   );
 }
 
@@ -198,69 +257,80 @@ function findVerifiedMappingByProviderId(providerId: string | null): ProviderEnd
   );
 }
 
-function toCsvCell(value: unknown): string {
-  const text = value === null || value === undefined ? "" : String(value);
-  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
-    return `"${text.replace(/"/g, '""')}"`;
+async function executeSelection(
+  profile: MultiCategoryProfile,
+  routingMode: BenchmarkRoutingMode,
+): Promise<MultiCategoryProfileResult> {
+  if (routingMode === "local_verified_router") {
+    const selectedMapping = selectLocalVerifiedMapping(profile);
+    const selectedProvider = selectedMapping?.providerId ?? null;
+    const providerMatched = classifyProviderMatch(profile.expectedProvider, selectedProvider);
+
+    if (!selectedMapping) {
+      return {
+        profile: profile.profile,
+        intent: profile.intent,
+        category: profile.category,
+        expectedProvider: profile.expectedProvider,
+        selectedProvider,
+        providerMatched,
+        expectedOutputShape: profile.expectedOutputShape,
+        actualOutputShape: null,
+        outputShapeMatched: false,
+        executionSuccess: false,
+        parsedJsonAvailable: false,
+        applicationSuccess: false,
+        latencyMs: null,
+        errorReason: "local_verified_mapping_not_found",
+        notes: "No verified local mapping matched category/capability/outputShape expectation.",
+        routingMode,
+        selectionSource: "local_verified_router",
+      };
+    }
+
+    const execution = await executeLivePayShCall({
+      providerId: selectedMapping.providerId,
+      intent: profile.intent,
+      endpointUrl: selectedMapping.url,
+      method: selectedMapping.method,
+      body: selectedMapping.body ?? undefined,
+      headers: selectedMapping.headers,
+    });
+
+    const parsedPayload = parseJsonOrNull(execution.parsedJson ?? execution.responsePreview);
+    const actualOutputShape = parsedPayload ? detectOutputShape(parsedPayload) : null;
+    const outputShapeMatched = classifyOutputShapeMatch(profile.expectedOutputShape, actualOutputShape);
+    const appError = parsedPayload ? hasApplicationError(parsedPayload) : "parsed_json_unavailable";
+    const applicationSuccess = parsedPayload ? evaluateApplication(parsedPayload, profile.expectedOutputShape) : false;
+
+    return {
+      profile: profile.profile,
+      intent: profile.intent,
+      category: profile.category,
+      expectedProvider: profile.expectedProvider,
+      selectedProvider,
+      providerMatched,
+      expectedOutputShape: profile.expectedOutputShape,
+      actualOutputShape,
+      outputShapeMatched,
+      executionSuccess: execution.success,
+      parsedJsonAvailable: execution.parsedJsonAvailable,
+      applicationSuccess,
+      latencyMs: execution.latencyMs,
+      errorReason: execution.errorReason ?? (appError ? `application_error:${appError}` : null),
+      notes: "execution_attempted",
+      routingMode,
+      selectionSource: "local_verified_router",
+    };
   }
-  return text;
-}
 
-function getSelectedProfiles(): MultiCategoryProfile[] {
-  const includeImageLabels = process.argv.includes("--include-image-labels") || process.env.BENCHMARK_INCLUDE_IMAGE_LABELS === "true";
-  return MULTI_CATEGORY_PROFILES.filter((profile) => profile.includeByDefault || includeImageLabels);
-}
-
-function buildSummary(results: MultiCategoryProfileResult[]): MultiCategorySummary {
-  const executionAttemptedCount = results.filter((result) => result.notes.includes("execution_attempted")).length;
-  const executionSuccessCount = results.filter((result) => result.executionSuccess).length;
-  const parsedJsonSuccessCount = results.filter((result) => result.parsedJsonAvailable).length;
-  const applicationSuccessCount = results.filter((result) => result.applicationSuccess).length;
-  const expectedProviderMatchCount = results.filter((result) => result.providerMatched).length;
-  const expectedOutputShapeMatchCount = results.filter((result) => result.outputShapeMatched).length;
-  const profilesPassed = results.filter(
-    (result) =>
-      result.providerMatched &&
-      result.outputShapeMatched &&
-      result.executionSuccess &&
-      result.parsedJsonAvailable &&
-      result.applicationSuccess,
-  ).length;
-
-  return {
-    totalProfiles: results.length,
-    profilesPassed,
-    profilesFailed: results.length - profilesPassed,
-    expectedProviderMatchCount,
-    expectedOutputShapeMatchCount,
-    executionAttemptedCount,
-    executionSuccessCount,
-    parsedJsonSuccessCount,
-    applicationSuccessCount,
-  };
-}
-
-function toMarkdown(summary: MultiCategorySummary): string {
-  return [
-    "# Multi-Category Routing Benchmark Summary",
-    "",
-    `- total profiles: ${summary.totalProfiles}`,
-    `- profiles passed: ${summary.profilesPassed}`,
-    `- profiles failed: ${summary.profilesFailed}`,
-    `- expectedProviderMatchCount: ${summary.expectedProviderMatchCount}`,
-    `- expectedOutputShapeMatchCount: ${summary.expectedOutputShapeMatchCount}`,
-    `- executionAttemptedCount: ${summary.executionAttemptedCount}`,
-    `- executionSuccessCount: ${summary.executionSuccessCount}`,
-    `- parsedJsonSuccessCount: ${summary.parsedJsonSuccessCount}`,
-    `- applicationSuccessCount: ${summary.applicationSuccessCount}`,
-    "",
-  ].join("\n");
-}
-
-async function runProfile(profile: MultiCategoryProfile): Promise<MultiCategoryProfileResult> {
-  const candidateMappings = getProfileMappings(profile);
+  const candidateMappings = providerEndpointMap.filter(
+    (mapping) =>
+      mapping.status === "verified_pay_cli_success" &&
+      mapping.category === profile.category &&
+      mapping.outputShape === profile.expectedOutputShape,
+  );
   const candidateProviders = candidateMappings.map((mapping) => mapping.providerId);
-
   const preflightInput: RadarPreflightInput = {
     intent: profile.intent,
     category: profile.category,
@@ -268,11 +338,33 @@ async function runProfile(profile: MultiCategoryProfile): Promise<MultiCategoryP
   };
 
   const preflight = await callRadarPreflight(preflightInput);
+  if (!preflight.available) {
+    return {
+      profile: profile.profile,
+      intent: profile.intent,
+      category: profile.category,
+      expectedProvider: profile.expectedProvider,
+      selectedProvider: null,
+      providerMatched: false,
+      expectedOutputShape: profile.expectedOutputShape,
+      actualOutputShape: null,
+      outputShapeMatched: false,
+      executionSuccess: false,
+      parsedJsonAvailable: false,
+      applicationSuccess: false,
+      latencyMs: null,
+      errorReason: "radar_preflight_unavailable",
+      notes: preflight.fallbackReason ?? "Radar preflight unavailable.",
+      routingMode,
+      selectionSource: "live_radar",
+    };
+  }
+
   const selectedProvider = preflight.decision?.selectedProvider ?? null;
   const providerMatched = classifyProviderMatch(profile.expectedProvider, selectedProvider);
-
-  const selectedMapping = findVerifiedMappingByProviderId(selectedProvider);
   if (!selectedProvider) {
+    const blockReason = (preflight.decision?.blockReason ?? "").trim().toLowerCase();
+    const isNoCandidates = blockReason === "no_candidates";
     return {
       profile: profile.profile,
       intent: profile.intent,
@@ -287,11 +379,16 @@ async function runProfile(profile: MultiCategoryProfile): Promise<MultiCategoryP
       parsedJsonAvailable: false,
       applicationSuccess: false,
       latencyMs: null,
-      errorReason: preflight.decision?.blockReason ?? preflight.fallbackReason ?? "route_blocked",
-      notes: "route_not_approved",
+      errorReason: isNoCandidates ? "no_candidates" : (preflight.decision?.blockReason ?? "route_blocked"),
+      notes: isNoCandidates
+        ? "Live Radar returned no provider candidate for this profile."
+        : "Radar route not approved.",
+      routingMode,
+      selectionSource: "live_radar",
     };
   }
 
+  const selectedMapping = findVerifiedMappingByProviderId(selectedProvider);
   if (!selectedMapping) {
     return {
       profile: profile.profile,
@@ -308,7 +405,9 @@ async function runProfile(profile: MultiCategoryProfile): Promise<MultiCategoryP
       applicationSuccess: false,
       latencyMs: null,
       errorReason: "selected_provider_not_in_verified_pay_cli_success_mappings",
-      notes: "route_selected_unmapped_provider",
+      notes: "Radar selected provider that is not in local verified mappings.",
+      routingMode,
+      selectionSource: "live_radar",
     };
   }
 
@@ -343,7 +442,63 @@ async function runProfile(profile: MultiCategoryProfile): Promise<MultiCategoryP
     latencyMs: execution.latencyMs,
     errorReason: execution.errorReason ?? (appError ? `application_error:${appError}` : null),
     notes: "execution_attempted",
+    routingMode,
+    selectionSource: "live_radar",
   };
+}
+
+export function buildSummary(results: MultiCategoryProfileResult[], routingMode: BenchmarkRoutingMode): MultiCategorySummary {
+  const executionAttemptedCount = results.filter((result) => result.notes.includes("execution_attempted")).length;
+  const executionSuccessCount = results.filter((result) => result.executionSuccess).length;
+  const parsedJsonSuccessCount = results.filter((result) => result.parsedJsonAvailable).length;
+  const applicationSuccessCount = results.filter((result) => result.applicationSuccess).length;
+  const expectedProviderMatchCount = results.filter((result) => result.providerMatched).length;
+  const expectedOutputShapeMatchCount = results.filter((result) => result.outputShapeMatched).length;
+  const profilesPassed = results.filter(
+    (result) =>
+      result.providerMatched &&
+      result.outputShapeMatched &&
+      result.executionSuccess &&
+      result.parsedJsonAvailable &&
+      result.applicationSuccess,
+  ).length;
+
+  return {
+    totalProfiles: results.length,
+    profilesPassed,
+    profilesFailed: results.length - profilesPassed,
+    expectedProviderMatchCount,
+    expectedOutputShapeMatchCount,
+    executionAttemptedCount,
+    executionSuccessCount,
+    parsedJsonSuccessCount,
+    applicationSuccessCount,
+    routingMode,
+    liveRadarUnavailableCount: results.filter((result) => result.errorReason === "radar_preflight_unavailable").length,
+    liveRadarNoCandidatesCount: results.filter((result) => result.errorReason === "no_candidates").length,
+    localRouterUsedCount: results.filter((result) => result.selectionSource === "local_verified_router").length,
+  };
+}
+
+function toMarkdown(summary: MultiCategorySummary): string {
+  return [
+    "# Multi-Category Routing Benchmark Summary",
+    "",
+    `- total profiles: ${summary.totalProfiles}`,
+    `- profiles passed: ${summary.profilesPassed}`,
+    `- profiles failed: ${summary.profilesFailed}`,
+    `- routingMode: ${summary.routingMode}`,
+    `- expectedProviderMatchCount: ${summary.expectedProviderMatchCount}`,
+    `- expectedOutputShapeMatchCount: ${summary.expectedOutputShapeMatchCount}`,
+    `- executionAttemptedCount: ${summary.executionAttemptedCount}`,
+    `- executionSuccessCount: ${summary.executionSuccessCount}`,
+    `- parsedJsonSuccessCount: ${summary.parsedJsonSuccessCount}`,
+    `- applicationSuccessCount: ${summary.applicationSuccessCount}`,
+    `- liveRadarUnavailableCount: ${summary.liveRadarUnavailableCount}`,
+    `- liveRadarNoCandidatesCount: ${summary.liveRadarNoCandidatesCount}`,
+    `- localRouterUsedCount: ${summary.localRouterUsedCount}`,
+    "",
+  ].join("\n");
 }
 
 export async function runMultiCategoryBenchmark(): Promise<{
@@ -351,18 +506,19 @@ export async function runMultiCategoryBenchmark(): Promise<{
   results: MultiCategoryProfileResult[];
   reportPaths: { jsonPath: string; csvPath: string; summaryPath: string };
 }> {
+  const routingMode = resolveRoutingMode();
   const profiles = getSelectedProfiles();
   const results: MultiCategoryProfileResult[] = [];
 
   for (const profile of profiles) {
-    const result = await runProfile(profile);
+    const result = await executeSelection(profile, routingMode);
     results.push(result);
     console.log(
-      `[${profile.profile}] selected=${result.selectedProvider ?? "none"} providerMatched=${result.providerMatched} shape=${result.actualOutputShape ?? "unknown"} success=${result.executionSuccess}`,
+      `[${profile.profile}] mode=${routingMode} source=${result.selectionSource} selected=${result.selectedProvider ?? "none"} providerMatched=${result.providerMatched} shape=${result.actualOutputShape ?? "unknown"} success=${result.executionSuccess}`,
     );
   }
 
-  const summary = buildSummary(results);
+  const summary = buildSummary(results, routingMode);
 
   await mkdir(RESULTS_DIR, { recursive: true });
   const jsonPath = path.join(RESULTS_DIR, "latest.json");
@@ -373,6 +529,8 @@ export async function runMultiCategoryBenchmark(): Promise<{
     "profile",
     "intent",
     "category",
+    "routingMode",
+    "selectionSource",
     "expectedProvider",
     "selectedProvider",
     "providerMatched",
@@ -392,6 +550,8 @@ export async function runMultiCategoryBenchmark(): Promise<{
       result.profile,
       result.intent,
       result.category,
+      result.routingMode,
+      result.selectionSource,
       result.expectedProvider,
       result.selectedProvider ?? "",
       result.providerMatched,
@@ -420,6 +580,7 @@ if (require.main === module) {
   runMultiCategoryBenchmark()
     .then(({ summary, reportPaths }) => {
       console.log("\n=== Multi-Category Routing Benchmark ===");
+      console.log(`routingMode: ${summary.routingMode}`);
       console.log(`total profiles: ${summary.totalProfiles}`);
       console.log(`profiles passed: ${summary.profilesPassed}`);
       console.log(`profiles failed: ${summary.profilesFailed}`);
@@ -429,6 +590,9 @@ if (require.main === module) {
       console.log(`executionSuccessCount: ${summary.executionSuccessCount}`);
       console.log(`parsedJsonSuccessCount: ${summary.parsedJsonSuccessCount}`);
       console.log(`applicationSuccessCount: ${summary.applicationSuccessCount}`);
+      console.log(`liveRadarUnavailableCount: ${summary.liveRadarUnavailableCount}`);
+      console.log(`liveRadarNoCandidatesCount: ${summary.liveRadarNoCandidatesCount}`);
+      console.log(`localRouterUsedCount: ${summary.localRouterUsedCount}`);
       console.log("artifact paths:");
       console.log(`- ${reportPaths.jsonPath}`);
       console.log(`- ${reportPaths.csvPath}`);

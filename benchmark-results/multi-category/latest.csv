@@ -1,5 +1,5 @@
-profile,intent,category,expectedProvider,selectedProvider,providerMatched,expectedOutputShape,actualOutputShape,outputShapeMatched,executionSuccess,parsedJsonAvailable,applicationSuccess,latencyMs,errorReason,notes
-solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,,false,trending_pools,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
-solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,,false,json_rpc_health,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
-research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,,false,research_answer,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
-places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,,false,places_search,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
+profile,intent,category,routingMode,selectionSource,expectedProvider,selectedProvider,providerMatched,expectedOutputShape,actualOutputShape,outputShapeMatched,executionSuccess,parsedJsonAvailable,applicationSuccess,latencyMs,errorReason,notes
+solana_trending_pools,get trending Solana DEX pools,finance,live_radar,live_radar,paysponge-coingecko,,false,trending_pools,,false,false,false,false,,radar_preflight_unavailable,Radar preflight unavailable (timeout=30000ms): The operation was aborted due to timeout.
+solana_rpc_health,check Solana RPC health,compute,live_radar,live_radar,quicknode-rpc,quicknode-rpc,true,json_rpc_health,json_rpc_health,true,true,true,true,11216,,execution_attempted
+research_answer,research latest Solana agent payments,ai_ml,live_radar,live_radar,paysponge/perplexity,,false,research_answer,,false,false,false,false,,radar_preflight_unavailable,Radar preflight unavailable (timeout=30000ms): The operation was aborted due to timeout.
+places_search,find coffee shops in Colombo Sri Lanka,maps,live_radar,live_radar,solana-foundation/google/places,solana-foundation-google-places,true,places_search,places_search,true,true,true,true,7043,,execution_attempted
