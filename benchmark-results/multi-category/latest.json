@@ -1,0 +1,83 @@
+{
+  "summary": {
+    "totalProfiles": 4,
+    "profilesPassed": 0,
+    "profilesFailed": 4,
+    "expectedProviderMatchCount": 0,
+    "expectedOutputShapeMatchCount": 0,
+    "executionAttemptedCount": 0,
+    "executionSuccessCount": 0,
+    "parsedJsonSuccessCount": 0,
+    "applicationSuccessCount": 0
+  },
+  "results": [
+    {
+      "profile": "solana_trending_pools",
+      "intent": "get trending Solana DEX pools",
+      "category": "finance",
+      "expectedProvider": "paysponge-coingecko",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "expectedOutputShape": "trending_pools",
+      "actualOutputShape": null,
+      "outputShapeMatched": false,
+      "executionSuccess": false,
+      "parsedJsonAvailable": false,
+      "applicationSuccess": false,
+      "latencyMs": null,
+      "errorReason": "RADAR_API_BASE_URL not set.",
+      "notes": "route_not_approved"
+    },
+    {
+      "profile": "solana_rpc_health",
+      "intent": "check Solana RPC health",
+      "category": "compute",
+      "expectedProvider": "quicknode-rpc",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "expectedOutputShape": "json_rpc_health",
+      "actualOutputShape": null,
+      "outputShapeMatched": false,
+      "executionSuccess": false,
+      "parsedJsonAvailable": false,
+      "applicationSuccess": false,
+      "latencyMs": null,
+      "errorReason": "RADAR_API_BASE_URL not set.",
+      "notes": "route_not_approved"
+    },
+    {
+      "profile": "research_answer",
+      "intent": "research latest Solana agent payments",
+      "category": "ai_ml",
+      "expectedProvider": "paysponge/perplexity",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "expectedOutputShape": "research_answer",
+      "actualOutputShape": null,
+      "outputShapeMatched": false,
+      "executionSuccess": false,
+      "parsedJsonAvailable": false,
+      "applicationSuccess": false,
+      "latencyMs": null,
+      "errorReason": "RADAR_API_BASE_URL not set.",
+      "notes": "route_not_approved"
+    },
+    {
+      "profile": "places_search",
+      "intent": "find coffee shops in Colombo Sri Lanka",
+      "category": "maps",
+      "expectedProvider": "solana-foundation/google/places",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "expectedOutputShape": "places_search",
+      "actualOutputShape": null,
+      "outputShapeMatched": false,
+      "executionSuccess": false,
+      "parsedJsonAvailable": false,
+      "applicationSuccess": false,
+      "latencyMs": null,
+      "errorReason": "RADAR_API_BASE_URL not set.",
+      "notes": "route_not_approved"
+    }
+  ]
+}

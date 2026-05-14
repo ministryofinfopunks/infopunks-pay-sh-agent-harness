@@ -1,0 +1,5 @@
+profile,intent,category,expectedProvider,selectedProvider,providerMatched,expectedOutputShape,actualOutputShape,outputShapeMatched,executionSuccess,parsedJsonAvailable,applicationSuccess,latencyMs,errorReason,notes
+solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,,false,trending_pools,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
+solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,,false,json_rpc_health,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
+research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,,false,research_answer,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved
+places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,,false,places_search,,false,false,false,false,,RADAR_API_BASE_URL not set.,route_not_approved

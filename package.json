@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "prepack": "npm run build",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "benchmark:multi-category": "ts-node src/demoMultiCategoryBenchmark.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
