@@ -11,6 +11,7 @@ export interface ProviderEndpointMapping {
   url: string;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body: unknown | null;
+  headers?: Record<string, string>;
   category: string;
   capabilities: string[];
   outputShape: string;
@@ -113,5 +114,46 @@ export const providerEndpointMap: ProviderEndpointMapping[] = [
     endpointMappingSource: "manual_402_verification",
     notes:
       "Unpaid curl returned x402 Payment Required. pay curl returned Settlement failed, so this mapping is not executed by default.",
+  },
+  {
+    endpointMappingId: "google-places-search-text",
+    providerId: "solana-foundation-google-places",
+    label: "Google Places Search Text",
+    url: "https://places.google.gateway-402.com/v1/places:searchText",
+    method: "POST",
+    body: { textQuery: "coffee in Colombo" },
+    headers: {
+      "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.rating",
+    },
+    category: "maps",
+    capabilities: ["maps", "search", "places"],
+    outputShape: "places_search",
+    status: "verified_pay_cli_success",
+    endpointMappingSource: "manual_pay_cli_verification",
+    notes:
+      "Unpaid request returned x402 challenge; pay-cli exited 0 with parsed JSON places list when X-Goog-FieldMask header was provided.",
+  },
+  {
+    endpointMappingId: "google-vision-images-annotate",
+    providerId: "solana-foundation-google-vision",
+    label: "Google Vision Annotate Image",
+    url: "https://vision.google.gateway-402.com/v1/images:annotate",
+    method: "POST",
+    body: {
+      requests: [
+        {
+          image: {
+            content: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7ZxwAAAABJRU5ErkJggg==",
+          },
+          features: [{ type: "LABEL_DETECTION", maxResults: 3 }],
+        },
+      ],
+    },
+    category: "ai_ml",
+    capabilities: ["ai_ml", "vision", "ocr", "image_labels"],
+    outputShape: "image_labels",
+    status: "verified_pay_cli_success",
+    endpointMappingSource: "manual_pay_cli_verification",
+    notes: "Unpaid request returned x402 challenge; pay-cli exited 0 with parsed JSON labelAnnotations response.",
   },
 ];
