@@ -1,0 +1,9 @@
+trialId,profile,intent,category,expectedProvider,selectedProvider,providerMatched,decision,latencyMs,errorReason,radarSource,timestamp
+1,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,,false,preflight_unavailable,30010,radar_preflight_unavailable,fallback,2026-05-14T10:47:30.322Z
+2,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,,false,preflight_unavailable,30004,radar_preflight_unavailable,fallback,2026-05-14T10:48:00.332Z
+3,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,,false,preflight_unavailable,30002,radar_preflight_unavailable,fallback,2026-05-14T10:48:30.336Z
+4,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,,false,preflight_unavailable,30001,radar_preflight_unavailable,fallback,2026-05-14T10:49:00.339Z
+5,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,,false,preflight_unavailable,30002,radar_preflight_unavailable,fallback,2026-05-14T10:49:30.340Z
+6,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,,false,preflight_unavailable,30003,radar_preflight_unavailable,fallback,2026-05-14T10:50:00.343Z
+7,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,,false,preflight_unavailable,30009,radar_preflight_unavailable,fallback,2026-05-14T10:50:30.346Z
+8,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,,false,preflight_unavailable,30005,radar_preflight_unavailable,fallback,2026-05-14T10:51:00.355Z

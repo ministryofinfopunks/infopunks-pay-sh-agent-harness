@@ -28,7 +28,8 @@
     "build": "tsc",
     "prepack": "npm run build",
     "prepare": "npm run build",
-    "benchmark:multi-category": "ts-node src/demoMultiCategoryBenchmark.ts"
+    "benchmark:multi-category": "ts-node src/demoMultiCategoryBenchmark.ts",
+    "diagnose:radar-preflight": "ts-node src/demoRadarPreflightDiagnostics.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

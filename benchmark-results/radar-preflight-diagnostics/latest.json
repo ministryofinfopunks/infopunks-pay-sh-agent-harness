@@ -1,0 +1,161 @@
+{
+  "summary": {
+    "totalTrials": 8,
+    "successCount": 0,
+    "timeoutCount": 8,
+    "noCandidatesCount": 0,
+    "routeBlockedCount": 0,
+    "wrongProviderCount": 0,
+    "expectedProviderMatchCount": 0,
+    "avgLatencyMs": 30004.5,
+    "p95LatencyMs": 30010,
+    "perProfile": [
+      {
+        "profile": "solana_trending_pools",
+        "totalTrials": 2,
+        "successRate": 0,
+        "timeoutRate": 1,
+        "noCandidatesCount": 0,
+        "expectedProviderMatchCount": 0
+      },
+      {
+        "profile": "solana_rpc_health",
+        "totalTrials": 2,
+        "successRate": 0,
+        "timeoutRate": 1,
+        "noCandidatesCount": 0,
+        "expectedProviderMatchCount": 0
+      },
+      {
+        "profile": "research_answer",
+        "totalTrials": 2,
+        "successRate": 0,
+        "timeoutRate": 1,
+        "noCandidatesCount": 0,
+        "expectedProviderMatchCount": 0
+      },
+      {
+        "profile": "places_search",
+        "totalTrials": 2,
+        "successRate": 0,
+        "timeoutRate": 1,
+        "noCandidatesCount": 0,
+        "expectedProviderMatchCount": 0
+      }
+    ]
+  },
+  "rows": [
+    {
+      "trialId": 1,
+      "profile": "solana_trending_pools",
+      "intent": "get trending Solana DEX pools",
+      "category": "finance",
+      "expectedProvider": "paysponge-coingecko",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30010,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:47:30.322Z"
+    },
+    {
+      "trialId": 2,
+      "profile": "solana_trending_pools",
+      "intent": "get trending Solana DEX pools",
+      "category": "finance",
+      "expectedProvider": "paysponge-coingecko",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30004,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:48:00.332Z"
+    },
+    {
+      "trialId": 3,
+      "profile": "solana_rpc_health",
+      "intent": "check Solana RPC health",
+      "category": "compute",
+      "expectedProvider": "quicknode-rpc",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30002,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:48:30.336Z"
+    },
+    {
+      "trialId": 4,
+      "profile": "solana_rpc_health",
+      "intent": "check Solana RPC health",
+      "category": "compute",
+      "expectedProvider": "quicknode-rpc",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30001,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:49:00.339Z"
+    },
+    {
+      "trialId": 5,
+      "profile": "research_answer",
+      "intent": "research latest Solana agent payments",
+      "category": "ai_ml",
+      "expectedProvider": "paysponge/perplexity",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30002,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:49:30.340Z"
+    },
+    {
+      "trialId": 6,
+      "profile": "research_answer",
+      "intent": "research latest Solana agent payments",
+      "category": "ai_ml",
+      "expectedProvider": "paysponge/perplexity",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30003,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:50:00.343Z"
+    },
+    {
+      "trialId": 7,
+      "profile": "places_search",
+      "intent": "find coffee shops in Colombo Sri Lanka",
+      "category": "maps",
+      "expectedProvider": "solana-foundation/google/places",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30009,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:50:30.346Z"
+    },
+    {
+      "trialId": 8,
+      "profile": "places_search",
+      "intent": "find coffee shops in Colombo Sri Lanka",
+      "category": "maps",
+      "expectedProvider": "solana-foundation/google/places",
+      "selectedProvider": null,
+      "providerMatched": false,
+      "decision": "preflight_unavailable",
+      "latencyMs": 30005,
+      "errorReason": "radar_preflight_unavailable",
+      "radarSource": "fallback",
+      "timestamp": "2026-05-14T10:51:00.355Z"
+    }
+  ]
+}
