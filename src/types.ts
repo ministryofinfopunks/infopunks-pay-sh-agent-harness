@@ -235,6 +235,8 @@ export interface RadarPreflightAndExecuteInput {
   execution?: HarnessExecutionConfig;
   proof?: boolean | HarnessProofConfig;
   executionMode?: HarnessExecutionMode;
+  maxRetries?: number;
+  logger?: (event: unknown) => void;
 }
 
 export interface RadarPreflightAndExecuteMetadata {

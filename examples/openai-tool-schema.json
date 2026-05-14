@@ -1,8 +1,8 @@
 {
   "type": "function",
   "function": {
-    "name": "radar_preflight",
-    "description": "Run an Infopunks Radar preflight decision before selecting a Pay.sh provider.",
+    "name": "infopunks_pay_sh_harness",
+    "description": "Preflight Infopunks Radar, optionally execute a verified Pay.sh route, and write a proof log before agent spend.",
     "parameters": {
       "type": "object",
       "additionalProperties": false,
@@ -34,12 +34,40 @@
             }
           }
         },
-        "candidateProviders": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Optional Pay.sh candidate provider IDs to evaluate."
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "endpointUrl": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string"
+            },
+            "body": {},
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "maxRetries": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": ["intent"]

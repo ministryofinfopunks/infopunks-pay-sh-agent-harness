@@ -28,9 +28,11 @@ npm install https://github.com/ministryofinfopunks/infopunks-pay-sh-agent-harnes
 
 ## GitHub-only distribution notes
 
-- `npm publish` is intentionally deferred during validation.
+- `npm publish` is intentionally deferred.
 - The harness remains dependency-light.
-- GitHub install keeps distribution narrower while proofs and provider mappings mature.
+- GitHub-distributed while proofs and provider mappings mature.
+- Hardened with tests, retries, CI, and proof logging.
+- Ready for agent integration, while live Radar availability is measured separately by diagnostics.
 - npm release can come later after Trusted Publishing, provenance, and 2FA hardening.
 
 ## Drop into an agent
@@ -52,7 +54,8 @@ const result = await radarPreflightAndExecute({
   },
   proof: {
     enabled: true
-  }
+  },
+  maxRetries: 2
 });
 
 if (!result.success) {
@@ -213,40 +216,69 @@ Tested locally with:
 
 ## Package status
 
-- Package metadata is prepared.
-- Public API is exported from `src/index.ts` and builds to `dist/index.js`.
-- Not published to npm yet unless release has been completed.
+- GitHub-distributed.
+- npm publish intentionally deferred.
+- Hardened with tests, retries, CI, and proof logging.
+- Ready for agent integration, while live Radar availability is measured separately by diagnostics.
 
 ## OpenAI tool copy-paste
 
 ```ts
-const infopunksRadarPreflightTool = {
-  name: "infopunks_radar_preflight",
-  description: "Check Infopunks Radar before selecting a Pay.sh provider route.",
+const infopunksPayShHarnessTool = {
+  name: "infopunks_pay_sh_harness",
+  description: "Preflight Infopunks Radar, optionally execute a verified Pay.sh route, and write a proof log before agent spend.",
   parameters: {
     type: "object",
     properties: {
       intent: { type: "string" },
       category: { type: "string" },
-      minTrustScore: { type: "number" },
-      maxLatencyMs: { type: "number" },
-      maxCostUsd: { type: "number" }
+      constraints: {
+        type: "object",
+        properties: {
+          minTrustScore: { type: "number" },
+          maxLatencyMs: { type: "number" },
+          maxCostUsd: { type: "number" }
+        }
+      },
+      execution: {
+        type: "object",
+        properties: {
+          enabled: { type: "boolean" },
+          endpointUrl: { type: "string" },
+          method: { type: "string" },
+          body: {},
+          headers: { type: "object", additionalProperties: { type: "string" } }
+        }
+      },
+      proof: {
+        type: "object",
+        properties: {
+          enabled: { type: "boolean" }
+        }
+      },
+      maxRetries: { type: "number", minimum: 0 }
     },
     required: ["intent"]
   }
 };
 ```
 
+Primary agent API is `radarPreflightAndExecute(...)`.
+
+Advanced preflight-only API remains available as `callRadarPreflight(...)`.
+
 Agent integration examples:
 - `examples/openai-tool-schema.json`
 - `examples/langchain-tool.ts`
 - `examples/live-market-data-agent.ts`
+- `examples/research-agent.ts`
 
 Run local examples:
 
 ```bash
 npx ts-node examples/live-market-data-agent.ts
 npx ts-node examples/langchain-tool.ts
+npx ts-node examples/research-agent.ts
 ```
 
 `examples/langchain-tool.ts` requires:

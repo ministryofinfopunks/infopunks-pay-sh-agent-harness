@@ -24,6 +24,8 @@ import {
 
 const DEFAULT_MIN_TRUST_SCORE = 70;
 const UNKNOWN_REGION = "unknown";
+const RETRY_BACKOFF_MS = [500, 1500] as const;
+const DEFAULT_MAX_RETRIES = 2;
 
 function toCatalogMode(mode: "live" | "mock" | "fallback-mock"): CatalogMode {
   return mode === "fallback-mock" ? "fallback" : mode;
@@ -247,6 +249,50 @@ function buildProofLog(input: {
   };
 }
 
+function emitLogger(logger: ((event: unknown) => void) | undefined, event: unknown): void {
+  if (!logger) {
+    return;
+  }
+  try {
+    logger(event);
+  } catch {
+    // logger hooks must never break harness execution
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getMaxRetries(input: RadarPreflightAndExecuteInput): number {
+  const raw = input.maxRetries;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    return DEFAULT_MAX_RETRIES;
+  }
+  return Math.max(0, Math.floor(raw));
+}
+
+function isRetryableMessage(message: string | undefined): boolean {
+  if (!message) {
+    return false;
+  }
+  const normalized = message.toLowerCase();
+  return normalized.includes("timeout") ||
+    normalized.includes("timed out") ||
+    normalized.includes("network") ||
+    normalized.includes("unavailable") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("econn") ||
+    normalized.includes("enotfound") ||
+    normalized.includes("eai_again") ||
+    normalized.includes("socket") ||
+    normalized.includes("abort");
+}
+
+function getBackoffMs(retryIndex: number): number {
+  return RETRY_BACKOFF_MS[Math.min(retryIndex, RETRY_BACKOFF_MS.length - 1)];
+}
+
 /**
  * Runs the full harness flow for an agent request: Radar preflight, provider routing,
  * optional Pay.sh execution, and optional proof-log persistence.
@@ -270,16 +316,72 @@ export async function radarPreflightAndExecute(
   input: RadarPreflightAndExecuteInput,
 ): Promise<RadarPreflightAndExecuteResult> {
   const startedAtMs = Date.now();
+  const logger = input.logger;
+  const maxRetries = getMaxRetries(input);
+  emitLogger(logger, { event: "harness_started", intent: input.intent, category: input.category, maxRetries });
   const candidateProviderIds = input.candidateProviders?.map(getProviderId);
   const providedCatalogCandidates = input.candidateProviders?.map(toCatalogProvider) ?? [];
   let catalogMode: CatalogMode | undefined;
-
-  const preflightResult = await callRadarPreflight({
-    intent: input.intent,
-    category: input.category,
-    constraints: input.constraints,
-    candidateProviders: candidateProviderIds,
-  });
+  let preflightResult: RadarPreflightResult;
+  let preflightAttempt = 0;
+  while (true) {
+    preflightAttempt += 1;
+    emitLogger(logger, { event: "radar_preflight_attempt", attempt: preflightAttempt });
+    try {
+      preflightResult = await callRadarPreflight({
+        intent: input.intent,
+        category: input.category,
+        constraints: input.constraints,
+        candidateProviders: candidateProviderIds,
+      });
+      const blocked = preflightResult.available && preflightResult.decision?.decision === "route_blocked";
+      const shouldRetry = !blocked &&
+        !preflightResult.available &&
+        isRetryableMessage(preflightResult.fallbackReason);
+      if (!shouldRetry || preflightAttempt > maxRetries) {
+        if (preflightResult.available) {
+          emitLogger(logger, {
+            event: "radar_preflight_success",
+            attempt: preflightAttempt,
+            available: preflightResult.available,
+            decision: preflightResult.decision?.decision,
+          });
+        } else {
+          emitLogger(logger, {
+            event: "radar_preflight_failed",
+            attempt: preflightAttempt,
+            reason: preflightResult.fallbackReason,
+          });
+        }
+        break;
+      }
+      const waitMs = getBackoffMs(preflightAttempt - 1);
+      emitLogger(logger, {
+        event: "radar_preflight_retry",
+        attempt: preflightAttempt,
+        retryInMs: waitMs,
+        reason: preflightResult.fallbackReason,
+      });
+      await sleep(waitMs);
+    } catch (error) {
+      if (preflightAttempt > maxRetries || !isRetryableMessage(error instanceof Error ? error.message : undefined)) {
+        emitLogger(logger, {
+          event: "radar_preflight_failed",
+          attempt: preflightAttempt,
+          reason: error instanceof Error ? error.message : "radar_preflight_exception",
+        });
+        throw error;
+      }
+      const waitMs = getBackoffMs(preflightAttempt - 1);
+      emitLogger(logger, {
+        event: "radar_preflight_retry",
+        attempt: preflightAttempt,
+        retryInMs: waitMs,
+        reason: error instanceof Error ? error.message : "radar_preflight_exception",
+      });
+      await sleep(waitMs);
+    }
+  }
 
   let routingResult: RoutingResult | undefined;
   let routingSource: "radar_preflight" | "local_router" = "radar_preflight";
@@ -332,24 +434,62 @@ export async function radarPreflightAndExecute(
       "execution_disabled_by_input",
     );
   } else {
-    try {
-      executionResult = await executeLivePayShCall({
-        providerId: selectedProviderId,
-        intent: input.intent,
-        endpointUrl: input.execution?.endpointUrl,
-        method: input.execution?.method,
-        body: input.execution?.body,
-        bodyJson: input.execution?.bodyJson,
-        headers: input.execution?.headers,
-      });
-    } catch (error) {
-      executionResult = makeSkippedExecutionResult(
-        selectedProviderId,
-        input.intent,
-        input.execution?.endpointUrl,
-        Date.now(),
-        error instanceof Error ? error.message : "execution_exception",
-      );
+    let executionAttempt = 0;
+    while (true) {
+      executionAttempt += 1;
+      emitLogger(logger, { event: "execution_attempt", attempt: executionAttempt, providerId: selectedProviderId });
+      try {
+        executionResult = await executeLivePayShCall({
+          providerId: selectedProviderId,
+          intent: input.intent,
+          endpointUrl: input.execution?.endpointUrl,
+          method: input.execution?.method,
+          body: input.execution?.body,
+          bodyJson: input.execution?.bodyJson,
+          headers: input.execution?.headers,
+        });
+        const shouldRetry = !executionResult.success && isRetryableMessage(executionResult.errorReason);
+        if (!shouldRetry || executionAttempt > maxRetries) {
+          emitLogger(logger, {
+            event: executionResult.success ? "execution_success" : "execution_failed",
+            attempt: executionAttempt,
+            errorReason: executionResult.errorReason,
+          });
+          break;
+        }
+        const waitMs = getBackoffMs(executionAttempt - 1);
+        emitLogger(logger, {
+          event: "execution_retry",
+          attempt: executionAttempt,
+          retryInMs: waitMs,
+          reason: executionResult.errorReason,
+        });
+        await sleep(waitMs);
+      } catch (error) {
+        if (executionAttempt > maxRetries || !isRetryableMessage(error instanceof Error ? error.message : undefined)) {
+          executionResult = makeSkippedExecutionResult(
+            selectedProviderId,
+            input.intent,
+            input.execution?.endpointUrl,
+            Date.now(),
+            error instanceof Error ? error.message : "execution_exception",
+          );
+          emitLogger(logger, {
+            event: "execution_failed",
+            attempt: executionAttempt,
+            reason: executionResult.errorReason,
+          });
+          break;
+        }
+        const waitMs = getBackoffMs(executionAttempt - 1);
+        emitLogger(logger, {
+          event: "execution_retry",
+          attempt: executionAttempt,
+          retryInMs: waitMs,
+          reason: error instanceof Error ? error.message : "execution_exception",
+        });
+        await sleep(waitMs);
+      }
     }
   }
 
@@ -370,12 +510,15 @@ export async function radarPreflightAndExecute(
         }),
       )
     : undefined;
+  if (proofPath) {
+    emitLogger(logger, { event: "proof_saved", path: proofPath });
+  }
   const skippedExecutionReason =
     selectedProviderId === null && decision.approved
       ? "missing_selected_provider"
       : getSkippedExecutionReason(decision, executionResult);
 
-  return {
+  const result = {
     success: executionResult?.success ?? false,
     decision,
     routingResult,
@@ -393,4 +536,6 @@ export async function radarPreflightAndExecute(
     },
     timestamp: completedTimestamp,
   };
+  emitLogger(logger, { event: "harness_completed", success: result.success, skippedExecutionReason });
+  return result;
 }
