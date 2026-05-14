@@ -1,5 +1,9 @@
 # Infopunks Pay.sh Agent Harness
 
+> **v0.3.2 — Hardened Agent Harness**  
+> Retries + logger + tests + CI + collision-resistant proof logs.  
+> Multi-category verified across finance, compute, AI research, vision, maps, and messaging.
+
 **Radar preflight + Pay.sh execution + proof logs in one function for agents.**
 
 - Pay.sh is the spend rail.
@@ -7,17 +11,26 @@
 - This harness is the proof adapter between them.
 - Agents call Radar before spending through Pay.sh.
 
+## Current verified coverage
+
+- finance: StableCrypto, PaySponge CoinGecko
+- compute: QuickNode Solana RPC
+- AI research: PaySponge Perplexity
+- vision: Google Vision
+- maps: Google Places
+- messaging: AgentMail, Textbelt
+
 ## Install from GitHub
 
 ```bash
-npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness
+npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness#v0.3.2
 ```
 
 Pinned branch/tag examples:
 
 ```bash
 npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness#main
-npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness#v0.1.1
+npm install github:ministryofinfopunks/infopunks-pay-sh-agent-harness#v0.3.2
 ```
 
 Tarball fallback:
@@ -26,14 +39,21 @@ Tarball fallback:
 npm install https://github.com/ministryofinfopunks/infopunks-pay-sh-agent-harness/archive/main.tar.gz
 ```
 
-## GitHub-only distribution notes
+## What's new in v0.3.2
 
-- `npm publish` is intentionally deferred.
-- The harness remains dependency-light.
-- GitHub-distributed while proofs and provider mappings mature.
-- Hardened with tests, retries, CI, and proof logging.
-- Ready for agent integration, while live Radar availability is measured separately by diagnostics.
-- npm release can come later after Trusted Publishing, provenance, and 2FA hardening.
+- Retry support for Radar preflight and Pay.sh execution.
+- Optional structured logger hook.
+- Stronger core-path harness tests.
+- Collision-resistant proof-log naming via `randomUUID`.
+- CI via GitHub Actions.
+- Harness-aware OpenAI tool schema.
+- Non-finance Perplexity research agent example.
+
+Retry behavior:
+- Default `maxRetries: 2`.
+- Backoff: `500ms`, then `1500ms`.
+- Retries timeout/network/unavailable-style failures.
+- Does not retry explicit Radar `route_blocked` decisions.
 
 ## Drop into an agent
 
@@ -52,16 +72,37 @@ const result = await radarPreflightAndExecute({
     endpointUrl: "https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/trending_pools",
     method: "GET"
   },
-  proof: {
-    enabled: true
-  },
-  maxRetries: 2
+  proof: { enabled: true },
+  maxRetries: 2,
+  logger: (event) => console.log("[infopunks-harness]", event)
 });
 
 if (!result.success) {
   console.log(result.skippedExecutionReason ?? result.executionResult?.errorReason);
 }
 ```
+
+## Quickstart: non-finance research (Perplexity)
+
+```ts
+import { radarPreflightAndExecute } from "@infopunks/pay-sh-harness";
+
+const result = await radarPreflightAndExecute({
+  intent: "research latest Solana agent payments",
+  category: "ai_ml",
+  execution: {
+    endpointUrl: "https://pplx.x402.paysponge.com/search",
+    method: "POST",
+    body: {
+      query: "latest Solana agent payments",
+      max_results: 1
+    }
+  },
+  proof: { enabled: true }
+});
+```
+
+Live execution only happens when `LIVE_PAYSH_EXECUTION=true`.
 
 ## Usage variants
 
@@ -112,6 +153,46 @@ if (result.executionResult?.success) {
   console.log(result.executionResult?.errorReason ?? result.skippedExecutionReason);
 }
 ```
+
+## Tests & CI
+
+- Core tests live alongside source as `src/*.test.ts`.
+- Run them with `npm test`.
+- CI runs typecheck, tests, and build on push/PR using GitHub Actions.
+- [CI workflow](.github/workflows/ci.yml)
+
+Coverage examples include:
+- preflight-only / execution disabled
+- proof disabled
+- Radar unavailable fallback/local-router path
+- `route_blocked` no execution
+- execution exception safe failure
+- approved route + execution success
+- retry success after first failed Radar attempt
+- logger events + swallowed logger throw
+- proof filename collision safety
+- provider verification application-success checks
+- multi-category benchmark classification
+- Radar preflight diagnostics classification
+
+## Real agent examples
+
+- [examples/research-agent.ts](examples/research-agent.ts)
+- [examples/live-market-data-agent.ts](examples/live-market-data-agent.ts)
+- [examples/openai-tool-schema.json](examples/openai-tool-schema.json)
+
+These examples show the harness as an agent-side preflight + execution + proof adapter, not just a benchmark script.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm test` | Run test suite |
+| `npm run typecheck` | Run TypeScript type checks |
+| `npm run build` | Build package |
+| `npm run benchmark:multi-category` | Run multi-category routing benchmark |
+| `npm run diagnose:radar-preflight` | Run Radar preflight diagnostics |
+| `npm run mappings:status` | Inspect provider mapping verification status |
 
 ## Advanced: preflight only
 
@@ -217,9 +298,9 @@ Tested locally with:
 ## Package status
 
 - GitHub-distributed.
-- npm publish intentionally deferred.
-- Hardened with tests, retries, CI, and proof logging.
-- Ready for agent integration, while live Radar availability is measured separately by diagnostics.
+- npm publishing intentionally deferred during supply-chain monitoring/validation.
+- Ready for agent integration.
+- Live Radar availability is measured separately by diagnostics.
 
 ## OpenAI tool copy-paste
 
@@ -261,28 +342,4 @@ const infopunksPayShHarnessTool = {
     required: ["intent"]
   }
 };
-```
-
-Primary agent API is `radarPreflightAndExecute(...)`.
-
-Advanced preflight-only API remains available as `callRadarPreflight(...)`.
-
-Agent integration examples:
-- `examples/openai-tool-schema.json`
-- `examples/langchain-tool.ts`
-- `examples/live-market-data-agent.ts`
-- `examples/research-agent.ts`
-
-Run local examples:
-
-```bash
-npx ts-node examples/live-market-data-agent.ts
-npx ts-node examples/langchain-tool.ts
-npx ts-node examples/research-agent.ts
-```
-
-`examples/langchain-tool.ts` requires:
-
-```bash
-npm install @langchain/core zod
 ```
