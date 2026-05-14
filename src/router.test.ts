@@ -85,6 +85,24 @@ test("category filter returns only matching or aliased providers", () => {
   assert.equal(routed.categoryMatch, true);
 });
 
+test("payments category alias accepts finance providers", () => {
+  const routed = routeProvider({
+    providers,
+    radarSignals,
+    minTrustScore: 70,
+    requestedCategory: "payments",
+  });
+
+  const financeProviderRejection = routed.rejectedProviders.find(
+    (provider) => provider.providerId === "pay-a",
+  );
+
+  assert.ok(financeProviderRejection);
+  assert.ok(
+    financeProviderRejection.reasons.every((reason) => !reason.startsWith("category_mismatch:")),
+  );
+});
+
 test("no category match returns blocked route or explicit fallback marker", () => {
   const routed = routeProvider({
     providers,
