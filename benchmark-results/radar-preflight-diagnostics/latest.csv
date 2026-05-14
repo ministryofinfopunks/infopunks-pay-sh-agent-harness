@@ -1,41 +1,61 @@
-trialId,profile,intent,category,expectedProvider,selectedProvider,providerMatched,decision,latencyMs,errorReason,radarSource,timestamp
-1,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,1018,,live,2026-05-14T13:23:44.035Z
-2,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,373,,live,2026-05-14T13:23:45.053Z
-3,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,338,,live,2026-05-14T13:23:45.426Z
-4,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,296,,live,2026-05-14T13:23:45.765Z
-5,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,311,,live,2026-05-14T13:23:46.062Z
-6,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,384,,live,2026-05-14T13:23:46.373Z
-7,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,310,,live,2026-05-14T13:23:46.757Z
-8,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,406,,live,2026-05-14T13:23:47.067Z
-9,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,408,,live,2026-05-14T13:23:47.473Z
-10,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,true,route_approved,434,,live,2026-05-14T13:23:47.881Z
-11,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,386,,live,2026-05-14T13:23:48.316Z
-12,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,409,,live,2026-05-14T13:23:48.702Z
-13,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,410,,live,2026-05-14T13:23:49.111Z
-14,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,512,,live,2026-05-14T13:23:49.521Z
-15,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,408,,live,2026-05-14T13:23:50.033Z
-16,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,411,,live,2026-05-14T13:23:50.441Z
-17,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,409,,live,2026-05-14T13:23:50.852Z
-18,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,408,,live,2026-05-14T13:23:51.262Z
-19,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,315,,live,2026-05-14T13:23:51.670Z
-20,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,true,route_approved,300,,live,2026-05-14T13:23:51.985Z
-21,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,411,,live,2026-05-14T13:23:52.285Z
-22,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,297,,live,2026-05-14T13:23:52.697Z
-23,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,296,,live,2026-05-14T13:23:52.994Z
-24,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,326,,live,2026-05-14T13:23:53.291Z
-25,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,409,,live,2026-05-14T13:23:53.617Z
-26,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,516,,live,2026-05-14T13:23:54.026Z
-27,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,411,,live,2026-05-14T13:23:54.542Z
-28,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,407,,live,2026-05-14T13:23:54.953Z
-29,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,512,,live,2026-05-14T13:23:55.360Z
-30,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,true,route_approved,409,,live,2026-05-14T13:23:55.872Z
-31,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,326,,live,2026-05-14T13:23:56.281Z
-32,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,412,,live,2026-05-14T13:23:56.607Z
-33,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,385,,live,2026-05-14T13:23:57.019Z
-34,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,411,,live,2026-05-14T13:23:57.404Z
-35,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,410,,live,2026-05-14T13:23:57.815Z
-36,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,507,,live,2026-05-14T13:23:58.225Z
-37,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,303,,live,2026-05-14T13:23:58.732Z
-38,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,315,,live,2026-05-14T13:23:59.035Z
-39,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,300,,live,2026-05-14T13:23:59.350Z
-40,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,true,route_approved,313,,live,2026-05-14T13:23:59.650Z
+trialId,profile,intent,category,expectedProvider,expectedProviderNormalized,selectedProvider,selectedProviderNormalized,providerMatched,decision,latencyMs,errorReason,radarSource,timestamp
+1,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,892,,live,2026-05-14T13:45:33.978Z
+2,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,311,,live,2026-05-14T13:45:34.871Z
+3,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,311,,live,2026-05-14T13:45:35.182Z
+4,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,294,,live,2026-05-14T13:45:35.493Z
+5,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,301,,live,2026-05-14T13:45:35.787Z
+6,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,296,,live,2026-05-14T13:45:36.088Z
+7,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,391,,live,2026-05-14T13:45:36.384Z
+8,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,355,,live,2026-05-14T13:45:36.775Z
+9,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,547,,live,2026-05-14T13:45:37.130Z
+10,solana_trending_pools,get trending Solana DEX pools,finance,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,paysponge-coingecko,true,route_approved,593,,live,2026-05-14T13:45:37.677Z
+11,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,627,,live,2026-05-14T13:45:38.270Z
+12,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,342,,live,2026-05-14T13:45:38.897Z
+13,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,303,,live,2026-05-14T13:45:39.239Z
+14,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,318,,live,2026-05-14T13:45:39.542Z
+15,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,582,,live,2026-05-14T13:45:39.860Z
+16,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,394,,live,2026-05-14T13:45:40.442Z
+17,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,345,,live,2026-05-14T13:45:40.836Z
+18,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,315,,live,2026-05-14T13:45:41.181Z
+19,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,564,,live,2026-05-14T13:45:41.496Z
+20,solana_rpc_health,check Solana RPC health,compute,quicknode-rpc,quicknode-rpc,quicknode-rpc,quicknode-rpc,true,route_approved,1066,,live,2026-05-14T13:45:42.060Z
+21,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,334,,live,2026-05-14T13:45:43.127Z
+22,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,284,,live,2026-05-14T13:45:43.461Z
+23,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,293,,live,2026-05-14T13:45:43.745Z
+24,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,321,,live,2026-05-14T13:45:44.038Z
+25,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,338,,live,2026-05-14T13:45:44.359Z
+26,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,352,,live,2026-05-14T13:45:44.697Z
+27,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,349,,live,2026-05-14T13:45:45.049Z
+28,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,321,,live,2026-05-14T13:45:45.399Z
+29,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,329,,live,2026-05-14T13:45:45.720Z
+30,research_answer,research latest Solana agent payments,ai_ml,paysponge/perplexity,paysponge-perplexity,paysponge-perplexity,paysponge-perplexity,true,route_approved,350,,live,2026-05-14T13:45:46.049Z
+31,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,737,,live,2026-05-14T13:45:46.399Z
+32,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,335,,live,2026-05-14T13:45:47.136Z
+33,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,604,,live,2026-05-14T13:45:47.471Z
+34,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,330,,live,2026-05-14T13:45:48.075Z
+35,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,332,,live,2026-05-14T13:45:48.405Z
+36,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,578,,live,2026-05-14T13:45:48.737Z
+37,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,323,,live,2026-05-14T13:45:49.315Z
+38,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,319,,live,2026-05-14T13:45:49.638Z
+39,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,297,,live,2026-05-14T13:45:49.957Z
+40,places_search,find coffee shops in Colombo Sri Lanka,maps,solana-foundation/google/places,solana-foundation-google-places,solana-foundation-google-places,solana-foundation-google-places,true,route_approved,343,,live,2026-05-14T13:45:50.254Z
+41,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,305,,live,2026-05-14T13:45:50.597Z
+42,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,344,,live,2026-05-14T13:45:50.902Z
+43,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,331,,live,2026-05-14T13:45:51.246Z
+44,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,320,,live,2026-05-14T13:45:51.577Z
+45,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,326,,live,2026-05-14T13:45:51.897Z
+46,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,316,,live,2026-05-14T13:45:52.223Z
+47,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,559,,live,2026-05-14T13:45:52.539Z
+48,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,303,,live,2026-05-14T13:45:53.098Z
+49,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,295,,live,2026-05-14T13:45:53.401Z
+50,image_labels,label a tiny test image,ai_ml,solana-foundation/google/vision,solana-foundation-google-vision,solana-foundation-google-vision,solana-foundation-google-vision,true,route_approved,335,,live,2026-05-14T13:45:53.696Z
+51,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,1343,,live,2026-05-14T13:45:54.032Z
+52,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,439,,live,2026-05-14T13:45:55.375Z
+53,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,408,,live,2026-05-14T13:45:55.814Z
+54,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,409,,live,2026-05-14T13:45:56.222Z
+55,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,409,,live,2026-05-14T13:45:56.631Z
+56,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,336,,live,2026-05-14T13:45:57.040Z
+57,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,326,,live,2026-05-14T13:45:57.377Z
+58,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,334,,live,2026-05-14T13:45:57.703Z
+59,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,289,,live,2026-05-14T13:45:58.037Z
+60,messaging_status,check SMS delivery status,messaging,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,paysponge-textbelt,true,route_approved,580,,live,2026-05-14T13:45:58.326Z
