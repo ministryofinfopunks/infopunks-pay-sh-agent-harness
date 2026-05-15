@@ -385,6 +385,26 @@ function quoteForShell(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
+function parseHttpStatusFromPayCliOutput(stdout: string, stderr: string): number | undefined {
+  const combined = `${stdout}\n${stderr}`;
+  const patterns = [
+    /\bHTTP\/\d(?:\.\d)?\s+([1-5]\d{2})\b/i,
+    /\bstatus(?:Code)?["'\s:=]+([1-5]\d{2})\b/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = combined.match(pattern);
+    if (!match) {
+      continue;
+    }
+    const parsed = Number.parseInt(match[1], 10);
+    if (Number.isInteger(parsed) && parsed >= 100 && parsed <= 599) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
 function runCommand(
   command: string,
   args: string[],
@@ -459,6 +479,7 @@ async function executeViaPayCli({
     const completedMs = Date.now();
     const stdoutPreview = sanitizePreview(result.stdout);
     const stderrPreview = sanitizePreview(result.stderr);
+    const parsedStatusCode = parseHttpStatusFromPayCliOutput(result.stdout, result.stderr);
 
     let parsedJsonAvailable = false;
     let parsedJson: unknown = undefined;
@@ -477,6 +498,7 @@ async function executeViaPayCli({
       completedAt: nowIso(completedMs),
       latencyMs: completedMs - startedAtMs,
       success: result.exitCode === 0,
+      statusCode: parsedStatusCode,
       exitCode: result.exitCode,
       costUsd: null,
       settlementReference: null,
