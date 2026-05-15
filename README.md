@@ -90,6 +90,17 @@ if (!result.success) {
 `LIVE_PAYSH_EXECUTION=true` is required for real Pay.sh execution.  
 When live execution is not enabled, execution is safely skipped according to harness configuration (`executionMode` and env settings).
 
+## Real Agent Loop Demo
+
+```bash
+npm run demo:agent-loop -- --flow=research
+npm run demo:agent-loop -- --flow=market
+npm run demo:agent-loop -- --flow=rpc
+LIVE_PAYSH_EXECUTION=true PAYSH_EXECUTION_MODE=pay_cli npm run demo:agent-loop -- --flow=all
+```
+
+This demo shows the harness as an agent-side preflight + execution + proof adapter.
+
 ## Generated Proof Log Example
 
 See [examples/proof-log.example.json](/Users/ahdilm/Documents/infopunks-pay-sh-agent-harness/examples/proof-log.example.json) for a sanitized sample.

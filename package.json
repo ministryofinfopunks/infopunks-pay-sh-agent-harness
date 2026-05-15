@@ -1,6 +1,6 @@
 {
   "name": "@infopunks/pay-sh-harness",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "private": false,
   "description": "Minimal TypeScript harness demonstrating Radar-assisted Pay.sh provider routing.",
   "main": "dist/index.js",
@@ -29,7 +29,8 @@
     "prepack": "npm run build",
     "prepare": "npm run build",
     "benchmark:multi-category": "ts-node src/demoMultiCategoryBenchmark.ts",
-    "diagnose:radar-preflight": "ts-node src/demoRadarPreflightDiagnostics.ts"
+    "diagnose:radar-preflight": "ts-node src/demoRadarPreflightDiagnostics.ts",
+    "demo:agent-loop": "ts-node examples/agent-loop-demo.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
