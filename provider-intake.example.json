@@ -1,0 +1,45 @@
+{
+  "provider": {
+    "providerId": "example/provider",
+    "normalizedProviderId": "example-provider",
+    "name": "Example Provider",
+    "category": "data",
+    "serviceUrl": "https://api.example.com",
+    "source": "pay.sh catalog",
+    "notes": "Start with a safe read-only route."
+  },
+  "route": {
+    "endpointMappingId": "example-provider-status",
+    "label": "Example Provider Status",
+    "endpointUrl": "https://api.example.com/status",
+    "method": "GET",
+    "headers": {},
+    "body": {},
+    "outputShape": "status_result",
+    "capabilities": ["status", "read_only"]
+  },
+  "safety": {
+    "sideEffectLevel": "read_only",
+    "requiresOwnPhoneNumber": false,
+    "requiresSecrets": false,
+    "safeForDefaultExecution": false,
+    "notes": "No write/send side effects."
+  },
+  "verification": {
+    "unpaid402Observed": false,
+    "payCliSuccess": false,
+    "parsedJsonAvailable": false,
+    "applicationSuccess": false,
+    "recommendedStatus": "candidate_pending",
+    "evidencePath": "verification-results/example-provider-status.json",
+    "verifiedAt": ""
+  },
+  "promotionRules": [
+    "pay CLI exitCode must be 0",
+    "parsed JSON must be available",
+    "applicationSuccess must be true",
+    "output shape validator must pass",
+    "no top-level application error",
+    "side-effectful routes must not execute by default"
+  ]
+}

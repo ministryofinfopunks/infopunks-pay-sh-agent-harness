@@ -1,0 +1,49 @@
+{
+  "provider": {
+    "providerId": "solana-foundation-google-places",
+    "normalizedProviderId": "solana-foundation-google-places",
+    "name": "Google Places",
+    "category": "maps",
+    "serviceUrl": "https://places.google.gateway-402.com",
+    "source": "manual pay-cli verification",
+    "notes": "Use explicit field mask header for predictable response shape."
+  },
+  "route": {
+    "endpointMappingId": "google-places-search-text",
+    "label": "Google Places Search Text",
+    "endpointUrl": "https://places.google.gateway-402.com/v1/places:searchText",
+    "method": "POST",
+    "headers": {
+      "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.rating"
+    },
+    "body": {
+      "textQuery": "coffee in Colombo"
+    },
+    "outputShape": "places_search",
+    "capabilities": ["maps", "search", "places"]
+  },
+  "safety": {
+    "sideEffectLevel": "read_only",
+    "requiresOwnPhoneNumber": false,
+    "requiresSecrets": false,
+    "safeForDefaultExecution": false,
+    "notes": "Search-only endpoint."
+  },
+  "verification": {
+    "unpaid402Observed": true,
+    "payCliSuccess": true,
+    "parsedJsonAvailable": true,
+    "applicationSuccess": true,
+    "recommendedStatus": "verified_pay_cli_success",
+    "evidencePath": "verification-results/google-places-search-text.json",
+    "verifiedAt": "2026-05-12T00:00:00.000Z"
+  },
+  "promotionRules": [
+    "pay CLI exitCode must be 0",
+    "parsed JSON must be available",
+    "applicationSuccess must be true",
+    "output shape validator must pass",
+    "no top-level application error",
+    "side-effectful routes must not execute by default"
+  ]
+}

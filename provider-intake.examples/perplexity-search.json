@@ -1,0 +1,47 @@
+{
+  "provider": {
+    "providerId": "paysponge/perplexity",
+    "normalizedProviderId": "paysponge-perplexity",
+    "name": "PaySponge Perplexity",
+    "category": "ai_ml",
+    "serviceUrl": "https://pplx.x402.paysponge.com",
+    "source": "manual pay-cli verification",
+    "notes": "Read-only research search."
+  },
+  "route": {
+    "endpointMappingId": "paysponge-perplexity-search",
+    "label": "PaySponge Perplexity Search",
+    "endpointUrl": "https://pplx.x402.paysponge.com/search",
+    "method": "POST",
+    "body": {
+      "query": "latest Solana agent payments",
+      "max_results": 1
+    },
+    "outputShape": "research_answer",
+    "capabilities": ["research", "web_search", "citations", "answer", "ai_ml"]
+  },
+  "safety": {
+    "sideEffectLevel": "read_only",
+    "requiresOwnPhoneNumber": false,
+    "requiresSecrets": false,
+    "safeForDefaultExecution": false,
+    "notes": "No send/write route."
+  },
+  "verification": {
+    "unpaid402Observed": false,
+    "payCliSuccess": true,
+    "parsedJsonAvailable": true,
+    "applicationSuccess": true,
+    "recommendedStatus": "verified_pay_cli_success",
+    "evidencePath": "verification-results/paysponge-perplexity-search.json",
+    "verifiedAt": "2026-05-12T00:00:00.000Z"
+  },
+  "promotionRules": [
+    "pay CLI exitCode must be 0",
+    "parsed JSON must be available",
+    "applicationSuccess must be true",
+    "output shape validator must pass",
+    "no top-level application error",
+    "side-effectful routes must not execute by default"
+  ]
+}

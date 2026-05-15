@@ -1,0 +1,44 @@
+{
+  "provider": {
+    "providerId": "paysponge/textbelt",
+    "normalizedProviderId": "paysponge-textbelt",
+    "name": "Textbelt",
+    "category": "messaging",
+    "serviceUrl": "https://api.paysponge.com",
+    "source": "manual pay-cli verification",
+    "notes": "Status route only; no SMS send route."
+  },
+  "route": {
+    "endpointMappingId": "textbelt-sms-status",
+    "label": "Textbelt SMS Status Check",
+    "endpointUrl": "https://api.paysponge.com/x402/purchase/svc_d6kszbre4qwg5n4n4/status/test-harness-123",
+    "method": "GET",
+    "body": {},
+    "outputShape": "sms_status",
+    "capabilities": ["sms", "text", "status", "delivery", "messaging"]
+  },
+  "safety": {
+    "sideEffectLevel": "read_only",
+    "requiresOwnPhoneNumber": false,
+    "requiresSecrets": false,
+    "safeForDefaultExecution": false,
+    "notes": "Read-only delivery status check."
+  },
+  "verification": {
+    "unpaid402Observed": false,
+    "payCliSuccess": true,
+    "parsedJsonAvailable": true,
+    "applicationSuccess": true,
+    "recommendedStatus": "verified_pay_cli_success",
+    "evidencePath": "verification-results/textbelt-sms-status.json",
+    "verifiedAt": "2026-05-12T00:00:00.000Z"
+  },
+  "promotionRules": [
+    "pay CLI exitCode must be 0",
+    "parsed JSON must be available",
+    "applicationSuccess must be true",
+    "output shape validator must pass",
+    "no top-level application error",
+    "side-effectful routes must not execute by default"
+  ]
+}

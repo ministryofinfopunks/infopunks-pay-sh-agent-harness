@@ -161,6 +161,23 @@ VERIFY_OUTPUT_SHAPE=simple_price \
 npm run verify:mapping
 ```
 
+## Provider Intake Kit
+
+Use the intake helper to generate a strict `VERIFY_*` command from a reviewed intake file:
+
+```bash
+npm run intake:command -- provider-intake.examples/perplexity-search.json
+```
+
+Then run:
+
+```bash
+npm run verify:mapping
+npm run mappings:status
+```
+
+This kit does not automatically promote mappings. It generates commands and evidence discipline; humans still review verification output before updating `providerEndpointMap.ts`.
+
 ## Package Status
 
 - GitHub-distributed.

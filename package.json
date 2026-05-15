@@ -1,6 +1,6 @@
 {
   "name": "@infopunks/pay-sh-harness",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": false,
   "description": "Minimal TypeScript harness demonstrating Radar-assisted Pay.sh provider routing.",
   "main": "dist/index.js",
@@ -21,6 +21,7 @@
     "proof:solana-dex-pools": "ts-node src/demoProofSolanaDexPools.ts",
     "mappings:status": "ts-node src/demoMappingStatus.ts",
     "verify:mapping": "ts-node src/demoVerifyProviderMapping.ts",
+    "intake:command": "ts-node src/providerIntakeCommand.ts",
     "debug:pay-cli-parity": "ts-node src/demoPayCliParity.ts",
     "benchmark": "ts-node src/demoBenchmark.ts",
     "test": "find src -name \"*.test.ts\" -print0 | xargs -0 node --test -r ts-node/register",
