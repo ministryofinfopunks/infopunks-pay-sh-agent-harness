@@ -1,0 +1,25 @@
+{
+  "proofId": "proof_2026-05-15T09-12-44-381Z_8f1f7ab2",
+  "timestamp": "2026-05-15T09:12:44.381Z",
+  "intent": "research latest Solana agent payments",
+  "category": "ai_ml",
+  "routingDecision": "route_approved",
+  "selectedProvider": "paysponge-perplexity",
+  "endpointMappingId": "pplx-search-research-answer",
+  "executionMode": "pay_cli",
+  "executionSuccess": true,
+  "parsedJsonAvailable": true,
+  "applicationSuccess": true,
+  "verificationStatus": "verified_pay_cli_success",
+  "proofSource": "radar_preflight_and_execute",
+  "receiptPreview": {
+    "paymentId": "pay_2f4a0d9e",
+    "status": "paid",
+    "amountUsd": 0.02,
+    "signaturePreview": "sig_8f7a...c21d"
+  },
+  "sanitizedResponsePreview": {
+    "answer": "Recent Solana agent payment tooling focuses on x402-compatible spend flows and proofed execution logs.",
+    "citationsCount": 1
+  }
+}
