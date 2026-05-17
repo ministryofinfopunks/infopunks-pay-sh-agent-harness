@@ -38,4 +38,3 @@
 ## Notes
 
 - Token-search benchmark recorded. No route winner is claimed. Scoring thresholds are not finalized.
-- Token-search benchmark recorded. No route winner is claimed. Scoring thresholds are not finalized.
