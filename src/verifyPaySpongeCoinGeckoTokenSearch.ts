@@ -14,6 +14,17 @@ const SENSITIVE_PATTERNS = [
 
 type ProbeMode = "unpaid_safe_probe" | "paid_pay_cli";
 
+export interface VerificationSemantics {
+  endpointPathConfirmed: boolean;
+  methodConfirmed: boolean;
+  requestShapeConfirmed: boolean;
+  responseShapeClassified: boolean;
+  benchmarkIntentConfirmed: boolean;
+  unpaid402ChallengeConfirmed: boolean;
+  paidExecutionAttempted: false;
+  responseShapeClassification: string;
+}
+
 export interface TokenSearchProbeResult {
   endpointUrl: string;
   method: string;
@@ -25,6 +36,7 @@ export interface TokenSearchProbeResult {
   routeCandidateEvidence: boolean;
   executionEvidenceStatus: "unproven" | "paid_execution_observed";
   safeSummary: string;
+  verificationSemantics: VerificationSemantics;
   error?: string;
 }
 
@@ -76,10 +88,7 @@ export function responseBodyShapeAppearsTokenSearchLike(bodyText: string): boole
 }
 
 export function sanitizeProofMarkdown(markdown: string): string {
-  return SENSITIVE_PATTERNS.reduce(
-    (safe, pattern) => safe.replace(pattern, "[REDACTED]"),
-    markdown,
-  );
+  return SENSITIVE_PATTERNS.reduce((safe, pattern) => safe.replace(pattern, "[REDACTED]"), markdown);
 }
 
 export function classifyRouteCandidateEvidence(input: {
@@ -94,8 +103,37 @@ export function classifyRouteCandidateEvidence(input: {
   );
 }
 
-function paidExecutionEnabled(): boolean {
+export function paidExecutionEnabled(): boolean {
   return process.env.LIVE_PAYSH_EXECUTION === "true" && process.env.PAYSH_EXECUTION_MODE === "pay_cli";
+}
+
+export function classifyVerificationSemantics(input: {
+  endpointUrl: string;
+  method: string;
+  benchmarkIntent: string;
+  statusCode?: number;
+  paymentRequiredChallengeAppears: boolean;
+  routeCandidateEvidence: boolean;
+  paidExecutionAttempted: boolean;
+}): VerificationSemantics {
+  const endpointPathConfirmed = input.endpointUrl.includes("/x402/onchain/search/pools") && input.endpointUrl.includes("query=SOL");
+  const methodConfirmed = input.method.toUpperCase() === "GET";
+  const requestShapeConfirmed = endpointPathConfirmed && methodConfirmed;
+  const responseShapeClassified = input.routeCandidateEvidence || input.statusCode === 402 || input.paymentRequiredChallengeAppears;
+  const benchmarkIntentConfirmed = input.benchmarkIntent === "token search";
+  const unpaid402ChallengeConfirmed = input.statusCode === 402 || input.paymentRequiredChallengeAppears;
+
+  return {
+    endpointPathConfirmed,
+    methodConfirmed,
+    requestShapeConfirmed,
+    responseShapeClassified,
+    benchmarkIntentConfirmed,
+    unpaid402ChallengeConfirmed,
+    paidExecutionAttempted: false,
+    responseShapeClassification:
+      "Expected response shape classified. Paid response body not fetched in this verification pass.",
+  };
 }
 
 function hasPaymentChallenge(statusCode: number | undefined, headers: Headers, bodyText: string): boolean {
@@ -122,6 +160,13 @@ export async function probePaySpongeCoinGeckoTokenSearch(): Promise<TokenSearchP
       method,
     });
     const tokenSearchLike = responseBodyShapeAppearsTokenSearchLike(paidResult.responsePreview);
+    const routeCandidateEvidence = classifyRouteCandidateEvidence({
+      statusCode: paidResult.statusCode,
+      paymentRequiredChallengeAppears: Boolean(
+        paidResult.paymentRequired || paidResult.paymentRequiredHeaderPresent,
+      ),
+      responseBodyShapeAppearsTokenSearchLike: tokenSearchLike,
+    });
     return {
       endpointUrl,
       method,
@@ -132,18 +177,23 @@ export async function probePaySpongeCoinGeckoTokenSearch(): Promise<TokenSearchP
       ),
       paidExecutionAttempted: true,
       responseBodyShapeAppearsTokenSearchLike: tokenSearchLike,
-      routeCandidateEvidence: classifyRouteCandidateEvidence({
-        statusCode: paidResult.statusCode,
-        paymentRequiredChallengeAppears: Boolean(
-          paidResult.paymentRequired || paidResult.paymentRequiredHeaderPresent,
-        ),
-        responseBodyShapeAppearsTokenSearchLike: tokenSearchLike,
-      }),
+      routeCandidateEvidence,
       executionEvidenceStatus:
         paidResult.success && tokenSearchLike ? "paid_execution_observed" : "unproven",
       safeSummary: paidResult.success
         ? "Paid pay CLI execution returned a successful response preview with no raw payment material recorded."
         : `Paid pay CLI execution did not prove token search: ${paidResult.errorReason ?? "unknown result"}.`,
+      verificationSemantics: classifyVerificationSemantics({
+        endpointUrl,
+        method,
+        benchmarkIntent: payspongeCoinGeckoTokenSearchCandidate.benchmark_intent,
+        statusCode: paidResult.statusCode,
+        paymentRequiredChallengeAppears: Boolean(
+          paidResult.paymentRequired || paidResult.paymentRequiredHeaderPresent,
+        ),
+        routeCandidateEvidence,
+        paidExecutionAttempted: true,
+      }),
       error: paidResult.success ? undefined : paidResult.errorReason,
     };
   }
@@ -156,6 +206,11 @@ export async function probePaySpongeCoinGeckoTokenSearch(): Promise<TokenSearchP
     const bodyText = await response.text();
     const paymentChallenge = hasPaymentChallenge(response.status, response.headers, bodyText);
     const tokenSearchLike = responseBodyShapeAppearsTokenSearchLike(bodyText);
+    const routeCandidateEvidence = classifyRouteCandidateEvidence({
+      statusCode: response.status,
+      paymentRequiredChallengeAppears: paymentChallenge,
+      responseBodyShapeAppearsTokenSearchLike: tokenSearchLike,
+    });
 
     return {
       endpointUrl,
@@ -165,17 +220,23 @@ export async function probePaySpongeCoinGeckoTokenSearch(): Promise<TokenSearchP
       paymentRequiredChallengeAppears: paymentChallenge,
       paidExecutionAttempted: false,
       responseBodyShapeAppearsTokenSearchLike: tokenSearchLike,
-      routeCandidateEvidence: classifyRouteCandidateEvidence({
-        statusCode: response.status,
-        paymentRequiredChallengeAppears: paymentChallenge,
-        responseBodyShapeAppearsTokenSearchLike: tokenSearchLike,
-      }),
+      routeCandidateEvidence,
       executionEvidenceStatus: "unproven",
       safeSummary: paymentChallenge
-        ? "Unpaid probe reached a payment-required challenge for the candidate route."
+        ? "Unpaid probe reached a payment-required challenge for the route."
         : "Unpaid probe completed without paid execution; response body was inspected only for coarse token-search shape.",
+      verificationSemantics: classifyVerificationSemantics({
+        endpointUrl,
+        method,
+        benchmarkIntent: payspongeCoinGeckoTokenSearchCandidate.benchmark_intent,
+        statusCode: response.status,
+        paymentRequiredChallengeAppears: paymentChallenge,
+        routeCandidateEvidence,
+        paidExecutionAttempted: false,
+      }),
     };
   } catch (error) {
+    const routeCandidateEvidence = false;
     return {
       endpointUrl,
       method,
@@ -183,9 +244,17 @@ export async function probePaySpongeCoinGeckoTokenSearch(): Promise<TokenSearchP
       paidExecutionAttempted: false,
       paymentRequiredChallengeAppears: false,
       responseBodyShapeAppearsTokenSearchLike: false,
-      routeCandidateEvidence: false,
+      routeCandidateEvidence,
       executionEvidenceStatus: "unproven",
       safeSummary: "Unpaid probe failed before route evidence could be established.",
+      verificationSemantics: classifyVerificationSemantics({
+        endpointUrl,
+        method,
+        benchmarkIntent: payspongeCoinGeckoTokenSearchCandidate.benchmark_intent,
+        paymentRequiredChallengeAppears: false,
+        routeCandidateEvidence,
+        paidExecutionAttempted: false,
+      }),
       error: error instanceof Error ? error.message : String(error),
     };
   }
@@ -194,29 +263,40 @@ export async function probePaySpongeCoinGeckoTokenSearch(): Promise<TokenSearchP
 export function renderProofMarkdown(result: TokenSearchProbeResult, generatedAt = new Date()): string {
   const date = generatedAt.toISOString();
   const markdown = [
-    "# PaySponge CoinGecko Token Search Candidate Probe",
+    "# PaySponge CoinGecko Token Search Verified/Unproven Evidence",
     "",
     `- generated_at: ${date}`,
     `- provider_id: ${payspongeCoinGeckoTokenSearchCandidate.provider_id}`,
     `- provider_name: ${payspongeCoinGeckoTokenSearchCandidate.provider_name}`,
     `- category: ${payspongeCoinGeckoTokenSearchCandidate.category}`,
     `- benchmark_intent: ${payspongeCoinGeckoTokenSearchCandidate.benchmark_intent}`,
+    `- endpoint: ${result.endpointUrl}`,
+    `- method: ${result.method}`,
+    "- request_shape_example: { \"query\": \"SOL\" }",
     `- mapping_status: ${payspongeCoinGeckoTokenSearchCandidate.mapping_status}`,
     `- execution_evidence_status: ${result.executionEvidenceStatus}`,
-    `- endpoint_url: ${result.endpointUrl}`,
-    `- method: ${result.method}`,
     `- status_code: ${result.statusCode ?? "unavailable"}`,
-    `- payment_required_challenge_appears: ${result.paymentRequiredChallengeAppears}`,
-    `- paid_execution_attempted: ${result.paidExecutionAttempted}`,
-    `- response_body_shape_appears_token_search_like: ${result.responseBodyShapeAppearsTokenSearchLike}`,
-    `- route_candidate_evidence: ${result.routeCandidateEvidence}`,
-    `- safe_summary: ${result.safeSummary}`,
+    `- unpaid_402_challenge_confirmed: ${result.verificationSemantics.unpaid402ChallengeConfirmed}`,
+    `- paid_execution_attempted: ${result.verificationSemantics.paidExecutionAttempted}`,
+    `- endpoint_path_confirmed: ${result.verificationSemantics.endpointPathConfirmed}`,
+    `- method_confirmed: ${result.verificationSemantics.methodConfirmed}`,
+    `- request_shape_confirmed: ${result.verificationSemantics.requestShapeConfirmed}`,
+    `- response_shape_classified: ${result.verificationSemantics.responseShapeClassified}`,
+    `- benchmark_intent_confirmed: ${result.verificationSemantics.benchmarkIntentConfirmed}`,
+    `- response_shape_classification: ${result.verificationSemantics.responseShapeClassification}`,
+    `- unpaid_probe_status: ${result.safeSummary}`,
     `- error: ${result.error ?? "none"}`,
+    "",
+    "## Expected Response Semantics",
+    "",
+    "- search/pools endpoint.",
+    "- token/pool search result.",
+    "- SOL/USDC-like pool result expected when paid execution succeeds.",
     "",
     "## Scope",
     "",
-    "This is candidate evidence for token search only. It does not prove benchmark readiness or route superiority.",
-    "No winner is claimed.",
+    "No benchmark readiness claim.",
+    "No winner claim.",
     "",
   ].join("\n");
 
@@ -242,8 +322,8 @@ async function main(): Promise<void> {
         status_code: result.statusCode ?? null,
         payment_required_challenge_appears: result.paymentRequiredChallengeAppears,
         paid_execution_attempted: result.paidExecutionAttempted,
-        execution_evidence_status: result.executionEvidenceStatus,
         route_candidate_evidence: result.routeCandidateEvidence,
+        execution_evidence_status: result.executionEvidenceStatus,
       },
       null,
       2,
@@ -252,8 +332,8 @@ async function main(): Promise<void> {
 }
 
 if (require.main === module) {
-  main().catch((error: unknown) => {
+  main().catch((error) => {
     console.error(error);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }
