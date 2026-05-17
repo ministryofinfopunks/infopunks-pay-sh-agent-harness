@@ -38,7 +38,8 @@
     "verify:paysponge-token-lookup-candidate": "ts-node src/verifyPaySpongeCoinGeckoTokenLookupCandidate.ts",
     "discover:token-search-routes": "tsx src/discoverTokenSearchRoutes.ts",
     "research:token-search-providers": "tsx src/tokenSearchProviderResearch.ts",
-    "verify:stablecrypto-token-search-candidate": "ts-node src/verifyStablecryptoTokenSearchCandidate.ts"
+    "verify:stablecrypto-token-search-candidate": "ts-node src/verifyStablecryptoTokenSearchCandidate.ts",
+    "benchmark:token-search": "tsx src/benchmarks/runTokenSearchBenchmark.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
