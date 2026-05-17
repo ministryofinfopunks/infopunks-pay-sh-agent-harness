@@ -35,7 +35,8 @@
     "verify:paysponge-coingecko": "ts-node src/verifyPaySpongeCoinGecko.ts",
     "verify:paysponge-token-search": "ts-node src/verifyPaySpongeCoinGeckoTokenSearch.ts",
     "benchmark:sol-price": "tsx src/benchmarks/runSolPriceBenchmark.ts",
-    "verify:paysponge-token-lookup-candidate": "ts-node src/verifyPaySpongeCoinGeckoTokenLookupCandidate.ts"
+    "verify:paysponge-token-lookup-candidate": "ts-node src/verifyPaySpongeCoinGeckoTokenLookupCandidate.ts",
+    "discover:token-search-routes": "tsx src/discoverTokenSearchRoutes.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
