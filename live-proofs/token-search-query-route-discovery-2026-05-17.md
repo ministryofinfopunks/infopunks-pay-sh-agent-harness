@@ -1,0 +1,695 @@
+# Token Search Query Route Discovery (2026-05-17)
+
+Scope: unpaid route discovery/probing only for benchmark_intent `token search`.
+Canonical benchmark query remains SOL.
+Tested query terms: SOL, ETH, BTC.
+No benchmark readiness claim.
+No winner claim.
+No paid execution run by this discovery unless explicitly enabled elsewhere.
+
+## Candidate Probe Results
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/tokens/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: search_adjacent
+- reason: Token/pool/address lookup route. Search-adjacent only; not clean query-based token search.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/coins/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/onchain/search/pools?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/onchain/search/tokens?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/networks/solana/search/tokens?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/search
+- method: POST
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/tokens/search
+- method: POST
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=UTF-8
+  - safe_response_summary: Empty response body.
+- classification: search_adjacent
+- reason: Token/pool/address lookup route. Search-adjacent only; not clean query-based token search.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/tokens/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+- classification: search_adjacent
+- reason: Token/pool/address lookup route. Search-adjacent only; not clean query-based token search.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/coins/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/onchain/search/pools?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 402
+  - outcome: payment_required
+  - payment_required_challenge_appears: true
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Payment required","message":"Payment is required to access this resource"}
+  - term: ETH
+  - status_code: 402
+  - outcome: payment_required
+  - payment_required_challenge_appears: true
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Payment required","message":"Payment is required to access this resource"}
+  - term: BTC
+  - status_code: 402
+  - outcome: payment_required
+  - payment_required_challenge_appears: true
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Payment required","message":"Payment is required to access this resource"}
+- classification: clean_candidate_sol
+- reason: Route accepts canonical SOL query input with payment-required or success behavior. This is the already-proven first route, not a second comparable route.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/onchain/search/tokens?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 401
+  - outcome: auth_required
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"status":{"timestamp":"2026-05-17T01:53:07.899+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
+  - term: ETH
+  - status_code: 401
+  - outcome: auth_required
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"status":{"timestamp":"2026-05-17T01:53:07.899+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
+  - term: BTC
+  - status_code: 401
+  - outcome: auth_required
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"status":{"timestamp":"2026-05-17T01:53:07.913+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/networks/solana/search/tokens?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/search
+- method: POST
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: paysponge-coingecko
+- provider_name: CoinGecko Onchain DEX API
+- endpoint_url: https://pro-api.coingecko.com/api/v3/x402/tokens/search
+- method: POST
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: application/json; charset=utf-8
+  - safe_response_summary: {"error":"Incorrect path. Please check https://docs.coingecko.com/"}
+- classification: search_adjacent
+- reason: Token/pool/address lookup route. Search-adjacent only; not clean query-based token search.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: rejected
+- reason: Query route exists but endpoint does not appear token/pool/onchain specific.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/tokens/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: search_adjacent
+- reason: Token/pool/address lookup route. Search-adjacent only; not clean query-based token search.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/coins/search?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/onchain/search/pools?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/onchain/search/tokens?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/networks/solana/search/tokens?query=SOL
+- method: GET
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: rejected
+- reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/search
+- method: POST
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: rejected
+- reason: Query route exists but endpoint does not appear token/pool/onchain specific.
+
+- provider_id: merit-systems-stableenrich-enrichment
+- provider_name: merit-systems-stableenrich-enrichment
+- endpoint_url: https://stableenrich.dev/tokens/search
+- method: POST
+- request_shape: {"query":"SOL"}
+- query_outcomes:
+  - term: SOL
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: ETH
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+  - term: BTC
+  - status_code: 404
+  - outcome: not_found
+  - payment_required_challenge_appears: false
+  - content_type: text/html; charset=utf-8
+  - safe_response_summary: <!DOCTYPE html><!--gWTg8ooflvX8qcdC8P_E_--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/bb47bb851509a0b2.css?dpl=dpl_8yUeUzcgSze3ZLTMyfHQSMoNiQDX" data-precedenc
+- classification: search_adjacent
+- reason: Token/pool/address lookup route. Search-adjacent only; not clean query-based token search.
+
+## Clean Candidates (SOL)
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/onchain/search/pools?query=SOL
+
+## Clean Candidates (General ETH/BTC only)
+- none
+
+Note: ETH/BTC-only routes are not benchmark-ready for SOL token-search benchmark.
+
+## Search-Adjacent Candidates
+- paysponge-coingecko https://pro-api.coingecko.com/tokens/search?query=SOL
+- paysponge-coingecko https://pro-api.coingecko.com/tokens/search
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/tokens/search?query=SOL
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/tokens/search
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/tokens/search?query=SOL
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/tokens/search
+
+## Rejected Paths
+- paysponge-coingecko https://pro-api.coingecko.com/search?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/coins/search?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/onchain/search/pools?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/onchain/search/tokens?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/networks/solana/search/tokens?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/search (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/search?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/coins/search?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/onchain/search/tokens?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/networks/solana/search/tokens?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- paysponge-coingecko https://pro-api.coingecko.com/api/v3/x402/search (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/search?query=SOL (Query route exists but endpoint does not appear token/pool/onchain specific.)
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/coins/search?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/onchain/search/pools?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/onchain/search/tokens?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/networks/solana/search/tokens?query=SOL (Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.)
+- merit-systems-stableenrich-enrichment https://stableenrich.dev/search (Query route exists but endpoint does not appear token/pool/onchain specific.)
+
+No clean second token-search route found yet.
