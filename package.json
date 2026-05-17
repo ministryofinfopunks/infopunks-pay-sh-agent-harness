@@ -33,6 +33,7 @@
     "diagnose:radar-preflight": "ts-node src/demoRadarPreflightDiagnostics.ts",
     "demo:agent-loop": "ts-node examples/agent-loop-demo.ts",
     "verify:paysponge-coingecko": "ts-node src/verifyPaySpongeCoinGecko.ts",
+    "verify:paysponge-token-search": "ts-node src/verifyPaySpongeCoinGeckoTokenSearch.ts",
     "benchmark:sol-price": "tsx src/benchmarks/runSolPriceBenchmark.ts"
   },
   "dependencies": {
