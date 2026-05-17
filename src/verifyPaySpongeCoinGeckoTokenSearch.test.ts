@@ -16,39 +16,96 @@ function baseProbeResult(overrides: Partial<TokenSearchProbeResult> = {}): Token
   return {
     endpointUrl: payspongeCoinGeckoTokenSearchCandidate.endpoint_url,
     method: payspongeCoinGeckoTokenSearchCandidate.method,
-    mode: "unpaid_safe_probe",
-    statusCode: 402,
-    paymentRequiredChallengeAppears: true,
-    paidExecutionAttempted: false,
+    mode: "paid_pay_cli",
+    success: false,
+    executionTransport: "pay_cli",
+    cliExitCode: 1,
+    statusCode: null,
+    statusEvidence: "pay_cli_exit_1_status_unavailable",
+    latencyMs: 100,
+    responseShapeClassified: "unknown",
+    tokenSearchResultDetected: false,
+    paymentRequiredChallengeAppears: false,
+    paidExecutionAttempted: true,
     responseBodyShapeAppearsTokenSearchLike: false,
-    routeCandidateEvidence: true,
+    routeCandidateEvidence: false,
     executionEvidenceStatus: "unproven",
-    safeSummary: "Unpaid probe reached a payment-required challenge for the route.",
+    proofReference: "live-proofs/paysponge-coingecko-token-search-paid-execution-2026-05-17.md",
+    safeSummary: "Paid execution did not prove token search.",
     verificationSemantics: classifyVerificationSemantics({
       endpointUrl: payspongeCoinGeckoTokenSearchCandidate.endpoint_url,
       method: payspongeCoinGeckoTokenSearchCandidate.method,
       benchmarkIntent: payspongeCoinGeckoTokenSearchCandidate.benchmark_intent,
-      statusCode: 402,
-      paymentRequiredChallengeAppears: true,
-      routeCandidateEvidence: true,
-      paidExecutionAttempted: false,
+      statusCode: null,
+      paymentRequiredChallengeAppears: false,
+      routeCandidateEvidence: false,
+      paidExecutionAttempted: true,
+      responseShapeClassified: "unknown",
     }),
     ...overrides,
   };
 }
 
-test("token-search mapping is verified and unproven", () => {
+test("token-search mapping remains verified after probe outcomes", () => {
   assert.equal(payspongeCoinGeckoTokenSearchCandidate.benchmark_intent, "token search");
   assert.equal(payspongeCoinGeckoTokenSearchCandidate.mapping_status, "verified");
-  assert.equal(payspongeCoinGeckoTokenSearchCandidate.execution_evidence_status, "unproven");
+  assert.equal(payspongeCoinGeckoTokenSearchCandidate.execution_evidence_status, "proven");
+  assert.equal(
+    payspongeCoinGeckoTokenSearchCandidate.proof_reference,
+    "live-proofs/paysponge-coingecko-token-search-paid-execution-2026-05-17.md",
+  );
   assert.equal(payspongeCoinGeckoTokenSearchCandidate.method, "GET");
   assert.deepEqual(payspongeCoinGeckoTokenSearchCandidate.request_shape_example, { query: "SOL" });
 });
 
-test("paid_execution_attempted remains false in verified/unproven proof output", () => {
+test("successful paid fixture is proven", () => {
+  const markdown = renderProofMarkdown(
+    baseProbeResult({
+      success: true,
+      cliExitCode: 0,
+      statusCode: 200,
+      statusEvidence: "status_code_observed_200",
+      responseShapeClassified: "token_search_like_json",
+      tokenSearchResultDetected: true,
+      executionEvidenceStatus: "proven",
+      safeSummary: "Paid execution succeeded for token-search semantics.",
+      verificationSemantics: classifyVerificationSemantics({
+        endpointUrl: payspongeCoinGeckoTokenSearchCandidate.endpoint_url,
+        method: payspongeCoinGeckoTokenSearchCandidate.method,
+        benchmarkIntent: payspongeCoinGeckoTokenSearchCandidate.benchmark_intent,
+        statusCode: 200,
+        paymentRequiredChallengeAppears: false,
+        routeCandidateEvidence: true,
+        paidExecutionAttempted: true,
+        responseShapeClassified: "token_search_like_json",
+      }),
+    }),
+    new Date("2026-05-17T00:00:00.000Z"),
+  );
+
+  assert.match(markdown, /success: true/);
+  assert.match(markdown, /execution_evidence_status_target: proven/);
+});
+
+test("failed paid fixture remains unproven", () => {
   const markdown = renderProofMarkdown(baseProbeResult(), new Date("2026-05-17T00:00:00.000Z"));
-  assert.match(markdown, /paid_execution_attempted: false/);
-  assert.match(markdown, /execution_evidence_status: unproven/);
+  assert.match(markdown, /success: false/);
+  assert.match(markdown, /execution_evidence_status_target: unproven/);
+});
+
+test("pay_cli null status uses status_evidence instead of fake 200", () => {
+  const markdown = renderProofMarkdown(
+    baseProbeResult({
+      cliExitCode: 0,
+      statusCode: null,
+      statusEvidence: "pay_cli_exit_0_without_parseable_status",
+    }),
+    new Date("2026-05-17T00:00:00.000Z"),
+  );
+
+  assert.match(markdown, /status_code: null/);
+  assert.match(markdown, /status_evidence: pay_cli_exit_0_without_parseable_status/);
+  assert.doesNotMatch(markdown, /status_code: 200/);
 });
 
 test("verifier does not attempt paid execution by default", () => {
@@ -93,7 +150,7 @@ test("proof markdown does not include sensitive headers or secrets", () => {
 test("proof markdown file contains no benchmark-ready or winner claim", () => {
   const proofPath = path.resolve(
     process.cwd(),
-    "live-proofs/paysponge-coingecko-token-search-verified-unproven-2026-05-17.md",
+    "live-proofs/paysponge-coingecko-token-search-paid-execution-2026-05-17.md",
   );
   const proof = readFileSync(proofPath, "utf8");
 
@@ -101,31 +158,6 @@ test("proof markdown file contains no benchmark-ready or winner claim", () => {
   assert.match(proof, /No winner claim\./);
   assert.doesNotMatch(proof, /benchmark[-_ ]ready:\s*true/i);
   assert.doesNotMatch(proof, /winner_claimed:\s*true/i);
-});
-
-test("unpaid 402 challenge is required for verified/unproven semantics", () => {
-  const verified = classifyVerificationSemantics({
-    endpointUrl: payspongeCoinGeckoTokenSearchCandidate.endpoint_url,
-    method: payspongeCoinGeckoTokenSearchCandidate.method,
-    benchmarkIntent: "token search",
-    statusCode: 402,
-    paymentRequiredChallengeAppears: true,
-    routeCandidateEvidence: true,
-    paidExecutionAttempted: false,
-  });
-  const notVerified = classifyVerificationSemantics({
-    endpointUrl: payspongeCoinGeckoTokenSearchCandidate.endpoint_url,
-    method: payspongeCoinGeckoTokenSearchCandidate.method,
-    benchmarkIntent: "token search",
-    statusCode: 200,
-    paymentRequiredChallengeAppears: false,
-    routeCandidateEvidence: false,
-    paidExecutionAttempted: false,
-  });
-
-  assert.equal(verified.unpaid402ChallengeConfirmed, true);
-  assert.equal(notVerified.unpaid402ChallengeConfirmed, false);
-  assert.equal(notVerified.responseShapeClassified, false);
 });
 
 test("sanitizer redacts authorization-like values", () => {
