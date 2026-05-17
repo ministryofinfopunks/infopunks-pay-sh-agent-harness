@@ -1,271 +1,302 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { executeLivePayShCall, ExecuteLivePayShCallInput } from "./livePayShExecutor";
 import { stablecryptoTokenSearchCandidate } from "./mappings/stablecryptoTokenSearchCandidate";
 
-const VERIFIED_PROOF_REFERENCE = "live-proofs/stablecrypto-token-search-verified-unproven-2026-05-17.md";
-const CANDIDATE_PROOF_REFERENCE = "live-proofs/stablecrypto-token-search-candidate-unverified-2026-05-17.md";
+const PAID_PROOF_REFERENCE = "live-proofs/stablecrypto-token-search-paid-execution-2026-05-17.md";
 const VERIFIED_AT = "2026-05-17";
+const PROVEN_AT = "2026-05-17";
 
-type ProbeMethod = "GET" | "POST";
-type ProbeClassification = "verified_semantics" | "candidate_unverified" | "rejected";
-type MappingStatus = "verified" | "candidate";
-type EvidenceStatus = "unproven";
+const SENSITIVE_PATTERNS = [
+  /authorization\s*[:=]\s*[^\n]+/gi,
+  /x-payment\s*[:=]\s*[^\n]+/gi,
+  /payment-signature\s*[:=]\s*[^\n]+/gi,
+  /private[_ -]?key\s*[:=]\s*[^\s,;)]+/gi,
+  /seed[_ -]?phrase\s*[:=]\s*[^\n]+/gi,
+  /bearer\s+[a-z0-9._~+/=-]+/gi,
+  /api[_-]?key\s*[:=]\s*[^\s,;)]+/gi,
+  /apikey\s*[:=]\s*[^\s,;)]+/gi,
+  /wallet\s*[:=]\s*[^\n]+/gi,
+  /mnemonic\s*[:=]\s*[^\n]+/gi,
+  /signature\s*[:=]\s*[^\n]+/gi,
+];
 
-export type StablecryptoProbe = {
-  method: ProbeMethod;
-  endpoint: string;
-  request_shape: string;
-  query_term: string;
-  status_code: number | null;
-  content_type: string | null;
-  payment_required_challenge_appears: boolean;
-  safe_response_summary: string;
-  classification: ProbeClassification;
-  reason: string;
-};
+type ResponseShapeClassified =
+  | "token_search_like_json"
+  | "payment_challenge"
+  | "non_json_text"
+  | "empty"
+  | "unknown";
 
-export type StablecryptoVerificationResult = {
+export interface StablecryptoPaidExecutionResult {
   provider_id: string;
-  benchmark_intent: "token search";
-  candidate_endpoint: string;
-  methods_tested: ProbeMethod[];
-  query_terms_tested: string[];
-  paid_execution_attempted: false;
-  final_mapping_status: MappingStatus;
-  final_execution_evidence_status: EvidenceStatus;
-  response_shape_classification: "verified_semantics" | "candidate_unverified";
-  proof_reference: string;
-  probes: StablecryptoProbe[];
-  notes: string;
-};
-
-type ProbeInput = {
-  method: ProbeMethod;
   endpoint: string;
-  queryTerm: string;
-};
+  method: "POST";
+  request_shape: { query: "SOL" };
+  paid_execution_attempted: boolean;
+  success: boolean;
+  execution_transport: "pay_cli";
+  cli_exit_code: number | null;
+  status_code: number | null;
+  status_evidence: string;
+  latency_ms: number | null;
+  response_shape_classified: ResponseShapeClassified;
+  token_search_result_detected: boolean;
+  proof_reference: string;
+}
 
-type ProbeHttpResponse = {
-  status: number;
-  contentType: string | null;
-  bodyText: string;
-};
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
-type ProbeFn = (input: ProbeInput) => Promise<ProbeHttpResponse>;
+function lowerIncludesAny(value: string, needles: string[]): boolean {
+  const lowered = value.toLowerCase();
+  return needles.some((needle) => lowered.includes(needle));
+}
+
+function isTokenSearchLikeJson(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(isTokenSearchLikeJson);
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const keys = Object.keys(value).map((key) => key.toLowerCase());
+  const hasSearchContainer = keys.some((key) =>
+    ["data", "pools", "tokens", "included", "attributes", "relationships", "results"].includes(key),
+  );
+  const hasTokenOrPoolField = keys.some((key) =>
+    ["pool", "pools", "token", "tokens", "base_token", "quote_token", "symbol", "name"].includes(key),
+  );
+  const text = JSON.stringify(value).slice(0, 20000);
+  const mentionsSolLikePair = lowerIncludesAny(text, ["sol", "wrapped sol", "wsol", "usdc"]);
+
+  if ((hasSearchContainer || hasTokenOrPoolField) && mentionsSolLikePair) {
+    return true;
+  }
+
+  return Object.values(value).some(isTokenSearchLikeJson);
+}
+
+function detectTokenSearchResult(input: { parsedJson: unknown; responsePreview: string }): boolean {
+  if (isTokenSearchLikeJson(input.parsedJson)) {
+    return true;
+  }
+
+  return lowerIncludesAny(input.responsePreview, [
+    "token",
+    "tokens",
+    "symbol",
+    "coingecko",
+    "pool",
+    "pools",
+    "sol",
+  ]);
+}
+
+function classifyResponseShape(bodyText: string, statusCode: number | null): ResponseShapeClassified {
+  if (!bodyText.trim()) {
+    return "empty";
+  }
+
+  if (statusCode === 402) {
+    return "payment_challenge";
+  }
+
+  try {
+    const parsed = JSON.parse(bodyText) as unknown;
+    if (isTokenSearchLikeJson(parsed)) {
+      return "token_search_like_json";
+    }
+    return "unknown";
+  } catch {
+    return "non_json_text";
+  }
+}
+
+function classifyStatusEvidence(input: {
+  statusCode: number | null;
+  cliExitCode: number | null;
+  errorReason?: string;
+  responsePreview: string;
+  stderrPreview?: string;
+}): string {
+  if (input.statusCode !== null) {
+    return `status_code_observed_${input.statusCode}`;
+  }
+
+  if (input.cliExitCode !== null) {
+    const stderrMentionedHttp = lowerIncludesAny(input.stderrPreview ?? "", ["http/", "status", "code"]);
+    const stdoutMentionedHttp = lowerIncludesAny(input.responsePreview, ["http/", "status", "code"]);
+    if (stderrMentionedHttp || stdoutMentionedHttp) {
+      return `pay_cli_exit_${input.cliExitCode}_without_parseable_status`;
+    }
+    return input.errorReason
+      ? `pay_cli_exit_${input.cliExitCode}_${input.errorReason}`
+      : `pay_cli_exit_${input.cliExitCode}_status_unavailable`;
+  }
+
+  return input.errorReason ? `status_unavailable_${input.errorReason}` : "status_unavailable";
+}
 
 export function sanitizeProofMarkdown(markdown: string): string {
-  return markdown
-    .replace(/(authorization|bearer|api[_-]?key|apikey|x-api-key|wallet|seed|mnemonic|signature|private[_-]?key)\s*[:=]\s*[^\n]+/gi, "$1: [REDACTED]")
-    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "[REDACTED_EMAIL]");
+  return SENSITIVE_PATTERNS.reduce((safe, pattern) => safe.replace(pattern, "[REDACTED]"), markdown);
 }
 
-function extractContentType(headers: Headers): string | null {
-  const raw = headers.get("content-type");
-  return raw ? raw.split(";")[0].trim().toLowerCase() : null;
+export function paidExecutionEnabled(): boolean {
+  return process.env.LIVE_PAYSH_EXECUTION === "true" && process.env.PAYSH_EXECUTION_MODE === "pay_cli";
 }
 
-function summarizeBody(bodyText: string): string {
-  const trimmed = bodyText.replace(/\s+/g, " ").trim();
-  if (!trimmed) return "empty body";
-  return trimmed.slice(0, 180);
-}
+type LiveExecutor = (input: ExecuteLivePayShCallInput) => ReturnType<typeof executeLivePayShCall>;
 
-function hasPaymentChallenge(statusCode: number | null, body: string, contentType: string | null): boolean {
-  if (statusCode === 402) return true;
-  const combined = `${contentType ?? ""} ${body}`.toLowerCase();
-  return /payment required|x402|402 payment|required payment|insufficient payment/.test(combined);
-}
+export async function runStablecryptoPaidExecution(
+  executor: LiveExecutor = executeLivePayShCall,
+): Promise<StablecryptoPaidExecutionResult> {
+  const endpoint = stablecryptoTokenSearchCandidate.endpoint_url;
 
-function looksTokenSearchLike(body: string): boolean {
-  const lower = body.toLowerCase();
-  return /token|symbol|name|address|coingecko|coins|pairs|search/.test(lower);
-}
-
-function classifyProbe(statusCode: number | null, paymentChallenge: boolean, body: string): { classification: ProbeClassification; reason: string } {
-  if (statusCode === 404) {
+  if (!paidExecutionEnabled()) {
     return {
-      classification: "candidate_unverified",
-      reason: "Endpoint path returned 404 for this probe.",
+      provider_id: stablecryptoTokenSearchCandidate.provider_id,
+      endpoint,
+      method: "POST",
+      request_shape: { query: "SOL" },
+      paid_execution_attempted: false,
+      success: false,
+      execution_transport: "pay_cli",
+      cli_exit_code: null,
+      status_code: null,
+      status_evidence: "pay_cli_execution_disabled",
+      latency_ms: null,
+      response_shape_classified: "unknown",
+      token_search_result_detected: false,
+      proof_reference: PAID_PROOF_REFERENCE,
     };
   }
 
-  if (statusCode !== null && statusCode >= 200 && statusCode < 300 && looksTokenSearchLike(body)) {
-    return {
-      classification: "verified_semantics",
-      reason: "Valid route behavior observed with token-search-like response shape.",
-    };
-  }
-
-  if (paymentChallenge) {
-    return {
-      classification: "verified_semantics",
-      reason: "Unpaid payment-required challenge observed for this method/request shape.",
-    };
-  }
-
-  if (statusCode !== null && statusCode >= 500) {
-    return {
-      classification: "candidate_unverified",
-      reason: "Server error observed; semantics not confirmed.",
-    };
-  }
-
-  return {
-    classification: "rejected",
-    reason: "Route behavior did not confirm token-search semantics for this probe.",
-  };
-}
-
-export async function defaultProbeHttp(input: ProbeInput): Promise<ProbeHttpResponse> {
-  const url =
-    input.method === "GET"
-      ? `${input.endpoint}?query=${encodeURIComponent(input.queryTerm)}`
-      : input.endpoint;
-
-  const response = await fetch(url, {
-    method: input.method,
+  const paid = await executor({
+    providerId: stablecryptoTokenSearchCandidate.provider_id,
+    intent: stablecryptoTokenSearchCandidate.benchmark_intent,
+    endpointUrl: endpoint,
+    method: "POST",
+    bodyJson: { query: "SOL" },
     headers: {
-      "content-type": "application/json",
-      accept: "application/json, text/plain, */*",
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
     },
-    body: input.method === "POST" ? JSON.stringify({ query: input.queryTerm }) : undefined,
   });
 
-  const bodyText = await response.text();
-  return {
-    status: response.status,
-    contentType: extractContentType(response.headers),
-    bodyText,
-  };
-}
-
-export async function runStablecryptoProbes(
-  endpoint: string,
-  probeFn: ProbeFn = defaultProbeHttp,
-): Promise<StablecryptoProbe[]> {
-  const queryTerms = ["SOL", "ETH", "BTC"];
-  const methods: ProbeMethod[] = ["GET", "POST"];
-  const probes: StablecryptoProbe[] = [];
-
-  for (const method of methods) {
-    for (const term of queryTerms) {
-      const requestShape = method === "GET" ? "querystring:?query=<TERM>" : "json:{\"query\":\"<TERM>\"}";
-      try {
-        const result = await probeFn({ method, endpoint, queryTerm: term });
-        const paymentChallenge = hasPaymentChallenge(result.status, result.bodyText, result.contentType);
-        const classified = classifyProbe(result.status, paymentChallenge, result.bodyText);
-
-        probes.push({
-          method,
-          endpoint,
-          request_shape: requestShape,
-          query_term: term,
-          status_code: result.status,
-          content_type: result.contentType,
-          payment_required_challenge_appears: paymentChallenge,
-          safe_response_summary: summarizeBody(result.bodyText),
-          classification: classified.classification,
-          reason: classified.reason,
-        });
-      } catch (error) {
-        probes.push({
-          method,
-          endpoint,
-          request_shape: requestShape,
-          query_term: term,
-          status_code: null,
-          content_type: null,
-          payment_required_challenge_appears: false,
-          safe_response_summary: sanitizeProofMarkdown(`probe_error: ${error instanceof Error ? error.message : String(error)}`).slice(0, 180),
-          classification: "candidate_unverified",
-          reason: "Probe failed before semantic confirmation.",
-        });
-      }
-    }
-  }
-
-  return probes;
-}
-
-export function evaluateStablecryptoVerification(
-  probes: StablecryptoProbe[],
-  endpoint: string,
-): StablecryptoVerificationResult {
-  const pathExists = probes.some((p) => p.status_code !== 404 && p.status_code !== null);
-  const hasAcceptedMethodShape = probes.some((p) => p.classification === "verified_semantics");
-  const queryShapeUsed = probes.some((p) => p.request_shape.includes("query"));
-  const tokenSearchPlausible = probes.some(
-    (p) => p.classification === "verified_semantics" || /token-search/i.test(p.reason),
-  );
-
-  const verified = pathExists && hasAcceptedMethodShape && queryShapeUsed && tokenSearchPlausible;
-
-  const finalMappingStatus: MappingStatus = verified ? "verified" : "candidate";
-  const finalProofReference = verified ? VERIFIED_PROOF_REFERENCE : CANDIDATE_PROOF_REFERENCE;
-
-  const notes = verified
-    ? "Endpoint path, method, request shape, token-search intent, and unpaid route challenge/behavior verified. Paid execution not attempted. Not benchmark-ready."
-    : "Metadata suggests token-search candidate, but endpoint/method/request shape could not be verified. Not benchmark-ready.";
+  const statusCode = paid.statusCode ?? null;
+  const cliExitCode = paid.exitCode ?? null;
+  const responseShape = classifyResponseShape(paid.responsePreview, statusCode);
+  const tokenSearchLike = detectTokenSearchResult({
+    parsedJson: paid.parsedJson,
+    responsePreview: paid.responsePreview,
+  });
 
   return {
     provider_id: stablecryptoTokenSearchCandidate.provider_id,
-    benchmark_intent: "token search",
-    candidate_endpoint: endpoint,
-    methods_tested: ["GET", "POST"],
-    query_terms_tested: ["SOL", "ETH", "BTC"],
-    paid_execution_attempted: false,
-    final_mapping_status: finalMappingStatus,
-    final_execution_evidence_status: "unproven",
-    response_shape_classification: verified ? "verified_semantics" : "candidate_unverified",
-    proof_reference: finalProofReference,
-    probes,
-    notes,
+    endpoint,
+    method: "POST",
+    request_shape: { query: "SOL" },
+    paid_execution_attempted: true,
+    success: Boolean(paid.success && tokenSearchLike),
+    execution_transport: "pay_cli",
+    cli_exit_code: cliExitCode,
+    status_code: statusCode,
+    status_evidence: classifyStatusEvidence({
+      statusCode,
+      cliExitCode,
+      errorReason: paid.errorReason,
+      responsePreview: paid.responsePreview,
+      stderrPreview: paid.stderrPreview,
+    }),
+    latency_ms: paid.latencyMs ?? null,
+    response_shape_classified: responseShape,
+    token_search_result_detected: tokenSearchLike,
+    proof_reference: PAID_PROOF_REFERENCE,
   };
 }
 
-export function renderProofMarkdown(result: StablecryptoVerificationResult, now = new Date()): string {
-  const lines: string[] = [
-    "# StableCrypto Token Search Route Verification (Unpaid)",
+export function renderProofMarkdown(result: StablecryptoPaidExecutionResult, now = new Date()): string {
+  const responseShapeSummary =
+    result.response_shape_classified === "token_search_like_json"
+      ? "Token-search-like JSON detected."
+      : result.response_shape_classified === "payment_challenge"
+        ? "Payment challenge observed."
+        : result.response_shape_classified === "non_json_text"
+          ? "Non-JSON response observed."
+          : result.response_shape_classified === "empty"
+            ? "Empty response observed."
+            : "Response shape not confidently classified.";
+
+  const semanticSummary = result.token_search_result_detected
+    ? "Token-search semantics detected from paid response payload or preview."
+    : "Token-search semantics not confirmed from paid response.";
+
+  const lines = [
+    "# StableCrypto Token Search Paid Execution Evidence",
     "",
     `- generated_at: ${now.toISOString()}`,
     `- provider_id: ${result.provider_id}`,
-    `- benchmark_intent: ${result.benchmark_intent}`,
-    `- candidate endpoint: ${result.candidate_endpoint}`,
-    `- methods tested: ${result.methods_tested.join(", ")}`,
-    `- query terms tested: ${result.query_terms_tested.join(", ")}`,
+    `- endpoint: ${result.endpoint}`,
+    `- method: ${result.method}`,
+    `- request_shape: ${JSON.stringify(result.request_shape)}`,
     `- paid_execution_attempted: ${result.paid_execution_attempted}`,
-    `- final mapping_status: ${result.final_mapping_status}`,
-    `- final execution_evidence_status: ${result.final_execution_evidence_status}`,
-    `- response shape classification: ${result.response_shape_classification}`,
-    `- proof_source: infopunks-pay-sh-agent-harness`,
+    `- success: ${result.success}`,
+    `- execution_transport: ${result.execution_transport}`,
+    `- cli_exit_code: ${result.cli_exit_code === null ? "null" : String(result.cli_exit_code)}`,
+    `- status_code: ${result.status_code === null ? "null" : String(result.status_code)}`,
+    `- status_evidence: ${result.status_evidence}`,
+    `- latency_ms: ${result.latency_ms === null ? "null" : String(result.latency_ms)}`,
+    `- response_shape_classified: ${result.response_shape_classified}`,
+    `- token_search_result_detected: ${result.token_search_result_detected}`,
     `- proof_reference: ${result.proof_reference}`,
-    `- verified_at: ${VERIFIED_AT}`,
-    `- notes: ${result.notes}`,
-    "",
-    "## Probe Evidence",
-    "",
-    "| method | endpoint | request_shape | query_term | status_code | content_type | payment_required_challenge_appears | classification | reason | safe_response_summary |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    `- response shape summary: ${responseShapeSummary}`,
+    `- token-search semantic summary: ${semanticSummary}`,
+    "No benchmark-ready claim.",
+    "No winner claim.",
   ];
 
-  for (const probe of result.probes) {
-    lines.push(
-      `| ${probe.method} | ${probe.endpoint} | ${probe.request_shape} | ${probe.query_term} | ${probe.status_code ?? "null"} | ${probe.content_type ?? "null"} | ${probe.payment_required_challenge_appears} | ${probe.classification} | ${probe.reason} | ${probe.safe_response_summary.replace(/\|/g, "\\|")} |`,
-    );
-  }
-
-  lines.push("", "No benchmark-ready claim.", "No winner claim.");
   return sanitizeProofMarkdown(lines.join("\n"));
 }
 
-export async function verifyStablecryptoTokenSearchCandidate(now = new Date()): Promise<StablecryptoVerificationResult> {
-  const endpoint = stablecryptoTokenSearchCandidate.endpoint_url;
-  const probes = await runStablecryptoProbes(endpoint);
-  const result = evaluateStablecryptoVerification(probes, endpoint);
+export function renderStablecryptoMappingFile(result: StablecryptoPaidExecutionResult): string {
+  const provenLine = result.success ? `  proven_at: "${PROVEN_AT}",` : "";
+  const notes = result.success
+    ? "Paid execution succeeded for StableCrypto token-search route. This proves route execution, not benchmark readiness or superiority."
+    : "Endpoint path, method, request shape, token-search intent, and unpaid route challenge/behavior verified. Paid execution did not produce proven evidence. Not benchmark-ready.";
 
-  const proofPath = path.resolve(process.cwd(), result.proof_reference);
+  return [
+    "export const stablecryptoTokenSearchCandidate = {",
+    `  provider_id: "${stablecryptoTokenSearchCandidate.provider_id}",`,
+    `  provider_name: "${stablecryptoTokenSearchCandidate.provider_name}",`,
+    `  category: "${stablecryptoTokenSearchCandidate.category}",`,
+    `  benchmark_intent: "${stablecryptoTokenSearchCandidate.benchmark_intent}",`,
+    '  mapping_status: "verified",',
+    `  execution_evidence_status: "${result.success ? "proven" : "unproven"}",`,
+    `  verified_at: "${VERIFIED_AT}",`,
+    ...(provenLine ? [provenLine] : []),
+    `  proof_source: "${stablecryptoTokenSearchCandidate.proof_source}",`,
+    `  proof_reference: "${PAID_PROOF_REFERENCE}",`,
+    `  endpoint_url: "${stablecryptoTokenSearchCandidate.endpoint_url}",`,
+    `  method: "${stablecryptoTokenSearchCandidate.method}",`,
+    "  request_shape_example: { query: \"SOL\" },",
+    `  notes: "${notes}",`,
+    "} as const;",
+    "",
+  ].join("\n");
+}
+
+export async function verifyStablecryptoTokenSearchCandidate(now = new Date()): Promise<StablecryptoPaidExecutionResult> {
+  const result = await runStablecryptoPaidExecution();
+
+  const proofPath = path.resolve(process.cwd(), PAID_PROOF_REFERENCE);
   await mkdir(path.dirname(proofPath), { recursive: true });
   await writeFile(proofPath, `${renderProofMarkdown(result, now)}\n`, "utf8");
+
+  const mappingPath = path.resolve(process.cwd(), "src/mappings/stablecryptoTokenSearchCandidate.ts");
+  await writeFile(mappingPath, renderStablecryptoMappingFile(result), "utf8");
 
   return result;
 }
@@ -273,8 +304,9 @@ export async function verifyStablecryptoTokenSearchCandidate(now = new Date()): 
 if (require.main === module) {
   verifyStablecryptoTokenSearchCandidate()
     .then((result) => {
-      console.log(`StableCrypto token-search verification complete: ${result.proof_reference}`);
-      console.log(`mapping_status=${result.final_mapping_status} execution_evidence_status=${result.final_execution_evidence_status}`);
+      console.log(`StableCrypto token-search paid verification complete: ${result.proof_reference}`);
+      console.log(`paid_execution_attempted=${result.paid_execution_attempted} success=${result.success}`);
+      console.log(`status_code=${result.status_code === null ? "null" : result.status_code} status_evidence=${result.status_evidence}`);
     })
     .catch((error) => {
       console.error(error);

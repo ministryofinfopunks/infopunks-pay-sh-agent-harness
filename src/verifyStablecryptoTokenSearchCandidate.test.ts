@@ -1,94 +1,171 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  evaluateStablecryptoVerification,
+  paidExecutionEnabled,
   renderProofMarkdown,
+  renderStablecryptoMappingFile,
+  runStablecryptoPaidExecution,
   sanitizeProofMarkdown,
-  StablecryptoProbe,
+  StablecryptoPaidExecutionResult,
 } from "./verifyStablecryptoTokenSearchCandidate";
-import { stablecryptoTokenSearchCandidate } from "./mappings/stablecryptoTokenSearchCandidate";
+import { LivePayShExecutionResult } from "./types";
 
-function makeProbe(overrides: Partial<StablecryptoProbe> = {}): StablecryptoProbe {
+function basePaidResult(overrides: Partial<StablecryptoPaidExecutionResult> = {}): StablecryptoPaidExecutionResult {
   return {
-    method: "GET",
-    endpoint: stablecryptoTokenSearchCandidate.endpoint_url,
-    request_shape: "querystring:?query=<TERM>",
-    query_term: "SOL",
-    status_code: 402,
-    content_type: "application/json",
-    payment_required_challenge_appears: true,
-    safe_response_summary: "payment required",
-    classification: "verified_semantics",
-    reason: "Unpaid payment-required challenge observed for this method/request shape.",
+    provider_id: "merit-systems-stablecrypto-market-data",
+    endpoint: "https://stablecrypto.dev/api/coingecko/onchain/search",
+    method: "POST",
+    request_shape: { query: "SOL" },
+    paid_execution_attempted: true,
+    success: true,
+    execution_transport: "pay_cli",
+    cli_exit_code: 0,
+    status_code: 200,
+    status_evidence: "status_code_observed_200",
+    latency_ms: 123,
+    response_shape_classified: "token_search_like_json",
+    token_search_result_detected: true,
+    proof_reference: "live-proofs/stablecrypto-token-search-paid-execution-2026-05-17.md",
     ...overrides,
   };
 }
 
-test("promotes to verified/unproven only when route semantics are confirmed", () => {
-  const result = evaluateStablecryptoVerification(
-    [makeProbe(), makeProbe({ method: "POST", request_shape: 'json:{"query":"<TERM>"}', query_term: "ETH" })],
-    stablecryptoTokenSearchCandidate.endpoint_url,
+function fakeLiveResult(overrides: Partial<LivePayShExecutionResult> = {}): LivePayShExecutionResult {
+  return {
+    providerId: "merit-systems-stablecrypto-market-data",
+    intent: "token search",
+    endpointUrl: "https://stablecrypto.dev/api/coingecko/onchain/search",
+    startedAt: new Date("2026-05-17T00:00:00.000Z").toISOString(),
+    completedAt: new Date("2026-05-17T00:00:01.000Z").toISOString(),
+    latencyMs: 1000,
+    success: true,
+    statusCode: 200,
+    exitCode: 0,
+    costUsd: null,
+    settlementReference: null,
+    responsePreview: '{"data":[{"type":"token","attributes":{"symbol":"SOL"}}]}',
+    parsedJsonAvailable: true,
+    parsedJson: { data: [{ type: "token", attributes: { symbol: "SOL" } }] },
+    mode: "live_pay_sh_cli",
+    ...overrides,
+  };
+}
+
+test("successful paid fixture upgrades to verified/proven", () => {
+  const mapping = renderStablecryptoMappingFile(basePaidResult({ success: true }));
+
+  assert.match(mapping, /mapping_status: "verified"/);
+  assert.match(mapping, /execution_evidence_status: "proven"/);
+  assert.match(mapping, /proven_at: "2026-05-17"/);
+  assert.match(mapping, /proof_reference: "live-proofs\/stablecrypto-token-search-paid-execution-2026-05-17.md"/);
+});
+
+test("failed paid fixture remains verified/unproven", () => {
+  const mapping = renderStablecryptoMappingFile(
+    basePaidResult({
+      success: false,
+      status_code: null,
+      cli_exit_code: 1,
+      status_evidence: "pay_cli_exit_1_status_unavailable",
+      token_search_result_detected: false,
+    }),
   );
 
-  assert.equal(result.final_mapping_status, "verified");
-  assert.equal(result.final_execution_evidence_status, "unproven");
-  assert.equal(result.paid_execution_attempted, false);
-  assert.equal(result.response_shape_classification, "verified_semantics");
+  assert.match(mapping, /mapping_status: "verified"/);
+  assert.match(mapping, /execution_evidence_status: "unproven"/);
+  assert.doesNotMatch(mapping, /proven_at:/);
 });
 
-test("all 404 probes keep candidate/unproven", () => {
-  const probes: StablecryptoProbe[] = [
-    makeProbe({ status_code: 404, payment_required_challenge_appears: false, classification: "candidate_unverified" }),
-    makeProbe({ method: "POST", request_shape: 'json:{"query":"<TERM>"}', status_code: 404, payment_required_challenge_appears: false, classification: "candidate_unverified" }),
-  ];
+test("pay_cli null status uses status_evidence instead of fake 200", async () => {
+  const originalLive = process.env.LIVE_PAYSH_EXECUTION;
+  const originalMode = process.env.PAYSH_EXECUTION_MODE;
+  process.env.LIVE_PAYSH_EXECUTION = "true";
+  process.env.PAYSH_EXECUTION_MODE = "pay_cli";
 
-  const result = evaluateStablecryptoVerification(probes, stablecryptoTokenSearchCandidate.endpoint_url);
-
-  assert.equal(result.final_mapping_status, "candidate");
-  assert.equal(result.final_execution_evidence_status, "unproven");
-  assert.equal(result.paid_execution_attempted, false);
-  assert.equal(result.response_shape_classification, "candidate_unverified");
-});
-
-test("address lookup semantics are not accepted as clean token search", () => {
-  const result = evaluateStablecryptoVerification(
-    [
-      makeProbe({
-        status_code: 200,
-        payment_required_challenge_appears: false,
-        classification: "rejected",
-        reason: "Route behavior did not confirm token-search semantics for this probe.",
-        safe_response_summary: "address lookup only",
+  try {
+    const result = await runStablecryptoPaidExecution(async () =>
+      fakeLiveResult({
+        success: false,
+        statusCode: undefined,
+        exitCode: 1,
+        errorReason: "pay_cli_execution_failed",
+        responsePreview: "status unavailable",
+        parsedJsonAvailable: false,
+        parsedJson: undefined,
       }),
-    ],
-    stablecryptoTokenSearchCandidate.endpoint_url,
-  );
+    );
 
-  assert.equal(result.final_mapping_status, "candidate");
-  assert.equal(result.final_execution_evidence_status, "unproven");
+    assert.equal(result.status_code, null);
+    assert.match(result.status_evidence, /pay_cli_exit_1_/);
+    assert.notEqual(result.status_evidence, "status_code_observed_200");
+    assert.equal(result.success, false);
+  } finally {
+    if (originalLive === undefined) {
+      delete process.env.LIVE_PAYSH_EXECUTION;
+    } else {
+      process.env.LIVE_PAYSH_EXECUTION = originalLive;
+    }
+    if (originalMode === undefined) {
+      delete process.env.PAYSH_EXECUTION_MODE;
+    } else {
+      process.env.PAYSH_EXECUTION_MODE = originalMode;
+    }
+  }
 });
 
-test("proof markdown contains required safety statements and no benchmark/winner claim", () => {
-  const result = evaluateStablecryptoVerification([makeProbe()], stablecryptoTokenSearchCandidate.endpoint_url);
-  const markdown = renderProofMarkdown(result, new Date("2026-05-17T00:00:00.000Z"));
+test("proof markdown is safe from secrets", () => {
+  const markdown = renderProofMarkdown(
+    basePaidResult({
+      status_evidence: "Authorization: Bearer token wallet=abc signature=xyz",
+    }),
+    new Date("2026-05-17T00:00:00.000Z"),
+  );
 
-  assert.match(markdown, /paid_execution_attempted: false/);
+  assert.doesNotMatch(markdown, /Bearer token/);
+  assert.doesNotMatch(markdown, /wallet=abc/);
+  assert.doesNotMatch(markdown, /signature=xyz/);
+  assert.match(markdown, /\[REDACTED\]/);
+});
+
+test("proof markdown contains no benchmark-ready or winner wording", () => {
+  const markdown = renderProofMarkdown(basePaidResult(), new Date("2026-05-17T00:00:00.000Z"));
+
   assert.match(markdown, /No benchmark-ready claim\./);
   assert.match(markdown, /No winner claim\./);
-  assert.doesNotMatch(markdown, /benchmark[-_ ]ready:\s*true/i);
+  assert.doesNotMatch(markdown, /benchmark-ready:\s*true/i);
   assert.doesNotMatch(markdown, /winner_claimed:\s*true/i);
+  assert.doesNotMatch(markdown, /route superiority/i);
 });
 
-test("sanitizer redacts auth and wallet-like data", () => {
-  const markdown = sanitizeProofMarkdown(
-    "authorization: Bearer abc\nwallet: 0x123\napi_key: key\nsignature: sig\nseed: phrase\nprivate_key: secret",
-  );
+test("paid execution enabled gate", () => {
+  const originalLive = process.env.LIVE_PAYSH_EXECUTION;
+  const originalMode = process.env.PAYSH_EXECUTION_MODE;
 
-  assert.doesNotMatch(markdown, /Bearer abc/);
-  assert.doesNotMatch(markdown, /wallet:\s*0x123/);
-  assert.doesNotMatch(markdown, /api_key:\s*key/);
-  assert.doesNotMatch(markdown, /signature:\s*sig/);
-  assert.doesNotMatch(markdown, /seed:\s*phrase/);
-  assert.doesNotMatch(markdown, /private_key:\s*secret/);
-  assert.match(markdown, /\[REDACTED\]/);
+  delete process.env.LIVE_PAYSH_EXECUTION;
+  delete process.env.PAYSH_EXECUTION_MODE;
+  assert.equal(paidExecutionEnabled(), false);
+
+  process.env.LIVE_PAYSH_EXECUTION = "true";
+  process.env.PAYSH_EXECUTION_MODE = "pay_cli";
+  assert.equal(paidExecutionEnabled(), true);
+
+  if (originalLive === undefined) {
+    delete process.env.LIVE_PAYSH_EXECUTION;
+  } else {
+    process.env.LIVE_PAYSH_EXECUTION = originalLive;
+  }
+  if (originalMode === undefined) {
+    delete process.env.PAYSH_EXECUTION_MODE;
+  } else {
+    process.env.PAYSH_EXECUTION_MODE = originalMode;
+  }
+});
+
+test("sanitizeProofMarkdown redacts sensitive fields", () => {
+  const sanitized = sanitizeProofMarkdown("authorization: Bearer a\napi_key: key\nwallet: 0xabc\nmnemonic: words");
+  assert.doesNotMatch(sanitized, /Bearer a/);
+  assert.doesNotMatch(sanitized, /api_key: key/);
+  assert.doesNotMatch(sanitized, /wallet: 0xabc/);
+  assert.doesNotMatch(sanitized, /mnemonic: words/);
+  assert.match(sanitized, /\[REDACTED\]/);
 });
