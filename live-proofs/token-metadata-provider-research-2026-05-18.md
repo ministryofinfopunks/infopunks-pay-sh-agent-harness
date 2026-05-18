@@ -1,37 +1,74 @@
 # Token Metadata Provider Research (2026-05-18)
 
-Scope: provider metadata discovery only. No paid execution.
-Benchmark intent: token metadata (identity/descriptive fields, not pure price/search/pool routes).
-Canonical metadata input candidate considered: SOL on solana with mint/token address So11111111111111111111111111111111111111112 when endpoint shape supports address input.
-No benchmark readiness claim.
-No winner claim.
+## 1. Summary
+- Scope: provider discovery and evidence classification for `finance-data-token-metadata` only.
+- Paid execution: not attempted.
+- Radar state changes: none.
+- Result: 5 candidate routes documented (2 `verified/unproven`, 3 rejected by semantics).
+- Token metadata intent target: endpoint should return token identity/descriptor fields (name, symbol, chain/network, contract/mint address, decimals, optional logo/tags).
 
-## Providers Reviewed
-- merit-systems/stablecrypto/market-data (StableCrypto)
-- paysponge/coingecko (CoinGecko Onchain DEX API)
+## 2. Candidate Table
 
-## Candidate Endpoints Found
-- merit-systems/stablecrypto/market-data POST https://stablecrypto.dev/api/alchemy/token/token-metadata
-- paysponge/coingecko GET https://pro-api.coingecko.com/api/v3/x402/onchain/networks/{network}/tokens/{address}
+| provider | provider_id if known | category | service_url | candidate_route | method | input_shape | expected_metadata_fields | evidence_source | current_state | blocker | next_step |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CoinGecko Onchain DEX API | `paysponge/coingecko` | finance | `https://pro-api.coingecko.com/api/v3/x402/onchain` | `https://pro-api.coingecko.com/api/v3/x402/onchain/networks/{network}/tokens/{address}` | GET | path params: `network`, `address` (example: `solana`, `So11111111111111111111111111111111111111112`) | `name`, `symbol`, `network`, `address`, `decimals`, optional image/market attributes | Pay skills detail metadata + unpaid probe (`402`) | `verified/unproven` | Paid response body not yet observed for field confirmation | Run one controlled paid probe and extract field presence map |
+| StableCrypto (Alchemy proxy) | `merit-systems/stablecrypto/market-data` | finance | `https://stablecrypto.dev` | `https://stablecrypto.dev/api/alchemy/token/token-metadata` | POST | JSON body: `{"network":"solana","contractAddress":"So11111111111111111111111111111111111111112"}` | `name`, `symbol`, `network`, `contractAddress`, `decimals`, optional logo/metadata | Pay skills detail metadata + unpaid probe (`402`) | `verified/unproven` | Paid response body not yet observed for field confirmation | Run one controlled paid probe and extract field presence map |
+| CoinGecko Onchain DEX API | `paysponge/coingecko` | finance | `https://pro-api.coingecko.com/api/v3/x402/onchain` | `https://pro-api.coingecko.com/api/v3/x402/onchain/search/pools?query=SOL` | GET | query param: `query` | search results (not canonical token metadata object) | Pay skills detail + unpaid probe (`402`) | `rejected/search-only` | Route semantics are discovery/search, not clean metadata lookup | Keep excluded from metadata lane |
+| CoinGecko Onchain DEX API | `paysponge/coingecko` | finance | `https://pro-api.coingecko.com/api/v3/x402/onchain` | `https://pro-api.coingecko.com/api/v3/x402/onchain/simple/networks/{network}/token_price/{addresses}` | GET | path params: `network`, `addresses` | price snapshot fields | Pay skills detail + unpaid probe (`402`) | `rejected/price-only` | Price-only endpoint by documented semantics | Keep excluded from metadata lane |
+| StableCrypto (Alchemy proxy) | `merit-systems/stablecrypto/market-data` | finance | `https://stablecrypto.dev` | `https://stablecrypto.dev/api/alchemy/prices/by-address` | POST | JSON body with token addresses | price fields | Pay skills detail + unpaid probe (`402`) | `rejected/price-only` | Price-only endpoint by documented semantics | Keep excluded from metadata lane |
 
-## Rejected/Non-Clean Endpoints
-- merit-systems/stablecrypto/market-data: POST https://stablecrypto.dev/api/alchemy/node/rpc (not_relevant)
-- merit-systems/stablecrypto/market-data: POST https://stablecrypto.dev/api/alchemy/portfolio/nft-collections (not_relevant)
-- merit-systems/stablecrypto/market-data: POST https://stablecrypto.dev/api/alchemy/portfolio/nfts (not_relevant)
-- merit-systems/stablecrypto/market-data: POST https://stablecrypto.dev/api/alchemy/portfolio/token-balances (needs_docs_review)
-- merit-systems/stablecrypto/market-data: POST https://stablecrypto.dev/api/alchemy/portfolio/tokens (needs_docs_review)
-- merit-systems/stablecrypto/market-data: POST https://stablecrypto.dev/api/alchemy/prices/by-address (price_only)
-- paysponge/coingecko: GET https://pro-api.coingecko.com/api/v3/x402/onchain/networks/{network}/trending_pools (pool_only)
-- paysponge/coingecko: GET https://pro-api.coingecko.com/api/v3/x402/onchain/search/pools (search_only)
-- paysponge/coingecko: GET https://pro-api.coingecko.com/api/v3/x402/onchain/simple/networks/{network}/token_price/{addresses} (price_only)
-- paysponge/coingecko: GET https://pro-api.coingecko.com/api/v3/x402/simple/price (price_only)
+## 3. Provider-by-Provider Evidence
 
-## Classification Table
+### A. `paysponge/coingecko`
+- Catalog/detail evidence:
+  - Endpoint listed: `GET x402/onchain/networks/{network}/tokens/{address}` with description `Token Data by Token Address`.
+  - Other listed endpoints include search/pools, token_price, trending_pools.
+- Unpaid probes (2026-05-18):
+  - `GET https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/tokens/So11111111111111111111111111111111111111112`
+  - Status: `402`
+  - Body: `{"error":"Payment required","message":"Payment is required to access this resource"}`
+  - 402 challenge exists: yes
+  - Route semantics confirmed: metadata-intent path/method confirmed from provider detail + route shape; payload fields unproven without paid body.
+  - Classification: `verified/unproven`.
+- Unpaid probe (rejected/search-only):
+  - `GET https://pro-api.coingecko.com/api/v3/x402/onchain/search/pools?query=SOL`
+  - Status: `402`; challenge exists: yes; semantics: search/pool discovery, not clean token metadata.
+- Unpaid probe (rejected/price-only):
+  - `GET https://pro-api.coingecko.com/api/v3/x402/onchain/simple/networks/solana/token_price/So11111111111111111111111111111111111111112`
+  - Status: `402`; challenge exists: yes; semantics: price-only.
 
-| provider_id | provider_name | category | service_url | catalog description/use cases | candidate endpoint | method | request shape | why it may be token metadata | uncertainty / missing information | classification | canonical input candidate | docs URL |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| merit-systems/stablecrypto/market-data | StableCrypto | finance | https://stablecrypto.dev | Access crypto market and on-chain data through CoinGecko, DefiLlama, Alchemy, and Etherscan. Covers prices, DEX pools, DeFi TVL, yields, bridges, treasuries, token balances, transactions, contracts, logs, gas, and Ethereum stats. Use for crypto prices, market charts, DeFi analytics, TVL and yield research, DEX pool data, wallet token balances, Ethereum transfers, contract metadata, gas estimates, bridge volume, stablecoin supply, treasury holdings, and blockchain monitoring. | https://stablecrypto.dev/api/alchemy/token/token-metadata | POST | {"contractAddress":"So11111111111111111111111111111111111111112","network":"solana"} | Endpoint path/description indicates token identity metadata fields (name/symbol/address/network/decimals or metadata attributes). | Response schema and method/request compatibility are still unproven without execution. | clean_candidate_possible | {"network":"solana","contractAddress":"So11111111111111111111111111111111111111112"} | https://stablecrypto.dev/openapi.json |
-| paysponge/coingecko | CoinGecko Onchain DEX API | finance | https://pro-api.coingecko.com/api/v3/x402/onchain | Query CoinGecko onchain DEX market data through x402 for token prices, token detail lookup, trending pools on a network, and pool/token search. Use for onchain token pricing, token detail enrichment, trending-pool discovery on a network, and search across GeckoTerminal market data. | https://pro-api.coingecko.com/api/v3/x402/onchain/networks/{network}/tokens/{address} | GET | {"symbol":"SOL","network":"solana","token_address":"So11111111111111111111111111111111111111112"} | Endpoint path/description indicates token identity metadata fields (name/symbol/address/network/decimals or metadata attributes). | Response schema and method/request compatibility are still unproven without execution. | clean_candidate_possible | {"symbol":"SOL","network":"solana","token_address":"So11111111111111111111111111111111111111112"} | https://github.com/solana-foundation/pay-skills/blob/main/providers/paysponge/coingecko/PAY.md |
+### B. `merit-systems/stablecrypto/market-data`
+- Catalog/detail evidence:
+  - Endpoint listed: `POST api/alchemy/token/token-metadata` with description `Get metadata for a token contract`.
+  - Also lists `api/alchemy/prices/by-address` and other non-metadata token endpoints.
+- Unpaid probe (candidate):
+  - `POST https://stablecrypto.dev/api/alchemy/token/token-metadata`
+  - Request body: `{"network":"solana","contractAddress":"So11111111111111111111111111111111111111112"}`
+  - Status: `402`
+  - Response body observed: empty in probe capture; `content-type: application/json`
+  - 402 challenge exists: yes
+  - Route semantics confirmed: metadata-intent path/method/body shape confirmed from provider detail + probe.
+  - Classification: `verified/unproven`.
+- Unpaid probe (rejected/price-only):
+  - `POST https://stablecrypto.dev/api/alchemy/prices/by-address`
+  - Request body: `{"network":"solana","addresses":["So11111111111111111111111111111111111111112"]}`
+  - Status: `402`; challenge exists: yes; semantics: price-only.
 
-Strict caveat: candidate discovery evidence only. Token metadata semantics still require endpoint/method/request-shape verification before any benchmark use.
-No paid execution performed by this research task.
+## 4. Classification Per Candidate
+- `paysponge/coingecko` token-data-by-address: `verified/unproven`
+- `merit-systems/stablecrypto/market-data` token-metadata: `verified/unproven`
+- `paysponge/coingecko` search/pools: `rejected/search-only`
+- `paysponge/coingecko` token_price: `rejected/price-only`
+- `merit-systems/stablecrypto/market-data` prices/by-address: `rejected/price-only`
+
+## 5. Recommended Next Probes
+1. Controlled paid probe for `paysponge/coingecko` token metadata route with SOL mint to confirm actual response fields (`name`, `symbol`, `network`, `address`, `decimals`, optional image/tags).
+2. Controlled paid probe for `stablecrypto` token metadata route with the same canonical input, then compare field coverage and normalization friction.
+3. Add parser-only assertion helper test for metadata field presence classification if route response samples are captured (no Radar modifications).
+
+## 6. Explicit Caveats
+- This artifact does not claim benchmark-ready status.
+- This artifact does not claim a winner.
+- No executable route mapping changes were committed in this task.
+- No benchmark artifacts/metrics were generated.
+- `402` only proves unpaid gate/payment requirement and route reachability; it does not prove post-payment payload quality.
