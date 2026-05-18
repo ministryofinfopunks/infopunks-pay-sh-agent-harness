@@ -39,7 +39,8 @@
     "discover:token-search-routes": "tsx src/discoverTokenSearchRoutes.ts",
     "research:token-search-providers": "tsx src/tokenSearchProviderResearch.ts",
     "verify:stablecrypto-token-search-candidate": "ts-node src/verifyStablecryptoTokenSearchCandidate.ts",
-    "benchmark:token-search": "tsx src/benchmarks/runTokenSearchBenchmark.ts"
+    "benchmark:token-search": "tsx src/benchmarks/runTokenSearchBenchmark.ts",
+    "research:token-metadata-providers": "tsx src/tokenMetadataProviderResearch.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
