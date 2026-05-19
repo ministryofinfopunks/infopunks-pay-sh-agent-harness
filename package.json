@@ -47,8 +47,10 @@
     "verify:solana-balance-quicknode-paid": "tsx src/verifySolanaBalanceQuicknodePaid.ts",
     "verify:reddit-post-search-paid": "tsx src/verifyRedditPostSearchPaid.ts",
     "verify:web-search-paid": "tsx src/verifyWebSearchPaid.ts",
+    "verify:document-ocr-paid": "tsx src/verifyDocumentOcrPaid.ts",
     "diagnose:reddit-stablesocial-shapes": "tsx src/diagnoseRedditStableSocialShapes.ts",
-    "benchmark:web-search-live": "tsx src/benchmarkWebSearchLive.ts"
+    "benchmark:web-search-live": "tsx src/benchmarkWebSearchLive.ts",
+    "benchmark:document-ocr-live": "tsx src/benchmarkDocumentOcrLive.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
