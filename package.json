@@ -41,7 +41,14 @@
     "verify:stablecrypto-token-search-candidate": "ts-node src/verifyStablecryptoTokenSearchCandidate.ts",
     "benchmark:token-search": "tsx src/benchmarks/runTokenSearchBenchmark.ts",
     "research:token-metadata-providers": "tsx src/tokenMetadataProviderResearch.ts",
-    "verify:token-metadata-candidates": "tsx src/verifyTokenMetadataCandidates.ts"
+    "verify:token-metadata-candidates": "tsx src/verifyTokenMetadataCandidates.ts",
+    "verify:communications-stableemail-paid": "tsx src/verifyCommunicationsStableemailPaid.ts",
+    "verify:communications-agentmail-paid": "tsx src/verifyCommunicationsAgentmailPaid.ts",
+    "verify:solana-balance-quicknode-paid": "tsx src/verifySolanaBalanceQuicknodePaid.ts",
+    "verify:reddit-post-search-paid": "tsx src/verifyRedditPostSearchPaid.ts",
+    "verify:web-search-paid": "tsx src/verifyWebSearchPaid.ts",
+    "diagnose:reddit-stablesocial-shapes": "tsx src/diagnoseRedditStableSocialShapes.ts",
+    "benchmark:web-search-live": "tsx src/benchmarkWebSearchLive.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

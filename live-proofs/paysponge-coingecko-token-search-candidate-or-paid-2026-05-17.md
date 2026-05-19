@@ -1,6 +1,6 @@
 # PaySponge CoinGecko Token Search Candidate Or Paid Evidence
 
-- generated_at: 2026-05-17T01:30:38.128Z
+- generated_at: 2026-05-19T07:24:03.449Z
 - provider_id: paysponge-coingecko
 - endpoint: https://pro-api.coingecko.com/api/v3/x402/onchain/networks/solana/tokens/So11111111111111111111111111111111111111112
 - method: GET

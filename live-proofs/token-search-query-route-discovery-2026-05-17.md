@@ -344,19 +344,19 @@ No paid execution run by this discovery unless explicitly enabled elsewhere.
   - outcome: auth_required
   - payment_required_challenge_appears: false
   - content_type: application/json; charset=utf-8
-  - safe_response_summary: {"status":{"timestamp":"2026-05-17T01:53:07.899+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
+  - safe_response_summary: {"status":{"timestamp":"2026-05-19T07:24:09.303+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
   - term: ETH
   - status_code: 401
   - outcome: auth_required
   - payment_required_challenge_appears: false
   - content_type: application/json; charset=utf-8
-  - safe_response_summary: {"status":{"timestamp":"2026-05-17T01:53:07.899+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
+  - safe_response_summary: {"status":{"timestamp":"2026-05-19T07:24:09.297+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
   - term: BTC
   - status_code: 401
   - outcome: auth_required
   - payment_required_challenge_appears: false
   - content_type: application/json; charset=utf-8
-  - safe_response_summary: {"status":{"timestamp":"2026-05-17T01:53:07.913+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
+  - safe_response_summary: {"status":{"timestamp":"2026-05-19T07:24:09.296+00:00","error_code":10002,"error_message":"API Key Missing. Please make sure you're using the right authentication method. For Pro API, please visit: https://docs.coingecko.com/reference/authentication. For Public/Demo API, please v
 - classification: rejected
 - reason: Query route exists but SOL/ETH/BTC probes did not show accepted search behavior.
 
