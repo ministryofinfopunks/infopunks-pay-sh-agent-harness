@@ -50,7 +50,8 @@
     "verify:document-ocr-paid": "tsx src/verifyDocumentOcrPaid.ts",
     "diagnose:reddit-stablesocial-shapes": "tsx src/diagnoseRedditStableSocialShapes.ts",
     "benchmark:web-search-live": "tsx src/benchmarkWebSearchLive.ts",
-    "benchmark:document-ocr-live": "tsx src/benchmarkDocumentOcrLive.ts"
+    "benchmark:document-ocr-live": "tsx src/benchmarkDocumentOcrLive.ts",
+    "verify:maps-place-search-paid": "tsx src/verifyMapsPlaceSearchPaid.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
