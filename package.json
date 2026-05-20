@@ -51,7 +51,8 @@
     "diagnose:reddit-stablesocial-shapes": "tsx src/diagnoseRedditStableSocialShapes.ts",
     "benchmark:web-search-live": "tsx src/benchmarkWebSearchLive.ts",
     "benchmark:document-ocr-live": "tsx src/benchmarkDocumentOcrLive.ts",
-    "verify:maps-place-search-paid": "tsx src/verifyMapsPlaceSearchPaid.ts"
+    "verify:maps-place-search-paid": "tsx src/verifyMapsPlaceSearchPaid.ts",
+    "diagnose:maps-google-places-shapes": "tsx src/diagnoseMapsGooglePlacesShapes.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
